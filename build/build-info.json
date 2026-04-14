@@ -1,0 +1,12 @@
+{
+  "appName": "ACE Academy Manager",
+  "codename": "Clay Genesis",
+  "version": "0.1.0",
+  "build": "20260414-123532",
+  "builtAt": "2026-04-14T12:35:32.622373-03:00",
+  "channel": "alpha",
+  "dataSnapshot": {
+    "rankingDate": "2026-04-13",
+    "calendarSeason": 2026
+  }
+}

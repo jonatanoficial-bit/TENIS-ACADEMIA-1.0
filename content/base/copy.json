@@ -1,0 +1,13 @@
+{
+  "heroTitle": "Construa a academia que dita o ritmo do circuito mundial.",
+  "heroSubtitle": "Gerencie staff, caixa, scouting, treinamento, calendario e decisões táticas ao vivo em partidas 2D mobile-first.",
+  "onboardingNote": "Build inicial focada em arquitetura, loop jogavel e base ATP 2026. As artes definitivas entram nas proximas builds sem quebrar o core.",
+  "modules": [
+    "HQ premium com indicadores de academia",
+    "Treino por atleta com ganho real de atributos",
+    "Mercado de jovens talentos e staff",
+    "Calendario ATP 2026 + circuito de desenvolvimento",
+    "Ranking dinâmico com base oficial de abril/2026",
+    "Match Center 2D com botões táticos"
+  ]
+}

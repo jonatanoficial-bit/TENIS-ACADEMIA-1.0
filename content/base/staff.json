@@ -1,0 +1,131 @@
+{
+  "current": {
+    "headCoach": {
+      "name": "Rafael Costa",
+      "rating": 72,
+      "salary": 48000,
+      "department": "Treinador Chefe",
+      "impact": "Treino tecnico e leitura tática"
+    },
+    "fitnessCoach": {
+      "name": "Bianca Lobo",
+      "rating": 69,
+      "salary": 32000,
+      "department": "Preparacao Fisica",
+      "impact": "Stamina e recuperacao de treino"
+    },
+    "physio": {
+      "name": "Dr. Miguel Prado",
+      "rating": 66,
+      "salary": 28000,
+      "department": "Departamento Medico",
+      "impact": "Prevencao de lesoes e retorno rapido"
+    },
+    "financeDirector": {
+      "name": "Helena Mota",
+      "rating": 71,
+      "salary": 36000,
+      "department": "Financeiro",
+      "impact": "Receita de sponsor e controle de caixa"
+    },
+    "scout": {
+      "name": "Caio Teles",
+      "rating": 67,
+      "salary": 26000,
+      "department": "Scouting",
+      "impact": "Qualidade do mercado de atletas e staff"
+    }
+  },
+  "market": [
+    {
+      "id": "stf-001",
+      "role": "Treinador Chefe",
+      "name": "Alessandro Verri",
+      "rating": 84,
+      "salary": 79000,
+      "signFee": 180000,
+      "specialty": "Treino de saibro"
+    },
+    {
+      "id": "stf-002",
+      "role": "Treinador Chefe",
+      "name": "Diego Marquez",
+      "rating": 76,
+      "salary": 56000,
+      "signFee": 90000,
+      "specialty": "Desenvolvimento de juvenis"
+    },
+    {
+      "id": "stf-003",
+      "role": "Preparacao Fisica",
+      "name": "Naomi Gruber",
+      "rating": 82,
+      "salary": 49000,
+      "signFee": 120000,
+      "specialty": "Explosao e mobilidade"
+    },
+    {
+      "id": "stf-004",
+      "role": "Preparacao Fisica",
+      "name": "Tiago Salcedo",
+      "rating": 74,
+      "salary": 36000,
+      "signFee": 76000,
+      "specialty": "Planejamento de carga"
+    },
+    {
+      "id": "stf-005",
+      "role": "Departamento Medico",
+      "name": "Dr. Sofia Kalinina",
+      "rating": 85,
+      "salary": 52000,
+      "signFee": 150000,
+      "specialty": "Prevencao de microlesoes"
+    },
+    {
+      "id": "stf-006",
+      "role": "Departamento Medico",
+      "name": "Dr. Paulo Uehara",
+      "rating": 73,
+      "salary": 34000,
+      "signFee": 68000,
+      "specialty": "Reabilitacao expressa"
+    },
+    {
+      "id": "stf-007",
+      "role": "Financeiro",
+      "name": "Olivia Laurent",
+      "rating": 86,
+      "salary": 54000,
+      "signFee": 170000,
+      "specialty": "Receita de patrocinio premium"
+    },
+    {
+      "id": "stf-008",
+      "role": "Financeiro",
+      "name": "Caetano Dias",
+      "rating": 75,
+      "salary": 39000,
+      "signFee": 73000,
+      "specialty": "Controle de fluxo"
+    },
+    {
+      "id": "stf-009",
+      "role": "Scouting",
+      "name": "Maja Kovac",
+      "rating": 83,
+      "salary": 47000,
+      "signFee": 128000,
+      "specialty": "Joias sub-20"
+    },
+    {
+      "id": "stf-010",
+      "role": "Scouting",
+      "name": "Henrique Fialho",
+      "rating": 72,
+      "salary": 33000,
+      "signFee": 61000,
+      "specialty": "Mercado sul-americano"
+    }
+  ]
+}

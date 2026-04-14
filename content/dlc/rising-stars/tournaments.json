@@ -1,0 +1,20 @@
+{
+  "events": [
+    {
+      "id": "future-stars-cup-2026",
+      "name": "Future Stars Cup",
+      "category": "SHOWCASE",
+      "surface": "hard",
+      "startDate": "2026-07-06",
+      "endDate": "2026-07-09",
+      "city": "Sao Paulo",
+      "country": "Brazil",
+      "entryCutoff": 220,
+      "prizePool": 220000,
+      "prestige": 62,
+      "winnerPoints": 150,
+      "drawSize": 16,
+      "kind": "showcase"
+    }
+  ]
+}

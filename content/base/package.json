@@ -1,0 +1,14 @@
+{
+  "id": "base.atp-2026",
+  "name": "Base World Pack 2026",
+  "version": "1.0.0",
+  "description": "Base realista com ranking ATP abril/2026, calendario ATP 2026, academias iniciais e configuracoes do simulador.",
+  "files": {
+    "players": "players.json",
+    "staff": "staff.json",
+    "tournaments": "tournaments.json",
+    "copy": "copy.json",
+    "branding": "branding.json",
+    "config": "config.json"
+  }
+}

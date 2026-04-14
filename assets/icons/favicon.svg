@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="ACE Academy Manager">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7ef2cb"/>
+      <stop offset="50%" stop-color="#54a8ff"/>
+      <stop offset="100%" stop-color="#ffd166"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#08111e"/>
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="url(#glow)" opacity="0.55"/>
+  <path d="M64 18c20 0 36 16 36 36 0 14-7 23-16 35l-20 27-20-27C35 77 28 68 28 54c0-20 16-36 36-36Z" fill="url(#g)" opacity="0.14"/>
+  <circle cx="64" cy="46" r="16" fill="#ffd166"/>
+  <path d="M43 83 61 38h6l18 45h-9l-3-8H55l-3 8Zm15-16h12l-6-17Z" fill="url(#g)"/>
+  <path d="M86 34c9 3 16 11 18 22" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+</svg>

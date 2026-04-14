@@ -1,0 +1,30 @@
+{
+  "title": "ACE Academy Manager",
+  "shortTitle": "ACE Manager",
+  "tagline": "Premium Tennis Management Simulator",
+  "universe": "Circuit 2026",
+  "sponsorDeck": [
+    "Aurea Bank",
+    "Pulse Hydration",
+    "Nova Fiber",
+    "Lumen Court Tech"
+  ],
+  "surfaces": {
+    "hard": {
+      "label": "Quadra Rápida",
+      "colorHint": "#58c6ff"
+    },
+    "clay": {
+      "label": "Saibro",
+      "colorHint": "#ff9e7a"
+    },
+    "grass": {
+      "label": "Grama",
+      "colorHint": "#76ff9d"
+    },
+    "indoor-hard": {
+      "label": "Indoor Hard",
+      "colorHint": "#c18eff"
+    }
+  }
+}

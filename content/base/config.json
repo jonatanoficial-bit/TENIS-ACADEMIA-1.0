@@ -1,0 +1,34 @@
+{
+  "defaults": {
+    "academyName": "ACE Academy Brasil",
+    "managerName": "Você",
+    "startingBalance": 2400000,
+    "startingReputation": 18,
+    "startingFans": 12800,
+    "startingDate": "2026-04-13",
+    "currentWeekLabel": "Semana 15 - Abril 2026"
+  },
+  "economy": {
+    "facilityCostWeekly": 68000,
+    "youthProgramCostWeekly": 23000,
+    "sponsorBaseWeekly": 54000,
+    "staffMarketRefreshWeeks": 3,
+    "bankruptcyThreshold": -250000,
+    "trainingCostPerSession": 900
+  },
+  "progression": {
+    "trainingGainBase": 1.5,
+    "trainingFatigueBase": 4,
+    "worldNoiseRange": 28,
+    "sponsorshipReputationScale": 1.28,
+    "staffImpactScale": 0.06
+  },
+  "admin": {
+    "username": "admin",
+    "password": "ace2026"
+  },
+  "ui": {
+    "accent": "#ffd166",
+    "secondaryAccent": "#71f6c9"
+  }
+}
