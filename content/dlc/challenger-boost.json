@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "id": "challenger-boost",
+    "name": "Challenger Boost",
+    "version": "0.2.0",
+    "description": "Adiciona dois eventos Challenger e dois talentos extras."
+  },
+  "calendar": [
+    {"week": 8, "name": "Santiago Challenger", "tier": "Challenger", "surface": "Clay", "prize": 9000, "minRank": 180},
+    {"week": 31, "name": "Seoul Challenger", "tier": "Challenger", "surface": "Hard", "prize": 9600, "minRank": 180}
+  ],
+  "marketTalents": [
+    {"id": "talent-5", "name": "Noah Petrov", "age": 17, "country": "BUL", "style": "Defensivo", "potential": 89, "overall": 62, "salary": 1400, "fee": 25000},
+    {"id": "talent-6", "name": "Leo Martin", "age": 18, "country": "FRA", "style": "Agressivo", "potential": 90, "overall": 65, "salary": 1700, "fee": 29000}
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "id": "base-2026",
+    "name": "World Tour Base 2026",
+    "version": "0.2.0",
+    "description": "Base oficial da carreira 2026 com calendário, top players e staff inicial."
+  },
+  "academyDefaults": {
+    "name": "Ace Academy",
+    "money": 250000,
+    "reputation": 18,
+    "sponsor": 22000,
+    "weeklyCosts": 14500,
+    "season": 2026,
+    "week": 1,
+    "facilities": {
+      "training": 1,
+      "medical": 1,
+      "finance": 1,
+      "scouting": 1
+    }
+  },
+  "staffMarket": [
+    {"id": "coach-bronze", "role": "Tecnico", "name": "Miguel Torres", "tier": "Bronze", "cost": 24000, "salary": 2200, "effects": {"match": 2, "training": 2}},
+    {"id": "coach-gold", "role": "Tecnico", "name": "Luca Bianchi", "tier": "Ouro", "cost": 88000, "salary": 7600, "effects": {"match": 6, "training": 5}},
+    {"id": "physio-silver", "role": "Fisioterapeuta", "name": "Renan Costa", "tier": "Prata", "cost": 42000, "salary": 3400, "effects": {"recovery": 5, "injury": -4}},
+    {"id": "finance-gold", "role": "Financeiro", "name": "Sofia Klein", "tier": "Ouro", "cost": 76000, "salary": 6500, "effects": {"sponsor": 8, "costs": -6}},
+    {"id": "psych-silver", "role": "Psicologo", "name": "Nadia Morel", "tier": "Prata", "cost": 38000, "salary": 3100, "effects": {"mental": 5}}
+  ],
+  "marketTalents": [
+    {"id": "talent-1", "name": "Joao Mendes", "age": 17, "country": "BRA", "style": "Agressivo", "potential": 90, "overall": 63, "salary": 1400, "fee": 26000},
+    {"id": "talent-2", "name": "Luis Ortega", "age": 18, "country": "ESP", "style": "Equilibrado", "potential": 88, "overall": 66, "salary": 1800, "fee": 31000},
+    {"id": "talent-3", "name": "Ethan Brooks", "age": 16, "country": "USA", "style": "Saque", "potential": 92, "overall": 60, "salary": 1200, "fee": 24000},
+    {"id": "talent-4", "name": "Kenji Mori", "age": 19, "country": "JPN", "style": "Defensivo", "potential": 85, "overall": 68, "salary": 2100, "fee": 36000}
+  ],
+  "calendar": [
+    {"week": 1, "name": "Brisbane International", "tier": "ATP 250", "surface": "Hard", "prize": 18000, "minRank": 120},
+    {"week": 2, "name": "Auckland Open", "tier": "ATP 250", "surface": "Hard", "prize": 19000, "minRank": 100},
+    {"week": 3, "name": "Australian Open", "tier": "Grand Slam", "surface": "Hard", "prize": 210000, "minRank": 128},
+    {"week": 5, "name": "Cordoba Open", "tier": "ATP 250", "surface": "Clay", "prize": 17000, "minRank": 110},
+    {"week": 7, "name": "Doha Open", "tier": "ATP 500", "surface": "Hard", "prize": 38000, "minRank": 80},
+    {"week": 10, "name": "Indian Wells", "tier": "Masters 1000", "surface": "Hard", "prize": 78000, "minRank": 96},
+    {"week": 12, "name": "Miami Open", "tier": "Masters 1000", "surface": "Hard", "prize": 79000, "minRank": 96},
+    {"week": 15, "name": "Monte Carlo", "tier": "Masters 1000", "surface": "Clay", "prize": 76000, "minRank": 64},
+    {"week": 18, "name": "Madrid Open", "tier": "Masters 1000", "surface": "Clay", "prize": 82000, "minRank": 96},
+    {"week": 20, "name": "Rome Masters", "tier": "Masters 1000", "surface": "Clay", "prize": 80000, "minRank": 96},
+    {"week": 22, "name": "Roland Garros", "tier": "Grand Slam", "surface": "Clay", "prize": 220000, "minRank": 128},
+    {"week": 26, "name": "Halle Open", "tier": "ATP 500", "surface": "Grass", "prize": 42000, "minRank": 60},
+    {"week": 27, "name": "Queen's Club", "tier": "ATP 500", "surface": "Grass", "prize": 43000, "minRank": 70},
+    {"week": 29, "name": "Wimbledon", "tier": "Grand Slam", "surface": "Grass", "prize": 230000, "minRank": 128},
+    {"week": 33, "name": "Toronto Masters", "tier": "Masters 1000", "surface": "Hard", "prize": 81000, "minRank": 96},
+    {"week": 35, "name": "Cincinnati Masters", "tier": "Masters 1000", "surface": "Hard", "prize": 82000, "minRank": 96},
+    {"week": 36, "name": "US Open", "tier": "Grand Slam", "surface": "Hard", "prize": 240000, "minRank": 128},
+    {"week": 41, "name": "Shanghai Masters", "tier": "Masters 1000", "surface": "Hard", "prize": 83000, "minRank": 96},
+    {"week": 44, "name": "Paris Masters", "tier": "Masters 1000", "surface": "Hard", "prize": 84000, "minRank": 96},
+    {"week": 46, "name": "ATP Finals", "tier": "Finals", "surface": "Hard", "prize": 140000, "minRank": 8}
+  ],
+  "rankingSeed": [
+    {"rank": 1, "name": "Jannik Sinner", "country": "ITA", "points": 9930, "overall": 95, "age": 24, "style": "Equilibrado"},
+    {"rank": 2, "name": "Carlos Alcaraz", "country": "ESP", "points": 8770, "overall": 94, "age": 22, "style": "Agressivo"},
+    {"rank": 3, "name": "Alexander Zverev", "country": "GER", "points": 7595, "overall": 92, "age": 29, "style": "Saque"},
+    {"rank": 4, "name": "Taylor Fritz", "country": "USA", "points": 5280, "overall": 89, "age": 28, "style": "Agressivo"},
+    {"rank": 5, "name": "Novak Djokovic", "country": "SRB", "points": 5070, "overall": 91, "age": 39, "style": "Defensivo"},
+    {"rank": 6, "name": "Jack Draper", "country": "GBR", "points": 3870, "overall": 87, "age": 24, "style": "Agressivo"},
+    {"rank": 7, "name": "Alex de Minaur", "country": "AUS", "points": 3535, "overall": 86, "age": 27, "style": "Defensivo"},
+    {"rank": 8, "name": "Andrey Rublev", "country": "RUS", "points": 3490, "overall": 86, "age": 28, "style": "Agressivo"},
+    {"rank": 9, "name": "Daniil Medvedev", "country": "RUS", "points": 3290, "overall": 89, "age": 30, "style": "Controlador"},
+    {"rank": 10, "name": "Lorenzo Musetti", "country": "ITA", "points": 3200, "overall": 85, "age": 24, "style": "Clay"},
+    {"rank": 11, "name": "Stefanos Tsitsipas", "country": "GRE", "points": 3145, "overall": 85, "age": 28, "style": "Agressivo"},
+    {"rank": 12, "name": "Holger Rune", "country": "DEN", "points": 3120, "overall": 84, "age": 23, "style": "Equilibrado"}
+  ],
+  "starterRoster": [
+    {"id": "academy-1", "name": "Gabriel Vale", "country": "BRA", "age": 17, "overall": 67, "potential": 91, "stamina": 86, "mental": 72, "serve": 69, "forehand": 71, "backhand": 66, "rankingPoints": 140, "style": "Equilibrado"},
+    {"id": "academy-2", "name": "Thiago Serra", "country": "BRA", "age": 18, "overall": 64, "potential": 87, "stamina": 82, "mental": 69, "serve": 74, "forehand": 63, "backhand": 61, "rankingPoints": 90, "style": "Saque"}
+  ]
+}

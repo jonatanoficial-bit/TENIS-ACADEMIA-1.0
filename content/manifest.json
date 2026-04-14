@@ -1,22 +1,7 @@
 {
-  "coreVersion": "0.1.0",
-  "builtAt": "2026-04-14T12:35:32.622373-03:00",
-  "packages": [
-    {
-      "id": "base.atp-2026",
-      "name": "Base World Pack 2026",
-      "version": "1.0.0",
-      "enabled": true,
-      "entry": "content/base/package.json",
-      "type": "base"
-    },
-    {
-      "id": "dlc.rising-stars.dev",
-      "name": "Rising Stars Dev Pack",
-      "version": "0.1.0",
-      "enabled": false,
-      "entry": "content/dlc/rising-stars/package.json",
-      "type": "dlc"
-    }
+  "version": "0.2.0",
+  "packs": [
+    {"id": "base-2026", "type": "base", "path": "content/base/base-pack.json", "active": true},
+    {"id": "challenger-boost", "type": "dlc", "path": "content/dlc/challenger-boost.json", "active": false}
   ]
 }

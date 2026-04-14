@@ -1,115 +1,161 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#08111e" />
-    <title>ACE Academy Manager</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
-    <link rel="stylesheet" href="css/main.css" />
-  </head>
-  <body>
-    <div class="ambient ambient-a"></div>
-    <div class="ambient ambient-b"></div>
-    <div id="boot-screen" class="boot-screen">
-      <div class="boot-card glass-card">
-        <span class="eyebrow">Carregando build premium</span>
-        <h1>ACE Academy Manager</h1>
-        <p>Preparando calendário ATP 2026, ranking mundial, mercados e Match Center.</p>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>Ace Academy Manager</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar glass">
+      <div>
+        <p class="eyebrow">Vale Games • Premium Manager Prototype</p>
+        <h1>Ace Academy Manager</h1>
       </div>
-    </div>
+      <div class="hud-row">
+        <div class="pill"><span>Temporada</span><strong id="seasonLabel">2026</strong></div>
+        <div class="pill"><span>Semana</span><strong id="weekLabel">1</strong></div>
+        <div class="pill"><span>Caixa</span><strong id="moneyLabel">$0</strong></div>
+      </div>
+    </header>
 
-    <div class="app-shell">
-      <aside class="shell-rail glass-card">
-        <div class="rail-brand">
-          <img src="assets/icons/logo-mark.svg" alt="ACE" />
-          <div>
-            <span class="eyebrow">AAA Mobile-first</span>
-            <strong>ACE Manager</strong>
+    <main class="main-grid">
+      <aside class="sidebar glass">
+        <section class="hero-card">
+          <div class="hero-copy">
+            <p class="eyebrow">Mobile-first • carreira infinita</p>
+            <h2>Sua academia, seu legado no tênis</h2>
+            <p>Treine atletas, contrate staff, sobreviva financeiramente e leve seus talentos ao topo do ranking mundial.</p>
           </div>
-        </div>
-        <div class="rail-nav">
-          <button class="nav-btn" data-nav-view="dashboard"><span class="nav-icon"></span><span>HQ</span></button>
-          <button class="nav-btn" data-nav-view="training"><span class="nav-icon"></span><span>Treino</span></button>
-          <button class="nav-btn" data-nav-view="calendar"><span class="nav-icon"></span><span>Calendário</span></button>
-          <button class="nav-btn" data-nav-view="ranking"><span class="nav-icon"></span><span>Ranking</span></button>
-          <button class="nav-btn" data-nav-view="market"><span class="nav-icon"></span><span>Mercado</span></button>
-          <button class="nav-btn" data-nav-view="match"><span class="nav-icon"></span><span>Match Center</span></button>
-        </div>
+          <div class="hero-badges">
+            <span>Career</span>
+            <span>ATP-like</span>
+            <span>2D Match</span>
+            <span>DLC Ready</span>
+          </div>
+        </section>
+
+        <nav class="nav-tabs" id="mainTabs">
+          <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+          <button class="tab-btn" data-tab="roster">Atletas</button>
+          <button class="tab-btn" data-tab="calendar">Calendário</button>
+          <button class="tab-btn" data-tab="match">Partida</button>
+          <button class="tab-btn" data-tab="market">Mercado</button>
+          <button class="tab-btn" data-tab="staff">Staff</button>
+          <button class="tab-btn" data-tab="ranking">Ranking</button>
+          <button class="tab-btn" data-tab="adminhint">Admin</button>
+        </nav>
+
+        <section class="sidebar-actions">
+          <button id="advanceWeekBtn" class="btn-primary">Avançar Semana</button>
+          <button id="saveBtn" class="btn-secondary">Salvar</button>
+          <button id="resetBtn" class="btn-ghost">Novo Jogo</button>
+          <a class="btn-ghost" href="admin.html">Abrir Admin</a>
+        </section>
       </aside>
 
-      <main class="shell-main">
-        <header class="topbar glass-card">
-          <div id="topbar-meta"></div>
-          <div id="resource-strip" class="resource-strip"></div>
-        </header>
-
-        <section id="hero-banner" class="hero-banner"></section>
-
-        <section class="content-grid">
-          <div class="views-stack">
-            <section class="view-panel" data-view="dashboard">
-              <div id="dashboard-view"></div>
-            </section>
-            <section class="view-panel" data-view="training">
-              <div id="training-view"></div>
-            </section>
-            <section class="view-panel" data-view="calendar">
-              <div id="calendar-view"></div>
-            </section>
-            <section class="view-panel" data-view="ranking">
-              <div id="ranking-view"></div>
-            </section>
-            <section class="view-panel" data-view="market">
-              <div id="market-view"></div>
-            </section>
-            <section class="view-panel" data-view="match">
-              <div class="section-stack">
-                <div id="match-summary"></div>
-                <div class="glass-card section-card">
-                  <div class="section-head"><h3>Quadra 2D</h3><span>Intervenção tática em tempo real</span></div>
-                  <div class="match-canvas-wrap">
-                    <canvas id="live-match-canvas" aria-label="Quadra 2D do Match Center"></canvas>
-                  </div>
-                </div>
-                <div class="dual-grid">
-                  <div id="match-live-status"></div>
-                  <div id="match-live-score"></div>
-                </div>
-                <div class="dual-grid">
-                  <div id="match-log-feed"></div>
-                  <div id="match-history"></div>
-                </div>
-              </div>
-            </section>
-          </div>
-          <aside class="notifications-column">
-            <div class="glass-card section-card sticky-card">
-              <div class="section-head"><h3>Pulse Feed</h3><span>Academia ao vivo</span></div>
-              <div id="notifications" class="notifications-stack"></div>
-              <button class="button-tertiary full-width" data-action="reset-save">Resetar save local</button>
+      <section class="content-stack">
+        <section class="tab-panel active glass" id="tab-dashboard">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Visão geral</p>
+              <h3>Painel da Academia</h3>
             </div>
-          </aside>
+            <div class="status-dot-row">
+              <span class="status-dot"></span>
+              <span id="statusText">Pronto para competir</span>
+            </div>
+          </div>
+          <div class="cards-grid">
+            <article class="stat-card"><span>Reputação</span><strong id="reputationLabel">0</strong></article>
+            <article class="stat-card"><span>Patrocínio</span><strong id="sponsorLabel">$0</strong></article>
+            <article class="stat-card"><span>Custos / semana</span><strong id="costsLabel">$0</strong></article>
+            <article class="stat-card"><span>Atletas ativos</span><strong id="rosterCountLabel">0</strong></article>
+          </div>
+          <div class="dashboard-grid">
+            <article class="panel-card">
+              <div class="panel-title-row"><h4>Agenda imediata</h4><button id="openCalendarBtn" class="mini-btn">Ver tudo</button></div>
+              <div id="nextEventsList" class="list-block"></div>
+            </article>
+            <article class="panel-card">
+              <div class="panel-title-row"><h4>Resumo da semana</h4></div>
+              <div id="weekSummary" class="list-block"></div>
+            </article>
+            <article class="panel-card full-width">
+              <div class="panel-title-row"><h4>Academia</h4></div>
+              <div id="facilityList" class="facility-grid"></div>
+            </article>
+          </div>
         </section>
-      </main>
-    </div>
 
-    <nav class="bottom-nav glass-card">
-      <button class="nav-btn" data-nav-view="dashboard"><span class="nav-icon"></span><span>HQ</span></button>
-      <button class="nav-btn" data-nav-view="training"><span class="nav-icon"></span><span>Treino</span></button>
-      <button class="nav-btn" data-nav-view="calendar"><span class="nav-icon"></span><span>Agenda</span></button>
-      <button class="nav-btn" data-nav-view="ranking"><span class="nav-icon"></span><span>Rank</span></button>
-      <button class="nav-btn" data-nav-view="market"><span class="nav-icon"></span><span>Mercado</span></button>
-      <button class="nav-btn" data-nav-view="match"><span class="nav-icon"></span><span>Jogo</span></button>
-    </nav>
+        <section class="tab-panel glass" id="tab-roster">
+          <div class="section-head"><div><p class="eyebrow">Gestão esportiva</p><h3>Seus atletas</h3></div></div>
+          <div id="rosterList" class="roster-grid"></div>
+        </section>
 
-    <script type="module" src="js/main.js"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
-      }
-    </script>
+        <section class="tab-panel glass" id="tab-calendar">
+          <div class="section-head"><div><p class="eyebrow">Circuito global</p><h3>Calendário 2026</h3></div></div>
+          <div id="calendarList" class="calendar-grid"></div>
+        </section>
 
-  </body>
+        <section class="tab-panel glass" id="tab-match">
+          <div class="section-head"><div><p class="eyebrow">2D Match Center</p><h3>Partida ao vivo</h3></div></div>
+          <div class="match-layout">
+            <canvas id="matchCanvas" width="960" height="540"></canvas>
+            <div class="match-side">
+              <div class="score-card">
+                <div class="score-row"><span id="matchPlayerName">Seu atleta</span><strong id="scorePlayer">0</strong></div>
+                <div class="score-row"><span id="matchOpponentName">Adversário</span><strong id="scoreOpponent">0</strong></div>
+                <div class="score-meta"><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
+              </div>
+              <div class="action-grid">
+                <button class="action-btn active" data-strategy="balanced">Equilibrado</button>
+                <button class="action-btn" data-strategy="aggressive">Agressivo</button>
+                <button class="action-btn" data-strategy="defensive">Defensivo</button>
+                <button class="action-btn" data-strategy="serve">Focar Saque</button>
+                <button class="action-btn" data-strategy="pressure">Pressionar</button>
+                <button class="action-btn" data-strategy="control">Controlar</button>
+              </div>
+              <div class="match-actions">
+                <button id="startMatchBtn" class="btn-primary">Iniciar Partida da Semana</button>
+                <button id="playPointBtn" class="btn-secondary">Jogar Ponto</button>
+                <button id="autoMatchBtn" class="btn-ghost">Auto Set</button>
+              </div>
+              <div id="matchLog" class="match-log"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="tab-panel glass" id="tab-market">
+          <div class="section-head"><div><p class="eyebrow">Scouting</p><h3>Mercado de talentos</h3></div></div>
+          <div id="marketList" class="market-grid"></div>
+        </section>
+
+        <section class="tab-panel glass" id="tab-staff">
+          <div class="section-head"><div><p class="eyebrow">Backroom</p><h3>Staff e departamentos</h3></div></div>
+          <div id="staffList" class="cards-grid"></div>
+        </section>
+
+        <section class="tab-panel glass" id="tab-ranking">
+          <div class="section-head"><div><p class="eyebrow">Mundo ATP-like</p><h3>Ranking Mundial</h3></div></div>
+          <div id="rankingTable" class="ranking-table"></div>
+        </section>
+
+        <section class="tab-panel glass" id="tab-adminhint">
+          <div class="section-head"><div><p class="eyebrow">Ferramentas</p><h3>Área Administrativa</h3></div></div>
+          <div class="admin-hint">
+            <p>Use a área Admin para importar/exportar saves, ativar DLCs locais e editar conteúdo básico sem backend.</p>
+            <a class="btn-primary inline-btn" href="admin.html">Abrir Admin</a>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
 </html>

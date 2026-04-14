@@ -1,62 +1,47 @@
-# Estrategia de criacao de assets premium
+# Estratégia de Assets AAA — Ace Academy Manager
 
-## Objetivo visual
-Transformar o projeto em um produto com cara de **app AAA premium**, mantendo performance alta em mobile. A primeira build usa arte vetorial elegante e placeholders premium. As proximas builds devem substituir esses placeholders por assets autorais finais.
+## Ordem correta de produção
 
-## Pacotes de arte planejados
+### Fase 1 — gameplay-first
+- fundo principal da home
+- fundo da tela de partida
+- fundo do admin
+- placeholders premium de atletas
+- ícones básicos do HUD
 
-### 1. Fundos principais
-1. **Academy HQ Dawn** - tela inicial / dashboard.
-2. **Night Match Court** - Match Center.
-3. **Training Complex** - tela de treino.
-4. **Global Tour Map** - calendario e viagens.
-5. **Executive Office** - tela de mercado/staff.
-6. **World Ranking Chamber** - ranking mundial.
+### Fase 2 — identidade visual do produto
+- logo principal do jogo
+- variações do logo para splash, app icon e cabeçalho
+- família visual dos torneios
+- sistema visual de superfícies: hard, clay e grass
 
-### 2. Avatares
-1. **Staff portraits**: head coach, fitness, physio, finance, scout.
-2. **Prospect portraits**: jovens talentos genericos divididos por regiao.
-3. **Player card silhouettes**: fallback leve para mobile.
-4. **Premium manager avatar set**: estilos executivo, ex-atleta, scout, high-tech.
+### Fase 3 — realismo e imersão
+- avatares de atletas originais do universo do jogo
+- retratos estilizados para jovens talentos
+- cards premium de staff
+- bandeiras em pack unificado SVG
+- fundos especiais por fase da carreira
 
-### 3. Logos e marcas
-1. Logo principal do jogo.
-2. Monograma / favicon.
-3. Selos por categoria: Grand Slam, Masters 1000, ATP 500, ATP 250, Challenger, Futures, Team.
-4. Logos custom para eventos ficcionais e DLCs.
+## Lista de assets a criar com você, um por um
 
-### 4. Bandeiras e paises
-1. Sprite ou pacote SVG por pais mais frequente no circuito.
-2. Foco inicial: Brasil, Italia, Espanha, Servia, Alemanha, Estados Unidos, Australia, Argentina, Canada, France, Great Britain.
-3. Expandir depois para todos os paises presentes no ranking e calendario.
+1. fundo hero da home
+2. logo principal do jogo
+3. ícone do app
+4. fundo premium do Match Center
+5. avatars base masculinos
+6. retratos de staff
+7. logos estilizados de torneios grandes
+8. pack de bandeiras SVG
+9. elementos de UI decorativos
+10. splash screen / loading art
 
-## Ordem ideal de producao
-1. **Hero background da home**.
-2. **Background do Match Center**.
-3. **Logo principal + favicon final**.
-4. **Set de 5 retratos de staff**.
-5. **Set de 12 avatares de prospects**.
-6. **Selos das categorias de torneio**.
-7. **Flags SVG**.
-8. **Cards especiais para Grand Slams e ATP Finals**.
+## Direção visual sugerida
 
-## Padrao tecnico dos assets
-- Formato preferido para UI: **SVG**.
-- Formato preferido para ilustrações detalhadas: **WebP**.
-- Largura sugerida para fundos: **1600x900** ou **1920x1080**.
-- Retratos: **768x1024**.
-- Logos: **SVG + PNG fallback**.
-- Comprimir sempre pensando em mobile.
+- premium esportivo contemporâneo
+- vidro escuro + neons frios + detalhes dourados
+- sensação de app AAA e broadcast esportivo
+- foco em legibilidade no celular
 
-## Pipeline recomendado
-1. Definir briefing visual por tela.
-2. Aprovar concept em baixa fidelidade.
-3. Gerar versao premium.
-4. Testar contraste e legibilidade no celular.
-5. Otimizar peso.
-6. Registrar em changelog e atualizar build.
+## Regra prática
 
-## Como vamos trabalhar nas proximas etapas
-- Criamos **um asset por vez**, com nome, funcao e direcao de arte.
-- Substituimos o placeholder correspondente.
-- Atualizamos `build/build-info.json`, `CHANGELOG.md` e o ZIP final.
+Criar assets finais só depois que a tela correspondente estiver estável em gameplay.

@@ -1,83 +1,56 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>ACE Manager Admin</title>
-    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
-    <link rel="stylesheet" href="css/main.css" />
-  </head>
-  <body class="admin-body">
-    <div class="ambient ambient-a"></div>
-    <div class="ambient ambient-b"></div>
-    <main id="admin-app" class="admin-shell">
-      <header class="glass-card admin-topbar">
-        <div>
-          <span class="eyebrow">Painel Administrativo local</span>
-          <h1>ACE Academy Manager Admin</h1>
-          <p>Ative DLCs, importe pacotes, edite branding e parâmetros do simulador.</p>
-        </div>
-        <div class="build-chip" id="admin-build-pill"></div>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ace Academy Manager • Admin</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <section class="admin-card glass" id="loginCard">
+      <p class="eyebrow">Admin local</p>
+      <h1>Painel de Conteúdo</h1>
+      <p>Login inicial: <strong>admin</strong> / <strong>ace2026</strong></p>
+      <div class="form-grid">
+        <label>Usuário<input id="adminUser" value="admin" /></label>
+        <label>Senha<input id="adminPass" type="password" value="ace2026" /></label>
+      </div>
+      <button id="loginBtn" class="btn-primary">Entrar</button>
+      <p id="loginMessage" class="muted"></p>
+    </section>
 
-      <div id="admin-notice" class="admin-notice accent">Modo local pronto para login.</div>
-
-      <section id="admin-login" class="admin-login-wrap">
-        <form id="admin-login-form" class="glass-card admin-login-card">
-          <span class="eyebrow">Credenciais locais</span>
-          <h2>Entrar no Admin</h2>
-          <label>
-            Usuário
-            <input name="username" placeholder="admin" autocomplete="username" />
-          </label>
-          <label>
-            Senha
-            <input name="password" type="password" placeholder="ace2026" autocomplete="current-password" />
-          </label>
-          <button class="button-primary" type="submit">Entrar</button>
-          <p class="muted">Build estática: os dados são salvos no localStorage e podem ser exportados em JSON.</p>
-        </form>
-      </section>
-
-      <section id="admin-dashboard" hidden class="section-stack">
-        <div class="hero-actions-row">
-          <button id="logout-admin" class="button-secondary" type="button">Sair</button>
-          <button id="reset-save" class="button-tertiary" type="button">Apagar save principal</button>
-        </div>
-
-        <div id="admin-summary" class="metric-grid"></div>
-
-        <section class="glass-card section-card">
-          <div class="section-head"><h3>Pacotes instalados</h3><span>Ativar / desativar sem tocar no core</span></div>
-          <div id="package-list" class="section-stack"></div>
-        </section>
-
-        <section class="glass-card section-card">
-          <div class="section-head"><h3>Importar pacote local</h3><span>JSON com payload de conteúdo</span></div>
-          <input id="package-import" type="file" accept="application/json,.json" />
-          <p class="muted">Formato esperado: { id, name, version, payload: { players, tournaments, copy, branding, config, staff } }</p>
-        </section>
-
-        <section class="glass-card section-card">
-          <div class="section-head"><h3>Pacotes custom instalados</h3><span>Modo local</span></div>
-          <div id="custom-package-list" class="section-stack"></div>
-        </section>
-
-        <section class="glass-card section-card">
-          <div class="section-head"><h3>Overrides de branding e regras</h3><span>Aplicados ao carregar a build principal</span></div>
-          <form id="admin-config-form-host" class="section-stack">
-            <div id="admin-config-form" class="admin-config-grid"></div>
-          </form>
-        </section>
-      </section>
-    </main>
-
-    <script type="module" src="js/admin.js"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
-      }
-    </script>
-
-  </body>
+    <section class="admin-card glass hidden" id="adminPanel">
+      <div class="section-head"><div><p class="eyebrow">Conteúdo modular</p><h2>Gerenciar DLCs e Save</h2></div></div>
+      <div class="cards-grid">
+        <article class="panel-card">
+          <h3>DLCs detectadas</h3>
+          <div id="dlcAdminList" class="list-block"></div>
+        </article>
+        <article class="panel-card">
+          <h3>Instalar DLC por JSON</h3>
+          <input id="dlcFileInput" type="file" accept="application/json" />
+          <button id="installDlcBtn" class="btn-secondary">Instalar</button>
+          <p class="muted">O arquivo é salvo em localStorage como expansão local.</p>
+        </article>
+        <article class="panel-card">
+          <h3>Exportar / Importar save</h3>
+          <div class="stack-gap">
+            <button id="exportSaveBtn" class="btn-secondary">Exportar Save</button>
+            <input id="saveFileInput" type="file" accept="application/json" />
+            <button id="importSaveBtn" class="btn-secondary">Importar Save</button>
+          </div>
+        </article>
+        <article class="panel-card">
+          <h3>Editar textos</h3>
+          <label>Nome da Academia<input id="academyNameInput" placeholder="Ace Academy" /></label>
+          <button id="saveAcademyNameBtn" class="btn-secondary">Salvar nome</button>
+        </article>
+      </div>
+      <div class="admin-actions"><a href="index.html" class="btn-ghost">Voltar ao jogo</a></div>
+      <pre id="adminLog" class="admin-log"></pre>
+    </section>
+  </main>
+  <script type="module" src="js/admin.js"></script>
+</body>
 </html>
