@@ -1,19 +1,32 @@
-# Ace Academy Manager — build v0.2.0 (2026-04-14 18:48:52)
+# Ace Academy Manager — build v0.3.0 (2026-04-14 19:02:10)
 
-Primeira build jogável focada em gameplay, mobile-first, em HTML + CSS + JavaScript puro.
+Build focada em **mobile-first real** e avanço de gameplay.
+
+## Novidades da v0.3.0
+
+- layout ajustado para celular primeiro
+- navegação horizontal por toque no mobile
+- HUD da partida e painéis mais estáveis em telas estreitas
+- qualifying e wild card simples para entrada em torneios
+- torneios com progressão por rodadas
+- fadiga, saúde e lesões leves
+- recuperação semanal com departamento médico influenciando
+- status de risco financeiro mais claro
+- save local atualizado para a nova versão
 
 ## O que já funciona
 
-- Carreira infinita com avanço semanal
-- Ranking mundial ATP-like com base abril/2026
-- Calendário anual com ATP 250, 500, Masters 1000, Grand Slams e Finals
-- Academia com upgrades
-- Mercado de jovens talentos
-- Staff com impacto real em jogo e economia
+- carreira infinita com avanço semanal
+- ranking mundial ATP-like com base abril/2026
+- calendário anual com ATP 250, 500, Masters 1000, Grand Slams e Finals
+- academia com upgrades
+- mercado de jovens talentos
+- staff com impacto em jogo, economia e recuperação
 - Match Center 2D com botões de estratégia
-- Save local automático
+- qualifying, fases de torneio e título completo
+- save local automático
 - Admin local para DLC e import/export JSON
-- Estrutura modular pronta para expansão
+- estrutura modular pronta para expansão
 
 ## Estrutura
 
@@ -32,7 +45,7 @@ Por segurança do `fetch`, rode com um servidor local simples.
 ### Python
 
 ```bash
-cd ace-academy-manager_v0.2.0_build-20260414-184852
+cd ace-academy-manager_v0.3.0_build-20260414-190210
 python3 -m http.server 8080
 ```
 
@@ -59,27 +72,14 @@ Credenciais iniciais:
 4. Selecione a branch principal e a pasta `/root`.
 5. Aguarde o link do GitHub Pages.
 
-## Salvar / resetar
+## Prioridades da próxima fase
 
-- O jogo salva automaticamente no `localStorage`.
-- O botão **Salvar** força um save imediato.
-- O botão **Novo Jogo** limpa o save local e reinicia a carreira.
-
-## Sistema de DLC
-
-- O conteúdo-base é carregado por `content/manifest.json`.
-- DLCs locais podem ser instaladas via Admin por upload JSON.
-- O core já aceita calendário, talentos e outros blocos extras por pack.
-
-## Próximos upgrades recomendados
-
-- Lesões detalhadas e departamento médico avançado
-- Convites, qualificatórios e chaves por torneio
-- Notícias, e-mails e mídia
-- Avatares realistas e fundos AAA finais
-- Logos oficiais estilizados por competição
-- Sistema financeiro mais profundo com patrocinadores e crise
+- chave visual mais rica por torneio
+- múltiplos atletas jogando no mesmo evento
+- patrocinadores negociáveis
+- notícias, caixa de entrada e convites
+- avatares e fundos AAA finais
 
 ## Observação
 
-Esta build foi reconstruída integralmente como pacote funcional completo, pronta para iteração e versionamento contínuo em novas entregas ZIP.
+A v0.3.0 foi pensada para manter o projeto leve, estático e pronto para GitHub Pages, mas com arquitetura aberta para backend futuro.

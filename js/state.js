@@ -1,23 +1,19 @@
-const STORAGE_KEY = 'ace_academy_save_v020';
+const STORAGE_KEY = 'ace_academy_save_v030';
 
 export function buildInitialState(content) {
   const academy = structuredClone(content.academyDefaults);
-  const staff = {
-    Tecnico: null,
-    Fisioterapeuta: null,
-    Financeiro: null,
-    Psicologo: null
-  };
-
+  const staff = { Tecnico: null, Fisioterapeuta: null, Financeiro: null, Psicologo: null };
   const roster = content.starterRoster.map(player => ({
     ...player,
     morale: 72,
     fatigue: 8,
     injuries: 0,
     salary: 1800 + Math.round(player.overall * 25),
-    isUser: true
+    isUser: true,
+    health: 100,
+    injuredWeeks: 0,
+    lastResult: 'Sem jogos'
   }));
-
   const ranking = [
     ...content.rankingSeed.map(p => ({ ...p, isUser: false })),
     ...roster.map((p, i) => ({
@@ -32,10 +28,9 @@ export function buildInitialState(content) {
       isUser: true
     }))
   ];
-
   return {
-    version: '0.2.0',
-    academy,
+    version: '0.3.0',
+    academy: { ...academy, bankruptcyWarnings: 0 },
     roster,
     ranking,
     calendar: content.calendar,
@@ -43,28 +38,13 @@ export function buildInitialState(content) {
     staffMarket: content.staffMarket,
     staff,
     match: null,
+    activeTournament: null,
     logs: ['Nova carreira iniciada. Sua academia está pronta para competir.'],
-    summary: ['Semana 1 iniciada. Escolha treinos, mercado ou prepare a partida.']
+    summary: ['Semana 1 iniciada. Prioridade mobile, gestão de risco e entrada em torneios.']
   };
 }
-
-export function saveState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-export function loadState() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  return raw ? JSON.parse(raw) : null;
-}
-
-export function clearState() {
-  localStorage.removeItem(STORAGE_KEY);
-}
-
-export function exportState() {
-  return loadState();
-}
-
-export function importState(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
+export function saveState(state) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+export function loadState() { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }
+export function clearState() { localStorage.removeItem(STORAGE_KEY); }
+export function exportState() { return loadState(); }
+export function importState(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
