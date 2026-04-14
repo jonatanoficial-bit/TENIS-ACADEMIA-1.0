@@ -83,3 +83,13 @@ Credenciais iniciais:
 ## Observação
 
 A v0.3.0 foi pensada para manter o projeto leve, estático e pronto para GitHub Pages, mas com arquitetura aberta para backend futuro.
+
+
+## Build v0.4.0
+
+Novidades desta fase:
+- prioridade reforçada para mobile-first com dock inferior e HUD horizontal
+- caixa de entrada com notícias e marcos de carreira
+- propostas de patrocínio dinâmicas
+- objetivo dinâmico de temporada visível na interface
+- pacote completo pronto para GitHub Pages

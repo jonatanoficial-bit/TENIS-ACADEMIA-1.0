@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'ace_academy_save_v030';
+const STORAGE_KEY = 'ace_academy_save_v040';
 
 export function buildInitialState(content) {
   const academy = structuredClone(content.academyDefaults);
@@ -29,7 +29,7 @@ export function buildInitialState(content) {
     }))
   ];
   return {
-    version: '0.3.0',
+    version: '0.4.0',
     academy: { ...academy, bankruptcyWarnings: 0 },
     roster,
     ranking,
@@ -40,7 +40,14 @@ export function buildInitialState(content) {
     match: null,
     activeTournament: null,
     logs: ['Nova carreira iniciada. Sua academia está pronta para competir.'],
-    summary: ['Semana 1 iniciada. Prioridade mobile, gestão de risco e entrada em torneios.']
+    summary: ['Semana 1 iniciada. Prioridade mobile, gestão de risco e entrada em torneios.'],
+    inbox: [
+      { title: 'Board da academia', body: 'Objetivo inicial: colocar um atleta no Top 120 e manter caixa saudável.', week: 1 },
+      { title: 'Scouting inicial', body: 'Há jovens talentos no mercado e espaço para montar um staff competitivo.', week: 1 }
+    ],
+    sponsorOffers: [],
+    objectives: { current: 'Entrar no Top 120' },
+    flags: {}
   };
 }
 export function saveState(state) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }

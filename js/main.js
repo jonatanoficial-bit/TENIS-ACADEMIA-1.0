@@ -38,9 +38,13 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '0.3.0';
+  state.version = '0.4.0';
   state.logs ||= [];
   state.summary ||= [];
+  state.inbox ||= [];
+  state.sponsorOffers ||= [];
+  state.objectives ||= { current: 'Entrar no Top 120' };
+  state.flags ||= {};
   state.academy.bankruptcyWarnings ??= 0;
   state.activeTournament ??= null;
   state.roster.forEach(p => {
@@ -53,6 +57,7 @@ function migrateState() {
 
 function bindUI() {
   $$('#mainTabs .tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+  $$('.dock-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   $('#openCalendarBtn')?.addEventListener('click', () => switchTab('calendar'));
   $('#advanceWeekBtn').addEventListener('click', advanceWeek);
   $('#saveBtn').addEventListener('click', () => { saveState(state); addLog('Save realizado manualmente.'); render(); });
@@ -77,14 +82,17 @@ function bindUI() {
 
 function switchTab(tab) {
   $$('#mainTabs .tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+  $$('.dock-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
   $$('.tab-panel').forEach(panel => panel.classList.toggle('active', panel.id === `tab-${tab}`));
   if (tab === 'match') drawCourt();
 }
+
 
 function render() {
   $('#seasonLabel').textContent = state.academy.season;
   $('#weekLabel').textContent = state.academy.week;
   $('#moneyLabel').textContent = money(state.academy.money);
+  $('#goalLabel').textContent = state.objectives.current;
   $('#reputationLabel').textContent = state.academy.reputation;
   $('#sponsorLabel').textContent = money(calculateSponsor());
   $('#costsLabel').textContent = money(calculateWeeklyCosts());
@@ -92,6 +100,8 @@ function render() {
   $('#statusText').textContent = getStatusText();
   renderNextEvents();
   renderSummary();
+  renderInbox();
+  renderSponsorOffers();
   renderHealth();
   renderFacilities();
   renderRoster();
@@ -106,10 +116,38 @@ function render() {
 
 function getStatusText() {
   if (state.academy.money < 0) return 'Risco de falência';
+  if (state.sponsorOffers?.length) return 'Novas propostas comerciais disponíveis';
   if (state.roster.some(p => p.injuredWeeks > 0)) return 'Lesões exigem gestão';
   if (state.activeTournament) return `Semana de ${state.activeTournament.event.name}`;
   return 'Pronto para competir';
 }
+
+function renderInbox() {
+  const box = $('#inboxList');
+  const items = (state.inbox || []).slice(0, 6);
+  box.innerHTML = items.map(msg => `
+    <div class="list-item">
+      <div><strong>${msg.title}</strong><div class="small">${msg.body}</div></div>
+      <div class="small">S${msg.week}</div>
+    </div>`).join('') || '<div class="list-item"><span>Nenhuma mensagem ainda.</span></div>';
+}
+
+function renderSponsorOffers() {
+  const host = $('#sponsorOffers');
+  const offers = state.sponsorOffers || [];
+  host.innerHTML = offers.length ? offers.map(offer => `
+    <article class="offer-card">
+      <div>
+        <h4>${offer.name}</h4>
+        <p class="muted">Bônus imediato ${money(offer.signingBonus)} • semanal ${money(offer.weeklyBoost)} • exigência ${offer.requirement}</p>
+      </div>
+      <div class="tag-row">
+        <button class="btn-primary" onclick="window.acceptSponsorOffer('${offer.id}')">Aceitar</button>
+        <button class="btn-ghost" onclick="window.rejectSponsorOffer('${offer.id}')">Recusar</button>
+      </div>
+    </article>`).join('') : '<div class="list-item"><span>Sem propostas nesta semana.</span></div>';
+}
+
 
 function renderNextEvents() {
   const list = $('#nextEventsList');
@@ -293,6 +331,23 @@ window.hireStaff = (id) => {
   addLog(`${member.name} agora lidera o setor ${member.role}.`);
   render();
 };
+window.acceptSponsorOffer = (id) => {
+  const offer = (state.sponsorOffers || []).find(o => o.id === id);
+  if (!offer) return;
+  state.academy.money += offer.signingBonus;
+  state.academy.sponsor += offer.weeklyBoost;
+  state.inbox.unshift({ title: `Contrato assinado: ${offer.name}`, body: `Entrada imediata de ${money(offer.signingBonus)} e reforço semanal de ${money(offer.weeklyBoost)}.`, week: state.academy.week });
+  state.sponsorOffers = state.sponsorOffers.filter(o => o.id !== id);
+  addLog(`Novo patrocínio firmado com ${offer.name}.`);
+  render();
+};
+window.rejectSponsorOffer = (id) => {
+  const offer = (state.sponsorOffers || []).find(o => o.id === id);
+  if (!offer) return;
+  state.sponsorOffers = state.sponsorOffers.filter(o => o.id !== id);
+  addLog(`Proposta de ${offer.name} recusada.`);
+  render();
+};
 
 function updateRanking() {
   const rankMap = new Map(state.ranking.map(r => [r.playerId || r.name, r]));
@@ -453,6 +508,7 @@ function finishMatch(playerWon) {
   state.summary.unshift(`${player.name} ${playerWon ? 'venceu' : 'caiu em'} ${round} de ${event.name}. +${pointsGain} pts / ${money(cashGain)}.`);
   state.summary = state.summary.slice(0, 8);
   addLog(`${player.name} ${playerWon ? 'venceu' : 'perdeu'} em ${event.name} (${round}).`);
+  state.inbox.unshift({ title: `${event.name}: ${player.name}`, body: `${playerWon ? 'Vitória importante' : 'Derrota'} na rodada ${round}. ${pointsGain} pontos processados no ranking.`, week: state.academy.week });
   state.match.finished = true;
   state.match.inProgress = false;
 
@@ -514,6 +570,9 @@ function advanceWeek() {
     player.morale = Math.max(45, (player.morale || 70) - 1 + state.academy.facilities.training * 0.2);
   });
   state.academy.week += 1;
+  maybeCreateWeeklyNews();
+  maybeCreateSponsorOffer();
+  evaluateObjectives();
   if (state.academy.week > 52) {
     state.academy.week = 1;
     state.academy.season += 1;
@@ -541,8 +600,55 @@ function rotateSeason() {
     player.health = Math.min(100, player.health + 12);
     player.injuredWeeks = 0;
   });
+  state.objectives.current = state.academy.season <= 2027 ? 'Colocar um atleta no Top 80' : 'Brigar por ATP 500';
+  state.inbox.unshift({ title: `Nova temporada ${state.academy.season}`, body: 'Novo calendário, novos convites e nova pressão por resultados.', week: state.academy.week });
   addLog(`Nova temporada ${state.academy.season} começou.`);
 }
+
+function maybeCreateWeeklyNews() {
+  const player = chooseBestPlayer();
+  if (!player) return;
+  const rank = getPlayerRank(player.id);
+  if (state.academy.week === 2) {
+    state.inbox.unshift({ title: 'Bem-vindo ao circuito', body: 'Seu staff sugere foco em caixa, staff-chave e pontos de ranking nas primeiras 12 semanas.', week: state.academy.week });
+  }
+  if (rank <= 120 && !state.flags.top120Mail) {
+    state.flags.top120Mail = true;
+    state.inbox.unshift({ title: 'Marco alcançado', body: `${player.name} entrou na zona Top 120 e passa a mirar entradas mais frequentes em chaves principais.`, week: state.academy.week });
+  }
+  if (player.injuredWeeks > 0) {
+    state.inbox.unshift({ title: 'Boletim médico', body: `${player.name} segue em recuperação. Ajuste carga e preserve saúde para evitar recaída.`, week: state.academy.week });
+  }
+  state.inbox = state.inbox.slice(0, 18);
+}
+
+function maybeCreateSponsorOffer() {
+  state.sponsorOffers ||= [];
+  if (state.sponsorOffers.length >= 2) return;
+  const trigger = state.academy.week % 4 === 0 || state.academy.reputation >= 28;
+  if (!trigger || Math.random() > 0.55) return;
+  const id = `offer-${state.academy.season}-${state.academy.week}-${Math.floor(Math.random()*999)}`;
+  const rep = state.academy.reputation;
+  const offer = {
+    id,
+    name: rep >= 40 ? 'Apex Rackets' : rep >= 26 ? 'Blue Court Energy' : 'Local Sports Hub',
+    signingBonus: 12000 + rep * 420,
+    weeklyBoost: 1800 + rep * 75,
+    requirement: rep >= 40 ? 'manter atleta no Top 80' : rep >= 26 ? 'avançar em ATP 250/500' : 'crescer reputação regional'
+  };
+  state.sponsorOffers.unshift(offer);
+  state.inbox.unshift({ title: `Nova proposta: ${offer.name}`, body: `Oferta comercial com bônus de assinatura de ${money(offer.signingBonus)}.`, week: state.academy.week });
+}
+
+function evaluateObjectives() {
+  const best = chooseBestPlayer();
+  if (!best) return;
+  const rank = getPlayerRank(best.id);
+  if (rank <= 80) state.objectives.current = 'Consolidar Top 80 e buscar ATP 500';
+  else if (rank <= 120) state.objectives.current = 'Atingir Top 80';
+  else state.objectives.current = 'Entrar no Top 120';
+}
+
 
 function calculateSponsor() {
   return Math.round(state.academy.sponsor * (1 + state.academy.reputation / 140 + getStaffBonus('Financeiro', 'sponsor') / 100));
