@@ -19,8 +19,34 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
+let courtLoopId = null;
+let courtClock = 0;
+const BUILD_LABEL = 'v0.9.0 • 20260416-141231';
+
 
 boot();
+
+function applyBuildMarkers() {
+  const buildLabel = BUILD_LABEL;
+  const pill = document.querySelector('#buildPill');
+  const overlay = document.querySelector('#buildOverlay');
+  const badge = document.querySelector('#mobileBuildBadge');
+  const inline = document.querySelector('#matchBuildInline');
+  if (pill) pill.textContent = buildLabel;
+  if (overlay) overlay.textContent = buildLabel;
+  if (badge) badge.textContent = buildLabel;
+  if (inline) inline.textContent = buildLabel;
+}
+
+function startCourtLoop() {
+  if (!canvas || !ctx || courtLoopId) return;
+  const tick = (timestamp) => {
+    courtClock = timestamp || performance.now();
+    drawCourt();
+    courtLoopId = requestAnimationFrame(tick);
+  };
+  courtLoopId = requestAnimationFrame(tick);
+}
 
 async function boot() {
   content = await loadContent();
@@ -28,6 +54,8 @@ async function boot() {
   state = loadState() || buildInitialState(content);
   migrateState();
   bindUI();
+  applyBuildMarkers();
+  startCourtLoop();
   drawCourt();
   render();
 }
@@ -38,7 +66,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '0.4.0';
+  state.version = '0.9.0';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -89,6 +117,7 @@ function switchTab(tab) {
 
 
 function render() {
+  applyBuildMarkers();
   $('#seasonLabel').textContent = state.academy.season;
   $('#weekLabel').textContent = state.academy.week;
   $('#moneyLabel').textContent = money(state.academy.money);
@@ -406,7 +435,8 @@ function startScheduledMatch() {
   state.match = {
     event, round, drawType: run.entryType, playerId: player.id, playerName: player.name, opponentName: opponent.name, playerScore: 0, opponentScore: 0,
     gamesPlayer: 0, gamesOpponent: 0, set: 1, pointText: '0-0', strategy: currentStrategy, inProgress: true,
-    log: [`${event.name} ${round} iniciado contra ${opponent.name}.`], opponent, finished: false
+    log: [`${event.name} ${round} iniciado contra ${opponent.name}.`], opponent, finished: false,
+    lastWinner: null, lastPointAt: performance.now()
   };
   $('#matchPlayerName').textContent = player.name;
   $('#matchOpponentName').textContent = opponent.name;
@@ -457,6 +487,8 @@ function playPoint() {
   const chance = playerPower + pressureBonus + defenseStabilizer - errorPenalty - oppPower + 50;
   const won = Math.random() * 100 < chance;
   if (won) state.match.playerScore += 1; else state.match.opponentScore += 1;
+  state.match.lastWinner = won ? 'player' : 'opponent';
+  state.match.lastPointAt = performance.now();
   player.fatigue = Math.min(100, player.fatigue + 1 + Math.max(0, effects.stamina));
   player.health = Math.max(42, player.health - 0.35 - Math.max(0, effects.stamina) * 0.2);
   maybeInjure(player, 1.1);
@@ -679,12 +711,146 @@ function maybeInjure(player, baseChance) {
   }
 }
 function drawCourt(lastWinner = null) {
-  const w = canvas?.width || 960; const h = canvas?.height || 540; if (!ctx) return;
+  if (!ctx || !canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const targetWidth = Math.max(320, Math.round((rect.width || 960) * dpr));
+  const targetHeight = Math.max(180, Math.round(targetWidth * 0.5625));
+  if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+  }
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const now = courtClock || performance.now();
+  const match = state?.match || null;
+  if (match && lastWinner) {
+    match.lastWinner = lastWinner;
+    match.lastPointAt = now;
+  }
+
+  const pulse = now * 0.001;
+  const baseRally = ((now % 1450) / 1450);
+  const rallyT = baseRally < 0.5 ? baseRally * 2 : (1 - baseRally) * 2;
+  const bottomPlayer = {
+    x: w * (0.36 + Math.sin(pulse * 2.1) * 0.04),
+    y: h * 0.78 + Math.sin(pulse * 3.0) * 4
+  };
+  const topPlayer = {
+    x: w * (0.64 + Math.cos(pulse * 1.8) * 0.04),
+    y: h * 0.22 + Math.cos(pulse * 2.8) * 4
+  };
+
+  const attackLean = match ? Math.min(18, (match.gamesPlayer - match.gamesOpponent) * 3) : 0;
+  bottomPlayer.x += attackLean;
+  topPlayer.x -= attackLean * 0.55;
+
+  const pointAge = match?.lastPointAt ? Math.min(1, (now - match.lastPointAt) / 550) : 1;
+  const smashTowardBottom = match?.lastWinner === 'player' ? 1 - pointAge : 0;
+  const smashTowardTop = match?.lastWinner === 'opponent' ? 1 - pointAge : 0;
+
+  const ball = {
+    x: bottomPlayer.x + (topPlayer.x - bottomPlayer.x) * rallyT + (smashTowardBottom - smashTowardTop) * 40,
+    y: bottomPlayer.y + (topPlayer.y - bottomPlayer.y) * rallyT - Math.sin(rallyT * Math.PI) * h * 0.16
+  };
+  const ballShadow = { x: ball.x, y: ball.y + 18 };
+  const speedGlow = 0.35 + Math.abs(Math.cos(pulse * 4.2)) * 0.65;
+
   ctx.clearRect(0, 0, w, h);
-  const gradient = ctx.createLinearGradient(0, 0, 0, h); gradient.addColorStop(0, '#0e3a69'); gradient.addColorStop(1, '#0d6c66'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 4; ctx.strokeRect(120, 80, w - 240, h - 160); ctx.beginPath(); ctx.moveTo(w / 2, 80); ctx.lineTo(w / 2, h - 80); ctx.stroke(); ctx.beginPath(); ctx.moveTo(120, h / 2); ctx.lineTo(w - 120, h / 2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(w / 2, h / 2, 5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
-  ctx.fillStyle = lastWinner === 'player' ? '#8cff80' : '#61ebff'; ctx.beginPath(); ctx.arc(w * 0.35, h * 0.72, 20, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = lastWinner === 'opponent' ? '#ff7a90' : '#c9d8f3'; ctx.beginPath(); ctx.arc(w * 0.65, h * 0.28, 20, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(lastWinner === 'player' ? w * 0.42 : w * 0.58, lastWinner === 'player' ? h * 0.56 : h * 0.44, 8, 0, Math.PI * 2); ctx.fill();
+
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, '#0f3f72');
+  bg.addColorStop(0.52, '#0d5676');
+  bg.addColorStop(1, '#0d6d64');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  for (let i = 0; i < 6; i += 1) {
+    ctx.fillRect((w / 6) * i, 0, 1, h);
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.82)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(w * 0.125, h * 0.15, w * 0.75, h * 0.7);
+  ctx.beginPath();
+  ctx.moveTo(w * 0.5, h * 0.15);
+  ctx.lineTo(w * 0.5, h * 0.85);
+  ctx.moveTo(w * 0.125, h * 0.5);
+  ctx.lineTo(w * 0.875, h * 0.5);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.fillRect(w * 0.12, h * 0.495, w * 0.76, 2);
+
+  function drawPlayer(player, fill, mirror = 1) {
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.arc(0, -26, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(-8, -16, 16, 34);
+    ctx.fillRect(-20, 16, 12, 36);
+    ctx.fillRect(8, 16, 12, 36);
+    ctx.save();
+    ctx.rotate((mirror * 0.55) + Math.sin(pulse * 5.2) * 0.08);
+    ctx.fillRect(-3, -8, 6, 34);
+    ctx.strokeStyle = '#f3f9ff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 29, 14, 18, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    ctx.restore();
+  }
+
+  drawPlayer(topPlayer, match?.lastWinner === 'opponent' ? '#ff8fa5' : '#d7e6ff', -1);
+  drawPlayer(bottomPlayer, match?.lastWinner === 'player' ? '#9aff81' : '#62ecff', 1);
+
+  for (let i = 0; i < 4; i += 1) {
+    const trailT = Math.max(0, rallyT - i * 0.06);
+    const trailX = bottomPlayer.x + (topPlayer.x - bottomPlayer.x) * trailT;
+    const trailY = bottomPlayer.y + (topPlayer.y - bottomPlayer.y) * trailT - Math.sin(trailT * Math.PI) * h * 0.16;
+    ctx.fillStyle = `rgba(255,255,255,${0.18 - i * 0.035})`;
+    ctx.beginPath();
+    ctx.arc(trailX, trailY, Math.max(2, 6 - i), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(ballShadow.x, ballShadow.y, 12, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const glow = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, 18 + 12 * speedGlow);
+  glow.addColorStop(0, 'rgba(255,255,255,0.95)');
+  glow.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, 18 + 12 * speedGlow, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#fffef5';
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, 7.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(8,16,30,0.72)';
+  ctx.fillRect(18, 16, 250, 58);
+  ctx.fillStyle = '#e8f4ff';
+  ctx.font = '700 20px Inter, system-ui, sans-serif';
+  ctx.fillText(match ? `${match.playerName} vs ${match.opponentName}` : 'Match Center 2D', 30, 40);
+  ctx.fillStyle = '#9fb6cf';
+  ctx.font = '500 14px Inter, system-ui, sans-serif';
+  ctx.fillText(match ? `Estratégia: ${currentStrategy.toUpperCase()} • Rali animado` : 'Aquecimento visual em movimento', 30, 62);
+
+  if (match?.lastWinner && pointAge < 1) {
+    ctx.save();
+    ctx.globalAlpha = 0.18 * (1 - pointAge);
+    ctx.fillStyle = match.lastWinner === 'player' ? '#9aff81' : '#ff8fa5';
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
 }
