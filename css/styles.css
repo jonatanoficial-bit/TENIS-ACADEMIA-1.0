@@ -173,3 +173,26 @@ input { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid 
   border-color:rgba(255,255,255,0.12);
   background:rgba(255,255,255,0.06);
 }
+
+
+.metric-flow{
+  color:#9fd7ff;
+  border-color:rgba(97,235,255,0.18);
+  background:rgba(97,235,255,0.08);
+}
+.avatar-slot{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 14px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.04);
+}
+.avatar-slot .avatar-placeholder{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:linear-gradient(135deg, rgba(97,235,255,0.35), rgba(154,255,129,0.18));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12);
+}

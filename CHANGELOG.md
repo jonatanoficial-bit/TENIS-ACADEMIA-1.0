@@ -22,3 +22,10 @@
 - jogadores do 2D ficam em pose de espera antes da partida e após o encerramento
 - novo indicador de estado da partida
 - autoplay preservado e interface da partida refinada
+
+## v1.4.0 - 20260416-224052
+
+- novo indicador de fluxo da partida
+- placeholders universais de avatar no Match Center
+- avanço de narrativa de temporada após cada partida
+- preparação maior para a futura fase visual

@@ -19,7 +19,7 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
-const BUILD_LABEL = 'v1.3.0 • 20260416-220618';
+const BUILD_LABEL = 'v1.4.0 • 20260416-224052';
 let autoPlayTimer = null;
 let autoPlaySpeed = 1;
 let courtClock = 0;
@@ -45,7 +45,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '1.3.0';
+  state.version = '1.4.0';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -64,6 +64,22 @@ function migrateState() {
 
 
 
+
+function computeTournamentFlowLabel() {
+  const match = state.match;
+  if (!match) return 'Sem partida';
+  if (match.finished) return match.playerSets > match.opponentSets ? 'Vitória concluída' : 'Derrota concluída';
+  if (!match.inProgress) return 'Pré-jogo';
+  if (autoPlayTimer) return `Simulação ${autoPlaySpeed}x`;
+  return 'Ponto a ponto';
+}
+
+function computeAvatarSeed(name = 'Player') {
+  let seed = 0;
+  for (const ch of String(name)) seed += ch.charCodeAt(0);
+  return ['Sprinter', 'Classic', 'Power', 'Tactician'][seed % 4];
+}
+
 function getMatchPhase() {
   if (!state.match) return 'idle';
   if (state.match.finished) return 'finished';
@@ -77,6 +93,7 @@ function applyBuildMarkers() {
   const mobile = $('#mobileBuildBadge');
   const inline = $('#matchBuildInline');
   const statePill = $('#matchStatePill');
+  const flowPill = $('#matchFlowPill');
   if (pill) pill.textContent = BUILD_LABEL;
   if (overlay) overlay.textContent = BUILD_LABEL;
   if (mobile) mobile.textContent = BUILD_LABEL;
@@ -89,6 +106,7 @@ function applyBuildMarkers() {
       phase === 'ready' ? 'Pronto para iniciar' :
       'Aguardando início';
   }
+  if (flowPill) flowPill.textContent = computeTournamentFlowLabel();
 }
 
 function refreshAutoButtons() {
@@ -579,6 +597,13 @@ function resolveGame() {
   }
 }
 
+
+function advanceTournamentStory(win) {
+  if (!state.story) state.story = { completedMatches: 0, wins: 0, losses: 0 };
+  state.story.completedMatches += 1;
+  if (win) state.story.wins += 1; else state.story.losses += 1;
+  if (win && state.story.wins === 1) addInboxMessage?.('Primeira vitória da nova fase', 'Sua academia começou a criar narrativas de temporada mais vivas.');
+}
 function finishMatch(playerWon) {
   const player = state.roster.find(p => p.id === state.match.playerId);
   const event = state.match.event;
@@ -641,6 +666,15 @@ function renderMatch() {
   $('#setLabel').textContent = `Set ${match.set}`;
   $('#pointLabel').textContent = match.pointText;
   $('#matchLog').textContent = match.log.slice(-12).join('\n');
+  const flowPill = $('#matchFlowPill');
+  if (flowPill) flowPill.textContent = computeTournamentFlowLabel();
+  const avatarBox = $('#matchAvatarPanel');
+  if (avatarBox) {
+    avatarBox.innerHTML = `
+      <div class="avatar-slot"><div class="avatar-placeholder"></div><div><strong>${match.playerName}</strong><div>Preset ${computeAvatarSeed(match.playerName)}</div></div></div>
+      <div class="avatar-slot"><div class="avatar-placeholder"></div><div><strong>${match.opponentName}</strong><div>Preset ${computeAvatarSeed(match.opponentName)}</div></div></div>
+    `;
+  }
   const autoBtn = $('#autoMatchBtn');
   if (autoBtn) {
     autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : (match?.finished ? 'Partida encerrada' : 'Auto 1x');
