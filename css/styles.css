@@ -122,32 +122,47 @@ input { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid 
 }
 
 
-#buildOverlay {
+
+.build-overlay {
   position: fixed;
   top: max(8px, env(safe-area-inset-top));
-  right: 10px;
-  z-index: 1400;
+  right: 12px;
+  z-index: 1200;
   padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(139,255,122,0.28);
-  background: rgba(2,10,14,0.92);
+  background: rgba(0,0,0,0.86);
   color: #8cff80;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.28);
   font-size: 12px;
-  line-height: 1;
+  font-weight: 700;
   letter-spacing: 0.03em;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.28);
 }
-.build-pill strong, #matchBuildInline { color: #8cff80; font-weight: 800; }
-.mobile-build-badge { display:none; margin-bottom:10px; padding:10px 12px; border-radius:16px; text-align:center; }
-.match-speed-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
-.speed-btn {
-  min-height: 48px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(10,24,44,0.86); color: var(--text); font: inherit; cursor:pointer;
+.build-pill strong, .metric-build { color: var(--accent2); font-weight: 800; }
+.mobile-build-badge {
+  display: none;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  text-align: center;
 }
-.speed-btn.active { border-color: rgba(123,255,145,0.45); box-shadow: 0 0 0 1px rgba(123,255,145,0.18) inset; }
-.speed-btn.stop { color: #ffd3d3; }
+.auto-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 8px;
+}
+.auto-controls .mini-btn.active {
+  background: linear-gradient(135deg, rgba(97,235,255,0.22), rgba(154,255,129,0.14));
+  border: 1px solid rgba(97,235,255,0.24);
+}
 @media (max-width: 720px) {
-  #buildOverlay { top:auto; bottom: calc(88px + env(safe-area-inset-bottom)); right: 12px; }
-  .mobile-build-badge { display:block; }
-  .match-speed-row { grid-template-columns:repeat(2,1fr); }
+  .build-overlay {
+    top: auto;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    right: 12px;
+    max-width: 70vw;
+    text-align: center;
+  }
+  .mobile-build-badge { display: block; }
 }

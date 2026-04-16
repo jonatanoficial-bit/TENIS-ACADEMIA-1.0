@@ -8,11 +8,6 @@ const ctx = canvas?.getContext('2d');
 let state;
 let content;
 let currentStrategy = 'balanced';
-let courtLoopId = null;
-let courtClock = 0;
-let autoPlayTimer = null;
-let autoPlaySpeed = 1;
-const BUILD_LABEL = 'v1.1.0 • 20260416-172803';
 
 const STRATEGY_EFFECTS = {
   balanced: { offense: 0, defense: 0, serve: 0, stamina: 0, error: 0, pressure: 0 },
@@ -24,6 +19,11 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
+const BUILD_LABEL = 'v1.2.0 • 20260416-191244';
+let autoPlayTimer = null;
+let autoPlaySpeed = 1;
+let courtClock = 0;
+let courtAnimId = null;
 
 boot();
 
@@ -34,7 +34,7 @@ async function boot() {
   migrateState();
   bindUI();
   applyBuildMarkers();
-  startCourtLoop();
+  startCourtAnimation();
   drawCourt();
   render();
 }
@@ -45,7 +45,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '1.1.0';
+  state.version = '1.2.0';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -62,6 +62,63 @@ function migrateState() {
   });
 }
 
+
+function applyBuildMarkers() {
+  const pill = $('#buildPill');
+  const overlay = $('#buildOverlay');
+  const mobile = $('#mobileBuildBadge');
+  const inline = $('#matchBuildInline');
+  if (pill) pill.textContent = BUILD_LABEL;
+  if (overlay) overlay.textContent = BUILD_LABEL;
+  if (mobile) mobile.textContent = BUILD_LABEL;
+  if (inline) inline.textContent = BUILD_LABEL;
+}
+
+function refreshAutoButtons() {
+  ['#auto1xBtn','#auto2xBtn','#auto4xBtn'].forEach((sel, index) => {
+    const btn = $(sel);
+    if (!btn) return;
+    const val = [1,2,4][index];
+    btn.classList.toggle('active', !!autoPlayTimer && autoPlaySpeed === val);
+  });
+}
+
+function setAutoPlay(multiplier = 1) {
+  if (!state.match?.inProgress || state.match.finished) return addLog('Inicie uma partida primeiro.');
+  stopAutoPlay();
+  autoPlaySpeed = multiplier;
+  const delay = Math.max(120, 720 / multiplier);
+  autoPlayTimer = setInterval(() => {
+    if (!state.match || state.match.finished || !state.match.inProgress) {
+      stopAutoPlay();
+      return;
+    }
+    playPoint();
+  }, delay);
+  addMatchLog(`Autoplay ativado em ${multiplier}x.`);
+  refreshAutoButtons();
+}
+
+function stopAutoPlay() {
+  if (autoPlayTimer) {
+    clearInterval(autoPlayTimer);
+    autoPlayTimer = null;
+    addMatchLog('Autoplay pausado.');
+    renderMatch();
+  }
+  refreshAutoButtons();
+}
+
+function startCourtAnimation() {
+  if (!ctx || !canvas || courtAnimId) return;
+  const tick = (ts) => {
+    courtClock = ts || performance.now();
+    drawCourt();
+    courtAnimId = requestAnimationFrame(tick);
+  };
+  courtAnimId = requestAnimationFrame(tick);
+}
+
 function bindUI() {
   $$('#mainTabs .tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   $$('.dock-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
@@ -76,11 +133,11 @@ function bindUI() {
     render();
   });
   $('#startMatchBtn').addEventListener('click', startScheduledMatch);
-  $('#playPointBtn').addEventListener('click', () => { stopAutoPlay(); playPoint(); });
-  $('#autoMatchBtn').addEventListener('click', () => { if (autoPlayTimer) stopAutoPlay(); else startAutoPlay(autoPlaySpeed); });
-  $('#speed1Btn')?.addEventListener('click', () => setAutoPlaySpeed(1));
-  $('#speed2Btn')?.addEventListener('click', () => setAutoPlaySpeed(2));
-  $('#speed4Btn')?.addEventListener('click', () => setAutoPlaySpeed(4));
+  $('#playPointBtn').addEventListener('click', playPoint);
+  $('#autoMatchBtn').addEventListener('click', () => setAutoPlay(1));
+  $('#auto1xBtn')?.addEventListener('click', () => setAutoPlay(1));
+  $('#auto2xBtn')?.addEventListener('click', () => setAutoPlay(2));
+  $('#auto4xBtn')?.addEventListener('click', () => setAutoPlay(4));
   $('#pauseAutoBtn')?.addEventListener('click', stopAutoPlay);
   $$('.action-btn').forEach(btn => btn.addEventListener('click', () => {
     $$('.action-btn').forEach(x => x.classList.remove('active'));
@@ -89,54 +146,6 @@ function bindUI() {
     addMatchLog(`Estratégia alterada para ${btn.textContent}.`);
     renderMatch();
   }));
-}
-
-
-function applyBuildMarkers() {
-  const ids = ['buildPill', 'buildOverlay', 'mobileBuildBadge', 'matchBuildInline'];
-  ids.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = BUILD_LABEL; });
-}
-
-function setAutoPlaySpeed(mult) {
-  autoPlaySpeed = mult;
-  document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
-  const btn = document.getElementById(`speed${mult}Btn`);
-  if (btn) btn.classList.add('active');
-  const label = document.getElementById('autoModeLabel');
-  if (label) label.textContent = autoPlayTimer ? `Auto ${mult}x` : `Manual • ${mult}x pronto`;
-  if (autoPlayTimer) startAutoPlay(mult);
-}
-
-function startAutoPlay(mult = autoPlaySpeed) {
-  if (!state.match?.inProgress || state.match.finished) return;
-  stopAutoPlay();
-  autoPlaySpeed = mult;
-  const label = document.getElementById('autoModeLabel');
-  if (label) label.textContent = `Auto ${mult}x`;
-  const delay = mult === 1 ? 700 : mult === 2 ? 380 : 190;
-  const tick = () => {
-    if (!state.match?.inProgress || state.match.finished) { stopAutoPlay(); return; }
-    playPoint();
-    if (state.match?.inProgress && !state.match.finished) autoPlayTimer = setTimeout(tick, delay);
-  };
-  autoPlayTimer = setTimeout(tick, delay);
-}
-
-function stopAutoPlay() {
-  if (autoPlayTimer) clearTimeout(autoPlayTimer);
-  autoPlayTimer = null;
-  const label = document.getElementById('autoModeLabel');
-  if (label) label.textContent = `Manual • ${autoPlaySpeed}x pronto`;
-}
-
-function startCourtLoop() {
-  if (courtLoopId || !canvas || !ctx) return;
-  const frame = (ts) => {
-    courtClock = ts || performance.now();
-    if (document.getElementById('tab-match')?.classList.contains('active')) drawCourt();
-    courtLoopId = requestAnimationFrame(frame);
-  };
-  courtLoopId = requestAnimationFrame(frame);
 }
 
 function switchTab(tab) {
@@ -530,7 +539,11 @@ function playPoint() {
 
 function autoPlayGame() {
   if (!state.match?.inProgress || state.match.finished) return;
-  startAutoPlay(autoPlaySpeed);
+  let guard = 0;
+  while (!state.match.finished && state.match.playerScore < 4 && state.match.opponentScore < 4 && guard < 20) {
+    playPoint();
+    guard += 1;
+  }
 }
 
 function resolveGame() {
@@ -611,9 +624,9 @@ function renderMatch() {
   $('#setLabel').textContent = `Set ${match.set}`;
   $('#pointLabel').textContent = match.pointText;
   $('#matchLog').textContent = match.log.slice(-12).join('\n');
-  const autoLabel = document.getElementById('autoModeLabel');
-  if (autoLabel) autoLabel.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x` : `Manual • ${autoPlaySpeed}x pronto`;
-  applyBuildMarkers();
+  const autoBtn = $('#autoMatchBtn');
+  if (autoBtn) autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : 'Auto 1x';
+  refreshAutoButtons();
 }
 function addMatchLog(text) { if (!state.match) return; state.match.log.push(text); }
 
@@ -641,7 +654,6 @@ function advanceWeek() {
     state.academy.season += 1;
     rotateSeason();
   }
-  stopAutoPlay();
   state.match = null;
   if (state.academy.money < 0) {
     state.academy.bankruptcyWarnings += 1;
@@ -747,83 +759,112 @@ function drawCourt(lastWinner = null) {
   if (!ctx || !canvas) return;
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
-  const targetWidth = Math.max(320, Math.round((rect.width || 960) * dpr));
-  const targetHeight = Math.max(180, Math.round(targetWidth * 0.5625));
-  if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
+  const width = Math.max(320, Math.round((rect.width || 960) * dpr));
+  const height = Math.max(180, Math.round((rect.height || 540) * dpr));
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
   }
+
   const w = canvas.width;
   const h = canvas.height;
   const now = courtClock || performance.now();
   const match = state?.match || null;
-  if (match && lastWinner) {
-    match.lastWinner = lastWinner;
-    match.lastPointAt = now;
-  }
   const pulse = now * 0.001;
-  const rallySeed = (now % 1600) / 1600;
-  const rallyT = rallySeed < 0.5 ? rallySeed * 2 : (1 - rallySeed) * 2;
-  const player = { x: w * (0.34 + Math.sin(pulse * 2.0) * 0.05), y: h * 0.78 + Math.sin(pulse * 3.1) * 4 };
-  const opponent = { x: w * (0.66 + Math.cos(pulse * 1.8) * 0.05), y: h * 0.22 + Math.cos(pulse * 2.8) * 4 };
-  const pointAge = match?.lastPointAt ? Math.min(1, (now - match.lastPointAt) / 520) : 1;
-  const nudgeToPlayer = match?.lastWinner === 'player' ? 1 - pointAge : 0;
-  const nudgeToOpponent = match?.lastWinner === 'opponent' ? 1 - pointAge : 0;
-  const ball = {
-    x: player.x + (opponent.x - player.x) * rallyT + (nudgeToPlayer - nudgeToOpponent) * 36,
-    y: player.y + (opponent.y - player.y) * rallyT - Math.sin(rallyT * Math.PI) * h * 0.16
+
+  const p1 = {
+    x: w * (0.34 + Math.sin(pulse * 2.0) * 0.05),
+    y: h * (0.76 + Math.sin(pulse * 3.2) * 0.01)
+  };
+  const p2 = {
+    x: w * (0.66 + Math.cos(pulse * 1.7) * 0.05),
+    y: h * (0.24 + Math.cos(pulse * 3.1) * 0.01)
   };
 
-  ctx.clearRect(0, 0, w, h);
-  const bg = ctx.createLinearGradient(0, 0, 0, h);
-  bg.addColorStop(0, '#0c3c71'); bg.addColorStop(0.55, '#135b7b'); bg.addColorStop(1, '#0f7666');
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = 'rgba(255,255,255,0.78)'; ctx.lineWidth = Math.max(2, w * 0.0042);
-  ctx.strokeRect(w * 0.12, h * 0.14, w * 0.76, h * 0.72);
-  ctx.beginPath();
-  ctx.moveTo(w * 0.5, h * 0.14); ctx.lineTo(w * 0.5, h * 0.86);
-  ctx.moveTo(w * 0.12, h * 0.5); ctx.lineTo(w * 0.88, h * 0.5);
-  ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(w * 0.12, h * 0.498, w * 0.76, 2);
-  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(w * 0.5, h * 0.5, Math.max(3, w * 0.005), 0, Math.PI * 2); ctx.fill();
+  const rally = ((now % 1600) / 1600);
+  const t = rally < 0.5 ? rally * 2 : (1 - rally) * 2;
+  const bias = match?.lastWinner === 'player' ? -0.08 : match?.lastWinner === 'opponent' ? 0.08 : 0;
+  const bx = p1.x + (p2.x - p1.x) * t + w * bias * Math.max(0, 1 - ((now - (match?.lastPointAt || now)) / 700));
+  const by = p1.y + (p2.y - p1.y) * t - Math.sin(t * Math.PI) * h * 0.18;
 
-  function drawAthlete(a, color, mirror = 1) {
+  ctx.clearRect(0, 0, w, h);
+
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#0e3a69');
+  g.addColorStop(1, '#0d6c66');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.82)';
+  ctx.lineWidth = Math.max(2, w * 0.004);
+  ctx.strokeRect(w * 0.12, h * 0.12, w * 0.76, h * 0.76);
+  ctx.beginPath();
+  ctx.moveTo(w * 0.5, h * 0.12);
+  ctx.lineTo(w * 0.5, h * 0.88);
+  ctx.moveTo(w * 0.12, h * 0.5);
+  ctx.lineTo(w * 0.88, h * 0.5);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillRect(w * 0.12, h * 0.498, w * 0.76, 2);
+
+  function drawPlayer(x, y, fill, invert = 1) {
     ctx.save();
-    ctx.translate(a.x, a.y);
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(0, -24, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.translate(x, y);
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.arc(0, -24, 10, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillRect(-8, -14, 16, 34);
-    ctx.fillRect(-18, 18, 10, 30); ctx.fillRect(8, 18, 10, 30);
+    ctx.fillRect(-18, 16, 10, 34);
+    ctx.fillRect(8, 16, 10, 34);
+
     ctx.save();
-    ctx.rotate(mirror * 0.55 + Math.sin(pulse * 5.0) * 0.08);
-    ctx.fillRect(-3, -10, 6, 28);
-    ctx.strokeStyle = '#f8fbff'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.ellipse(0, 24, 14, 18, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.rotate(invert * 0.45 + Math.sin(pulse * 6) * 0.08);
+    ctx.fillRect(-3, -6, 6, 32);
+    ctx.strokeStyle = '#f6fbff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 26, 12, 16, 0, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.restore();
+
     ctx.restore();
   }
-  drawAthlete(opponent, match?.lastWinner === 'opponent' ? '#ff97a9' : '#d5e4ff', -1);
-  drawAthlete(player, match?.lastWinner === 'player' ? '#8cff80' : '#66ecff', 1);
+
+  drawPlayer(p2.x, p2.y, match?.lastWinner === 'opponent' ? '#ff8fa5' : '#d8e6ff', -1);
+  drawPlayer(p1.x, p1.y, match?.lastWinner === 'player' ? '#9aff81' : '#61ebff', 1);
 
   for (let i = 0; i < 4; i++) {
-    const t = Math.max(0, rallyT - i * 0.06);
-    const tx = player.x + (opponent.x - player.x) * t;
-    const ty = player.y + (opponent.y - player.y) * t - Math.sin(t * Math.PI) * h * 0.16;
+    const tt = Math.max(0, t - i * 0.06);
+    const tx = p1.x + (p2.x - p1.x) * tt;
+    const ty = p1.y + (p2.y - p1.y) * tt - Math.sin(tt * Math.PI) * h * 0.18;
     ctx.fillStyle = `rgba(255,255,255,${0.16 - i * 0.03})`;
-    ctx.beginPath(); ctx.arc(tx, ty, Math.max(2, 6 - i), 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(tx, ty, Math.max(2, 6 - i), 0, Math.PI * 2);
+    ctx.fill();
   }
 
   ctx.fillStyle = 'rgba(0,0,0,0.22)';
-  ctx.beginPath(); ctx.ellipse(ball.x, ball.y + 16, 10, 4, 0, 0, Math.PI * 2); ctx.fill();
-  const glow = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, 20);
-  glow.addColorStop(0, 'rgba(255,255,255,0.95)'); glow.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(ball.x, ball.y, 20, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#fffef2'; ctx.beginPath(); ctx.arc(ball.x, ball.y, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(bx, by + 14, 10, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-  ctx.fillStyle = 'rgba(7,14,27,0.74)'; ctx.fillRect(18, 16, Math.min(360, w * 0.48), 58);
-  ctx.fillStyle = '#edf7ff'; ctx.font = `700 ${Math.max(16, w * 0.022)}px Inter, system-ui, sans-serif`;
-  ctx.fillText(match ? `${match.playerName} vs ${match.opponentName}` : '2D Match Center', 30, 38);
-  ctx.fillStyle = '#9fb6cf'; ctx.font = `500 ${Math.max(11, w * 0.014)}px Inter, system-ui, sans-serif`;
-  ctx.fillText(match ? `Estratégia ${currentStrategy.toUpperCase()} • ${autoPlayTimer ? 'AUTO' : 'MANUAL'}` : 'Quadra animada', 30, 60);
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(bx, by, 7, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(5,10,18,0.66)';
+  ctx.fillRect(18, 16, 320, 58);
+  ctx.fillStyle = '#e8f4ff';
+  ctx.font = '700 18px Inter, system-ui, sans-serif';
+  ctx.fillText(match ? `${match.playerName} vs ${match.opponentName}` : '2D Match Center', 30, 40);
+  ctx.fillStyle = '#9fb6cf';
+  ctx.font = '500 14px Inter, system-ui, sans-serif';
+  const autoLabel = autoPlayTimer ? `Auto ${autoPlaySpeed}x` : 'Manual';
+  ctx.fillText(`Estratégia ${currentStrategy.toUpperCase()} • ${autoLabel}`, 30, 61);
 }
+
+
 

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <div id="buildOverlay">v1.1.0 • 20260416-172803</div>
+  <div id="buildOverlay" class="build-overlay">v1.2.0 • 20260416-191244</div>
   <div class="app-shell">
     <header class="topbar glass">
       <div>
@@ -18,7 +18,7 @@
         <h1>Ace Academy Manager</h1>
       </div>
       <div class="hud-row hud-scroll">
-        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v1.1.0 • 20260416-172803</strong></div>
+        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v1.2.0 • 20260416-191244</strong></div>
         <div class="pill"><span>Temporada</span><strong id="seasonLabel">2026</strong></div>
         <div class="pill"><span>Semana</span><strong id="weekLabel">1</strong></div>
         <div class="pill"><span>Caixa</span><strong id="moneyLabel">$0</strong></div>
@@ -53,7 +53,7 @@
           <button class="tab-btn" data-tab="adminhint">Admin</button>
         </nav>
 
-        <div class="mobile-build-badge glass" id="mobileBuildBadge">v1.1.0 • 20260416-172803</div>
+        <div id="mobileBuildBadge" class="mobile-build-badge glass">v1.2.0 • 20260416-191244</div>
         <section class="sidebar-actions">
           <button id="advanceWeekBtn" class="btn-primary">Avançar Semana</button>
           <button id="saveBtn" class="btn-secondary">Salvar</button>
@@ -125,8 +125,7 @@
               <div class="score-card mobile-priority">
                 <div class="score-row"><span id="matchPlayerName">Seu atleta</span><strong id="scorePlayer">0</strong></div>
                 <div class="score-row"><span id="matchOpponentName">Adversário</span><strong id="scoreOpponent">0</strong></div>
-                <div class="score-meta"><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
-                <div class="score-meta secondary-meta"><span id="matchBuildInline">v1.1.0 • 20260416-172803</span><span id="autoModeLabel">Manual</span></div>
+                <div class="score-meta"><span id="matchBuildInline" class="metric-build">v1.2.0 • 20260416-191244</span><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
                 <div class="score-meta secondary-meta"><span id="roundLabel">Rodada -</span><span id="tournamentLabel">Nenhum torneio</span></div>
               </div>
               <canvas id="matchCanvas" width="960" height="540"></canvas>
@@ -143,12 +142,12 @@
               <div class="match-actions touch-actions">
                 <button id="startMatchBtn" class="btn-primary">Iniciar rodada da semana</button>
                 <button id="playPointBtn" class="btn-secondary">Jogar ponto</button>
-                <button id="autoMatchBtn" class="btn-ghost">Auto play</button>
-                <div class="match-speed-row">
-                  <button id="speed1Btn" class="speed-btn active">1x</button>
-                  <button id="speed2Btn" class="speed-btn">2x</button>
-                  <button id="speed4Btn" class="speed-btn">4x</button>
-                  <button id="pauseAutoBtn" class="speed-btn stop">Pausar</button>
+                <button id="autoMatchBtn" class="btn-ghost">Auto 1x</button>
+                <div class="auto-controls" aria-label="Controles de autoplay">
+                  <button id="auto1xBtn" class="mini-btn active">1x</button>
+                  <button id="auto2xBtn" class="mini-btn">2x</button>
+                  <button id="auto4xBtn" class="mini-btn">4x</button>
+                  <button id="pauseAutoBtn" class="mini-btn">Pausar</button>
                 </div>
               </div>
               <div id="matchLog" class="match-log"></div>

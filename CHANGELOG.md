@@ -9,3 +9,10 @@
 - Match Center 2D em canvas com acoes taticas durante a partida.
 - Painel Admin local com login, importacao/exportacao JSON e ativacao de pacotes.
 - Sistema de conteudo modular com base package + DLC exemplo.
+
+## v1.2.0 - 20260416-191244
+
+- autoplay corrigido sem onclick inline
+- controles 1x 2x 4x e pausar adicionados à interface da partida
+- 2D com rally contínuo e jogadores em movimento
+- build visível no HUD, overlay, badge mobile e painel da partida
