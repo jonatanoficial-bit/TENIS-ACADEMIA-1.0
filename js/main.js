@@ -19,7 +19,7 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
-const BUILD_LABEL = 'v1.2.0 • 20260416-191244';
+const BUILD_LABEL = 'v1.3.0 • 20260416-220618';
 let autoPlayTimer = null;
 let autoPlaySpeed = 1;
 let courtClock = 0;
@@ -45,7 +45,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '1.2.0';
+  state.version = '1.3.0';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -63,15 +63,32 @@ function migrateState() {
 }
 
 
+
+function getMatchPhase() {
+  if (!state.match) return 'idle';
+  if (state.match.finished) return 'finished';
+  if (state.match.inProgress) return 'live';
+  return 'ready';
+}
+
 function applyBuildMarkers() {
   const pill = $('#buildPill');
   const overlay = $('#buildOverlay');
   const mobile = $('#mobileBuildBadge');
   const inline = $('#matchBuildInline');
+  const statePill = $('#matchStatePill');
   if (pill) pill.textContent = BUILD_LABEL;
   if (overlay) overlay.textContent = BUILD_LABEL;
   if (mobile) mobile.textContent = BUILD_LABEL;
   if (inline) inline.textContent = BUILD_LABEL;
+  if (statePill) {
+    const phase = getMatchPhase();
+    statePill.textContent =
+      phase === 'live' ? 'Partida ao vivo' :
+      phase === 'finished' ? 'Partida encerrada' :
+      phase === 'ready' ? 'Pronto para iniciar' :
+      'Aguardando início';
+  }
 }
 
 function refreshAutoButtons() {
@@ -625,7 +642,12 @@ function renderMatch() {
   $('#pointLabel').textContent = match.pointText;
   $('#matchLog').textContent = match.log.slice(-12).join('\n');
   const autoBtn = $('#autoMatchBtn');
-  if (autoBtn) autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : 'Auto 1x';
+  if (autoBtn) {
+    autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : (match?.finished ? 'Partida encerrada' : 'Auto 1x');
+    autoBtn.disabled = !!match?.finished;
+  }
+  $('#playPointBtn').disabled = !!match?.finished;
+  applyBuildMarkers();
   refreshAutoButtons();
 }
 function addMatchLog(text) { if (!state.match) return; state.match.log.push(text); }

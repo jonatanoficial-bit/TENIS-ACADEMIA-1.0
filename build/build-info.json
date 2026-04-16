@@ -1,11 +1,11 @@
 {
   "app": "Ace Academy Manager",
-  "version": "1.2.0",
-  "build": "20260416-191244",
-  "display": "v1.2.0 • 20260416-191244",
+  "version": "1.3.0",
+  "build": "20260416-220618",
+  "display": "v1.3.0 • 20260416-220618",
   "notes": [
-    "Autoplay nativo sem onclick inline",
-    "Controles 1x 2x 4x e pausar",
-    "2D animado com rally contínuo"
+    "jogadores ficam em pose de espera fora da partida",
+    "novo indicador de estado da partida",
+    "autoplay preservado"
   ]
 }

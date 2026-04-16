@@ -16,3 +16,9 @@
 - controles 1x 2x 4x e pausar adicionados à interface da partida
 - 2D com rally contínuo e jogadores em movimento
 - build visível no HUD, overlay, badge mobile e painel da partida
+
+## v1.3.0 - 20260416-220618
+
+- jogadores do 2D ficam em pose de espera antes da partida e após o encerramento
+- novo indicador de estado da partida
+- autoplay preservado e interface da partida refinada

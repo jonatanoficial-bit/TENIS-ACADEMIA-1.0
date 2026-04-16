@@ -166,3 +166,10 @@ input { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid 
   }
   .mobile-build-badge { display: block; }
 }
+
+
+.metric-state{
+  color:#d9ecff;
+  border-color:rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.06);
+}
