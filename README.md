@@ -93,9 +93,3 @@ Novidades desta fase:
 - propostas de patrocínio dinâmicas
 - objetivo dinâmico de temporada visível na interface
 - pacote completo pronto para GitHub Pages
-
-## Build atual
-
-- Versão: v0.9.0
-- Build: 20260416-141231
-- Esta versão reforça a visibilidade da build e melhora a animação 2D da partida.
