@@ -19,7 +19,7 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
-const BUILD_LABEL = 'v1.4.0 • 20260416-224052';
+const BUILD_LABEL = 'v1.6.0 • 20260417-134034';
 let autoPlayTimer = null;
 let autoPlaySpeed = 1;
 let courtClock = 0;
@@ -45,7 +45,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '1.4.0';
+  state.version = '1.6.0';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -64,27 +64,95 @@ function migrateState() {
 
 
 
+function getMatchPhase() {
+  if (!state.match) return 'idle';
+  if (state.match.finished) return 'finished';
+  if (state.match.inProgress) return 'live';
+  return 'ready';
+}
 
 function computeTournamentFlowLabel() {
   const match = state.match;
   if (!match) return 'Sem partida';
   if (match.finished) return match.playerSets > match.opponentSets ? 'Vitória concluída' : 'Derrota concluída';
   if (!match.inProgress) return 'Pré-jogo';
-  if (autoPlayTimer) return `Simulação ${autoPlaySpeed}x`;
+  if (typeof autoPlayTimer !== 'undefined' && autoPlayTimer) return `Simulação ${autoPlaySpeed}x`;
   return 'Ponto a ponto';
 }
 
 function computeAvatarSeed(name = 'Player') {
   let seed = 0;
   for (const ch of String(name)) seed += ch.charCodeAt(0);
-  return ['Sprinter', 'Classic', 'Power', 'Tactician'][seed % 4];
+  return ['Sprinter','Classic','Power','Tactician'][seed % 4];
 }
 
-function getMatchPhase() {
-  if (!state.match) return 'idle';
-  if (state.match.finished) return 'finished';
-  if (state.match.inProgress) return 'live';
-  return 'ready';
+
+function getCareerProgress() {
+  const story = state.story || { completedMatches: 0, wins: 0, losses: 0 };
+  const rep = state.academy?.reputation || 0;
+  const cash = state.finance?.cash || state.cash || 0;
+  const completed = story.completedMatches || 0;
+  const rankingGoal = 120;
+  const currentBest = Math.max(1, 250 - rep * 3 - completed);
+  return {
+    completed,
+    wins: story.wins || 0,
+    losses: story.losses || 0,
+    reputation: rep,
+    cash,
+    currentBest,
+    rankingGoal,
+    seasonProgress: Math.min(100, (completed / 12) * 100),
+    prestigeProgress: Math.min(100, (rep / 40) * 100)
+  };
+}
+
+function getSeasonTargets() {
+  const c = getCareerProgress();
+  return [
+    {
+      title: 'Entrar no Top 120',
+      value: `Atual projeção ${c.currentBest}`,
+      done: c.currentBest <= 120
+    },
+    {
+      title: 'Chegar a 5 vitórias',
+      value: `${c.wins}/5`,
+      done: c.wins >= 5
+    },
+    {
+      title: 'Fechar caixa acima de $200k',
+      value: typeof formatCurrency === 'function' ? formatCurrency(c.cash) : c.cash,
+      done: c.cash >= 200000
+    }
+  ];
+}
+
+function getEligibleTierLabel() {
+  const rep = state.academy?.reputation || 0;
+  if (rep >= 28) return 'Grand Slam / Masters';
+  if (rep >= 18) return 'ATP 500 / Masters qualifying';
+  if (rep >= 10) return 'ATP 250 / Challenger alto';
+  return 'Challenger / Future';
+}
+
+function getSeasonStorySummary() {
+  const story = state.story || { completedMatches: 0, wins: 0, losses: 0 };
+  const rep = state.academy?.reputation || 0;
+  const balance = state.finance?.cash || state.cash || 0;
+  return { completed: story.completedMatches || 0, wins: story.wins || 0, losses: story.losses || 0, momentum: (story.wins || 0) - (story.losses || 0), rep, balance };
+}
+
+function getTournamentLobbyData() {
+  const event = (typeof getCurrentEvent === 'function' && getCurrentEvent()) || state.calendar?.[state.week - 1] || null;
+  if (!event) return { title: 'Lobby do torneio', subtitle: 'Aguardando definição do próximo evento', tier: 'ATP-like', country: 'Circuito mundial' };
+  return { title: event.name || 'Evento da semana', subtitle: event.surface ? `Superfície ${event.surface}` : 'Semana de competição', tier: event.level || event.category || 'ATP-like', country: event.country || 'Circuito mundial' };
+}
+
+function pushSeasonMilestone() {
+  const story = state.story || { completedMatches: 0, wins: 0, losses: 0 };
+  if (story.completedMatches === 3) addMatchLog('A academia começa a ganhar corpo no circuito.');
+  if (story.wins === 5) addMatchLog('Seu projeto começa a chamar atenção de patrocinadores maiores.');
 }
 
 function applyBuildMarkers() {
@@ -100,11 +168,7 @@ function applyBuildMarkers() {
   if (inline) inline.textContent = BUILD_LABEL;
   if (statePill) {
     const phase = getMatchPhase();
-    statePill.textContent =
-      phase === 'live' ? 'Partida ao vivo' :
-      phase === 'finished' ? 'Partida encerrada' :
-      phase === 'ready' ? 'Pronto para iniciar' :
-      'Aguardando início';
+    statePill.textContent = phase === 'live' ? 'Partida ao vivo' : phase === 'finished' ? 'Partida encerrada' : phase === 'ready' ? 'Pronto para iniciar' : 'Aguardando início';
   }
   if (flowPill) flowPill.textContent = computeTournamentFlowLabel();
 }
@@ -597,13 +661,6 @@ function resolveGame() {
   }
 }
 
-
-function advanceTournamentStory(win) {
-  if (!state.story) state.story = { completedMatches: 0, wins: 0, losses: 0 };
-  state.story.completedMatches += 1;
-  if (win) state.story.wins += 1; else state.story.losses += 1;
-  if (win && state.story.wins === 1) addInboxMessage?.('Primeira vitória da nova fase', 'Sua academia começou a criar narrativas de temporada mais vivas.');
-}
 function finishMatch(playerWon) {
   const player = state.roster.find(p => p.id === state.match.playerId);
   const event = state.match.event;
@@ -666,22 +723,8 @@ function renderMatch() {
   $('#setLabel').textContent = `Set ${match.set}`;
   $('#pointLabel').textContent = match.pointText;
   $('#matchLog').textContent = match.log.slice(-12).join('\n');
-  const flowPill = $('#matchFlowPill');
-  if (flowPill) flowPill.textContent = computeTournamentFlowLabel();
-  const avatarBox = $('#matchAvatarPanel');
-  if (avatarBox) {
-    avatarBox.innerHTML = `
-      <div class="avatar-slot"><div class="avatar-placeholder"></div><div><strong>${match.playerName}</strong><div>Preset ${computeAvatarSeed(match.playerName)}</div></div></div>
-      <div class="avatar-slot"><div class="avatar-placeholder"></div><div><strong>${match.opponentName}</strong><div>Preset ${computeAvatarSeed(match.opponentName)}</div></div></div>
-    `;
-  }
   const autoBtn = $('#autoMatchBtn');
-  if (autoBtn) {
-    autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : (match?.finished ? 'Partida encerrada' : 'Auto 1x');
-    autoBtn.disabled = !!match?.finished;
-  }
-  $('#playPointBtn').disabled = !!match?.finished;
-  applyBuildMarkers();
+  if (autoBtn) autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : 'Auto 1x';
   refreshAutoButtons();
 }
 function addMatchLog(text) { if (!state.match) return; state.match.log.push(text); }

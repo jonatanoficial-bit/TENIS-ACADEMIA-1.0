@@ -1,11 +1,12 @@
 {
   "app": "Ace Academy Manager",
-  "version": "1.4.0",
-  "build": "20260416-224052",
-  "display": "v1.4.0 • 20260416-224052",
+  "version": "1.6.0",
+  "build": "20260417-134034",
+  "display": "v1.6.0 • 20260417-134034",
+  "phase": "career-coherence",
   "notes": [
-    "próxima fase de gameplay",
-    "fluxo de estado da partida refinado",
-    "preparação para progressão de torneio e avatares"
+    "progressão de torneio mais coerente",
+    "painel de carreira ampliado",
+    "ganchos para lapidação visual"
   ]
 }

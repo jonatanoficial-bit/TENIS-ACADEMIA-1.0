@@ -17,15 +17,14 @@
 - 2D com rally contínuo e jogadores em movimento
 - build visível no HUD, overlay, badge mobile e painel da partida
 
-## v1.3.0 - 20260416-220618
+## v1.5.0 - 20260417-131120
 
-- jogadores do 2D ficam em pose de espera antes da partida e após o encerramento
-- novo indicador de estado da partida
-- autoplay preservado e interface da partida refinada
+- lobby de torneio base com slots de logo e fundo cinematográfico
+- card de narrativa da temporada no Match Center
+- progressão semanal mais clara para a futura lapidação visual
 
-## v1.4.0 - 20260416-224052
+## v1.6.0 - 20260417-134034
 
-- novo indicador de fluxo da partida
-- placeholders universais de avatar no Match Center
-- avanço de narrativa de temporada após cada partida
-- preparação maior para a futura fase visual
+- painel de progressão de carreira no Match Center
+- metas de temporada visíveis com andamento
+- coerência maior de tier elegível e narrativa de subida no circuito
