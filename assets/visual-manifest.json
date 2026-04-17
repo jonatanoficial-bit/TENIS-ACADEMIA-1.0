@@ -1,0 +1,11 @@
+{
+  "version": "2.1.0",
+  "build": "20260417-195408",
+  "slots": {
+    "homeBackground": "assets/backgrounds/home-main.svg",
+    "lobbyBackground": "assets/backgrounds/lobby-base.svg",
+    "playerAvatar": "assets/avatars/players/preset-player.svg",
+    "staffAvatar": "assets/avatars/staff/preset-staff.svg",
+    "logoGrandSlam": "assets/logos/grand-slam-placeholder.svg"
+  }
+}
