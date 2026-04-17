@@ -19,7 +19,7 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
-const BUILD_LABEL = 'v1.6.0 • 20260417-134034';
+const BUILD_LABEL = 'v1.8.0 • 20260417-185815';
 let autoPlayTimer = null;
 let autoPlaySpeed = 1;
 let courtClock = 0;
@@ -45,7 +45,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '1.6.0';
+  state.version = '1.8.0';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -63,114 +63,15 @@ function migrateState() {
 }
 
 
-
-function getMatchPhase() {
-  if (!state.match) return 'idle';
-  if (state.match.finished) return 'finished';
-  if (state.match.inProgress) return 'live';
-  return 'ready';
-}
-
-function computeTournamentFlowLabel() {
-  const match = state.match;
-  if (!match) return 'Sem partida';
-  if (match.finished) return match.playerSets > match.opponentSets ? 'Vitória concluída' : 'Derrota concluída';
-  if (!match.inProgress) return 'Pré-jogo';
-  if (typeof autoPlayTimer !== 'undefined' && autoPlayTimer) return `Simulação ${autoPlaySpeed}x`;
-  return 'Ponto a ponto';
-}
-
-function computeAvatarSeed(name = 'Player') {
-  let seed = 0;
-  for (const ch of String(name)) seed += ch.charCodeAt(0);
-  return ['Sprinter','Classic','Power','Tactician'][seed % 4];
-}
-
-
-function getCareerProgress() {
-  const story = state.story || { completedMatches: 0, wins: 0, losses: 0 };
-  const rep = state.academy?.reputation || 0;
-  const cash = state.finance?.cash || state.cash || 0;
-  const completed = story.completedMatches || 0;
-  const rankingGoal = 120;
-  const currentBest = Math.max(1, 250 - rep * 3 - completed);
-  return {
-    completed,
-    wins: story.wins || 0,
-    losses: story.losses || 0,
-    reputation: rep,
-    cash,
-    currentBest,
-    rankingGoal,
-    seasonProgress: Math.min(100, (completed / 12) * 100),
-    prestigeProgress: Math.min(100, (rep / 40) * 100)
-  };
-}
-
-function getSeasonTargets() {
-  const c = getCareerProgress();
-  return [
-    {
-      title: 'Entrar no Top 120',
-      value: `Atual projeção ${c.currentBest}`,
-      done: c.currentBest <= 120
-    },
-    {
-      title: 'Chegar a 5 vitórias',
-      value: `${c.wins}/5`,
-      done: c.wins >= 5
-    },
-    {
-      title: 'Fechar caixa acima de $200k',
-      value: typeof formatCurrency === 'function' ? formatCurrency(c.cash) : c.cash,
-      done: c.cash >= 200000
-    }
-  ];
-}
-
-function getEligibleTierLabel() {
-  const rep = state.academy?.reputation || 0;
-  if (rep >= 28) return 'Grand Slam / Masters';
-  if (rep >= 18) return 'ATP 500 / Masters qualifying';
-  if (rep >= 10) return 'ATP 250 / Challenger alto';
-  return 'Challenger / Future';
-}
-
-function getSeasonStorySummary() {
-  const story = state.story || { completedMatches: 0, wins: 0, losses: 0 };
-  const rep = state.academy?.reputation || 0;
-  const balance = state.finance?.cash || state.cash || 0;
-  return { completed: story.completedMatches || 0, wins: story.wins || 0, losses: story.losses || 0, momentum: (story.wins || 0) - (story.losses || 0), rep, balance };
-}
-
-function getTournamentLobbyData() {
-  const event = (typeof getCurrentEvent === 'function' && getCurrentEvent()) || state.calendar?.[state.week - 1] || null;
-  if (!event) return { title: 'Lobby do torneio', subtitle: 'Aguardando definição do próximo evento', tier: 'ATP-like', country: 'Circuito mundial' };
-  return { title: event.name || 'Evento da semana', subtitle: event.surface ? `Superfície ${event.surface}` : 'Semana de competição', tier: event.level || event.category || 'ATP-like', country: event.country || 'Circuito mundial' };
-}
-
-function pushSeasonMilestone() {
-  const story = state.story || { completedMatches: 0, wins: 0, losses: 0 };
-  if (story.completedMatches === 3) addMatchLog('A academia começa a ganhar corpo no circuito.');
-  if (story.wins === 5) addMatchLog('Seu projeto começa a chamar atenção de patrocinadores maiores.');
-}
-
 function applyBuildMarkers() {
   const pill = $('#buildPill');
   const overlay = $('#buildOverlay');
   const mobile = $('#mobileBuildBadge');
   const inline = $('#matchBuildInline');
-  const statePill = $('#matchStatePill');
-  const flowPill = $('#matchFlowPill');
   if (pill) pill.textContent = BUILD_LABEL;
   if (overlay) overlay.textContent = BUILD_LABEL;
   if (mobile) mobile.textContent = BUILD_LABEL;
   if (inline) inline.textContent = BUILD_LABEL;
-  if (statePill) {
-    const phase = getMatchPhase();
-    statePill.textContent = phase === 'live' ? 'Partida ao vivo' : phase === 'finished' ? 'Partida encerrada' : phase === 'ready' ? 'Pronto para iniciar' : 'Aguardando início';
-  }
-  if (flowPill) flowPill.textContent = computeTournamentFlowLabel();
 }
 
 function refreshAutoButtons() {
@@ -965,5 +866,21 @@ function drawCourt(lastWinner = null) {
   ctx.fillText(`Estratégia ${currentStrategy.toUpperCase()} • ${autoLabel}`, 30, 61);
 }
 
+
+
+function getEconomySummary(){
+  const cash = state.finance?.cash || state.cash || 0;
+  const weekly = (state.story?.wins||0)*5000 - (state.story?.losses||0)*2000;
+  return {cash, weekly};
+}
+
+function getStaffImpact(){
+  const rep = state.academy?.reputation||0;
+  return {
+    coaching: Math.min(100, rep*3),
+    medical: Math.min(100, rep*2),
+    management: Math.min(100, rep*2.5)
+  };
+}
 
 

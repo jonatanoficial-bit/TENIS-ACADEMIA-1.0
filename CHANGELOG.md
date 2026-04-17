@@ -17,14 +17,8 @@
 - 2D com rally contínuo e jogadores em movimento
 - build visível no HUD, overlay, badge mobile e painel da partida
 
-## v1.5.0 - 20260417-131120
+## v1.7.0 - 20260417-181352
 
-- lobby de torneio base com slots de logo e fundo cinematográfico
-- card de narrativa da temporada no Match Center
-- progressão semanal mais clara para a futura lapidação visual
-
-## v1.6.0 - 20260417-134034
-
-- painel de progressão de carreira no Match Center
-- metas de temporada visíveis com andamento
-- coerência maior de tier elegível e narrativa de subida no circuito
+- profundidade maior de ranking com projeção até top 350
+- pulso da temporada com janela competitiva e chance de convite
+- carreira mais coerente para a reta final antes da lapidação visual
