@@ -19,7 +19,7 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
-const BUILD_LABEL = 'v2.7.0 • 20260418-131205';
+const BUILD_LABEL = 'v2.7.1 • 20260418-143537';
 let autoPlayTimer = null;
 let autoPlaySpeed = 1;
 let courtClock = 0;
@@ -166,6 +166,7 @@ function openOwnerSetup(force=false) {
   $('#academyNameInput').value = state.academy.name || 'Ace Academy';
   $('#academyLogoInput').value = owner.logo || 'A';
   modal.classList.remove('hidden');
+  document.body.classList.add('setup-open');
   modal.setAttribute('aria-hidden','false');
   renderOwnerChoices(owner.avatar);
 }
@@ -173,6 +174,7 @@ function closeOwnerSetup() {
   const modal = $('#ownerSetupModal');
   if (!modal) return;
   modal.classList.add('hidden');
+  document.body.classList.remove('setup-open');
   modal.setAttribute('aria-hidden','true');
 }
 function renderOwnerChoices(active) {
@@ -185,7 +187,10 @@ function renderOwnerChoices(active) {
   }));
   hydrateAssetImages();
 }
+
 function saveOwnerSetup() {
+  if (!state) return;
+
   const ownerName = ($('#ownerNameInput')?.value || '').trim() || 'Manager';
   const country = ($('#ownerCountryInput')?.value || 'BRA').trim().toUpperCase().slice(0,3);
   const academyName = ($('#academyNameInput')?.value || 'Ace Academy').trim();
@@ -195,8 +200,11 @@ function saveOwnerSetup() {
   state.academy.name = academyName;
   state.academy.owner = { name: ownerName, country, avatar, logo };
   state.inbox.unshift({ title: `Bem-vindo, ${ownerName}`, body: `A ${academyName} está pronta para atacar o circuito global.`, week: state.academy.week });
+  saveState(state);
   closeOwnerSetup();
+  document.body.classList.remove('setup-open');
   render();
+  hydrateAssetImages();
 }
 function renderOwnerHub() {
   const host = $('#ownerHubCard');
@@ -253,7 +261,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '2.7.0';
+  state.version = '2.7.1';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -1151,3 +1159,12 @@ function getStaffImpact(){
 }
 
 
+
+
+window.forceEnterCareer = function forceEnterCareer() {
+  try {
+    saveOwnerSetup();
+  } catch (err) {
+    console.error(err);
+  }
+};

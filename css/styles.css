@@ -358,3 +358,34 @@ input { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid 
   .choice-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
   .mobile-dock{left:10px;right:10px;bottom:max(10px, env(safe-area-inset-bottom));}
 }
+
+
+body.setup-open{
+  overflow:hidden;
+}
+.mobile-dock{
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+.tab-panel{
+  padding-bottom: 120px;
+}
+.tour-item,
+.agenda-card,
+.schedule-card,
+.ranking-row,
+.player-card{
+  align-items: center;
+}
+.tour-logo,
+.tournament-logo,
+.event-logo{
+  width: 54px !important;
+  height: 54px !important;
+  object-fit: contain;
+}
+.match-event-logo,
+.hero-event-logo{
+  width: 72px !important;
+  height: 72px !important;
+  object-fit: contain;
+}

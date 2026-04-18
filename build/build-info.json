@@ -1,13 +1,14 @@
 {
   "app": "Ace Academy Manager",
-  "version": "2.7.0",
-  "build": "20260418-131205",
-  "display": "v2.7.0 • 20260418-131205",
-  "phase": "premium-mobile-ui-owner-lobby",
+  "version": "2.7.1",
+  "build": "20260418-143537",
+  "display": "v2.7.1 • 20260418-143537",
+  "phase": "career-button-fix-cache-bust",
   "notes": [
-    "logos ampliados e cards clicaveis",
-    "lobby da academia com dono, avatar, pais e sigla",
-    "setup inicial do dono e academia",
-    "melhoria visual mobile e branding na partida"
+    "corrigido botao entrar na carreira com fallback inline",
+    "adicionado save imediato apos criar dono da academia",
+    "cache busting no main.js",
+    "service worker refeito para limpar caches antigos",
+    "logos maiores e padding mobile reforcado"
   ]
 }
