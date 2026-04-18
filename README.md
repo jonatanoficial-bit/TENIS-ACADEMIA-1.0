@@ -93,3 +93,10 @@ Novidades desta fase:
 - propostas de patrocínio dinâmicas
 - objetivo dinâmico de temporada visível na interface
 - pacote completo pronto para GitHub Pages
+
+
+## Build visual integrada
+
+Versão 2.6.0 (20260418-122440).
+
+Esta build inclui integração de logos de torneios, avatares transparentes de jogadores/staff e fundos premium mobile-first.

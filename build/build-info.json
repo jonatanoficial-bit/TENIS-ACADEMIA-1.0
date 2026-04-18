@@ -1,1 +1,12 @@
-{"version": "1.8.0", "build": "20260417-185815", "display": "v1.8.0 \u2022 20260417-185815"}
+{
+  "app": "Ace Academy Manager",
+  "version": "2.6.0",
+  "build": "20260418-122440",
+  "display": "v2.6.0 \u2022 20260418-122440",
+  "phase": "visual-integration",
+  "notes": [
+    "logos ATP 250/500/Masters/Grand Slams integrados",
+    "avatares de jogadores e staff aplicados",
+    "fundos premium aplicados em home e match center"
+  ]
+}

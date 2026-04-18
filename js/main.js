@@ -19,11 +19,89 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
-const BUILD_LABEL = 'v1.8.0 • 20260417-185815';
+const BUILD_LABEL = 'v2.6.0 • 20260418-122440';
 let autoPlayTimer = null;
 let autoPlaySpeed = 1;
 let courtClock = 0;
 let courtAnimId = null;
+
+const PLAYER_AVATARS = [
+  'assets/branding/players/player_blond.png',
+  'assets/branding/players/player_latino.png',
+  'assets/branding/players/player_asian.png',
+  'assets/branding/players/player_black.png',
+  'assets/branding/players/player_brunette.png'
+];
+const STAFF_AVATARS = {
+  'Tecnico': 'assets/branding/staff/coach.png',
+  'Treinador Chefe': 'assets/branding/staff/coach.png',
+  'Fisioterapeuta': 'assets/branding/staff/doctor.png',
+  'Departamento Medico': 'assets/branding/staff/doctor.png',
+  'Financeiro': 'assets/branding/staff/finance.png',
+  'Psicologo': 'assets/branding/staff/finance.png',
+  'Scouting': 'assets/branding/staff/finance.png'
+};
+const TOURNAMENT_LOGOS = [
+  ['brisbane', 'assets/branding/logos/atp250_brisbane.png'],
+  ['auckland', 'assets/branding/logos/atp250_auckland.png'],
+  ['australian open', 'assets/branding/logos/grandslam_australianopen.png'],
+  ['doha', 'assets/branding/logos/atp250_doha.png'],
+  ['indian wells', 'assets/branding/logos/masters_indianwells.png'],
+  ['miami', 'assets/branding/logos/masters_miami.png'],
+  ['monte carlo', 'assets/branding/logos/masters_montecarlo.png'],
+  ['madrid', 'assets/branding/logos/masters_madrid.png'],
+  ['rome', 'assets/branding/logos/masters_rome.png'],
+  ['roland garros', 'assets/branding/logos/grandslam_rolandgarros.png'],
+  ['wimbledon', 'assets/branding/logos/grandslam_wimbledon.png'],
+  ['washington', 'assets/branding/logos/atp500_washington.png'],
+  ['canada', 'assets/branding/logos/masters_canada.png'],
+  ['cincinnati', 'assets/branding/logos/masters_cincinnati.png'],
+  ['us open', 'assets/branding/logos/grandslam_usopen.png'],
+  ['beijing', 'assets/branding/logos/atp500_beijing.png'],
+  ['tokyo', 'assets/branding/logos/atp500_tokyo.png'],
+  ['shanghai', 'assets/branding/logos/masters_shanghai.png'],
+  ['paris', 'assets/branding/logos/masters_paris.png'],
+  ['dubai', 'assets/branding/logos/atp500_dubai.png'],
+  ['barcelona', 'assets/branding/logos/atp500_barcelona.png'],
+  ['rio', 'assets/branding/logos/atp500_rio.png'],
+  ["queen's", 'assets/branding/logos/atp500_queens.png'],
+  ['halle', 'assets/branding/logos/atp500_halle.png'],
+  ['marseille', 'assets/branding/logos/atp250_marseille.png'],
+  ['buenos aires', 'assets/branding/logos/atp250_buenosaires.png'],
+  ['santiago', 'assets/branding/logos/atp250_santiago.png'],
+  ['estoril', 'assets/branding/logos/atp250_estoril.png'],
+  ['kitz', 'assets/branding/logos/atp250_kitzbuhel.png'],
+  ['antwerp', 'assets/branding/logos/atp250_antwerp.png'],
+  ['stockholm', 'assets/branding/logos/atp250_stockholm.png'],
+  ['metz', 'assets/branding/logos/atp250_metz.png'],
+  ['finals', 'assets/branding/logos/atp_finals.png']
+];
+function logoForTournament(name='') {
+  const key = (name || '').toLowerCase();
+  const hit = TOURNAMENT_LOGOS.find(([needle]) => key.includes(needle));
+  return hit ? hit[1] : '';
+}
+function avatarForPlayer(name='') {
+  const lower = (name || '').toLowerCase();
+  if (lower.includes('gabriel')) return PLAYER_AVATARS[0];
+  if (lower.includes('thiago')) return PLAYER_AVATARS[4];
+  if (lower.includes('joao')) return PLAYER_AVATARS[1];
+  if (lower.includes('luis')) return PLAYER_AVATARS[4];
+  if (lower.includes('ethan')) return PLAYER_AVATARS[0];
+  if (lower.includes('kenji')) return PLAYER_AVATARS[2];
+  if (lower.includes('jannik') || lower.includes('novak') || lower.includes('zverev')) return PLAYER_AVATARS[4];
+  if (lower.includes('carlos')) return PLAYER_AVATARS[1];
+  if (lower.includes('ben') || lower.includes('felix')) return PLAYER_AVATARS[0];
+  const idx = Math.abs([...lower].reduce((a,c)=>a+c.charCodeAt(0),0)) % PLAYER_AVATARS.length;
+  return PLAYER_AVATARS[idx];
+}
+function avatarImg(src, cls='avatar-img', alt='avatar') {
+  return src ? `<img class="${cls}" src="${src}" alt="${alt}">` : '';
+}
+function logoImg(src, cls='tour-logo', alt='logo') {
+  return src ? `<img class="${cls}" src="${src}" alt="${alt}">` : '';
+}
+
 
 boot();
 
@@ -45,7 +123,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '1.8.0';
+  state.version = '2.6.0';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -222,9 +300,13 @@ function renderNextEvents() {
   const next = state.calendar.filter(e => e.week >= state.academy.week).slice(0, 5);
   list.innerHTML = next.map(event => {
     const gate = getTournamentGate(event);
+    const logo = logoForTournament(event.name);
     return `
-      <div class="list-item">
-        <div><strong>Semana ${event.week}</strong><div class="small">${event.name} • ${event.tier}</div></div>
+      <div class="list-item logo-item">
+        <div class="list-main">
+          ${logoImg(logo,'small-logo',event.name)}
+          <div class="copy"><strong>Semana ${event.week}</strong><div class="small">${event.name} • ${event.tier}</div></div>
+        </div>
         <div class="small">${gate.label}</div>
       </div>`;
   }).join('');
@@ -267,13 +349,16 @@ window.upgradeFacility = (key) => {
 function renderRoster() {
   $('#rosterList').innerHTML = state.roster.map(player => {
     const rank = getPlayerRank(player.id);
+    const avatar = avatarForPlayer(player.name);
     return `
-    <article class="player-card">
+    <article class="player-card panel-card has-logo">
       <header>
-        <div class="avatar">${initials(player.name)}</div>
-        <div>
-          <h4>${player.name}</h4>
-          <div class="small">${player.country} • ${player.age} anos • ${player.style} • rank ${rank}</div>
+        <div class="avatar-stack">
+          ${avatarImg(avatar,'avatar-img',player.name)}
+          <div>
+            <h4>${player.name}</h4>
+            <div class="small">${player.country} • ${player.age} anos • ${player.style} • rank ${rank}</div>
+          </div>
         </div>
       </header>
       <div class="metric-row">
@@ -328,11 +413,15 @@ window.restPlayer = (playerId) => {
 function renderCalendar() {
   $('#calendarList').innerHTML = state.calendar.map(event => {
     const gate = getTournamentGate(event);
+    const logo = logoForTournament(event.name);
     return `
-      <div class="list-item">
-        <div>
-          <strong>Semana ${event.week} • ${event.name}</strong>
-          <div class="small">${event.tier} • ${event.surface} • prêmio ${money(event.prize)} • chave ${event.drawSize || 16}</div>
+      <div class="list-item logo-item">
+        <div class="list-main">
+          ${logoImg(logo,'tour-logo',event.name)}
+          <div class="copy">
+            <strong>Semana ${event.week} • ${event.name}</strong>
+            <div class="small">${event.tier} • ${event.surface} • prêmio ${money(event.prize)} • chave ${event.drawSize || 16}</div>
+          </div>
         </div>
         <div class="${gate.cls}">${gate.label}</div>
       </div>`;
@@ -340,13 +429,17 @@ function renderCalendar() {
 }
 
 function renderMarket() {
-  $('#marketList').innerHTML = state.marketTalents.map(talent => `
-    <article class="market-card">
+  $('#marketList').innerHTML = state.marketTalents.map(talent => {
+    const avatar = avatarForPlayer(talent.name);
+    return `
+    <article class="market-card panel-card has-logo">
       <header>
-        <div class="avatar">${initials(talent.name)}</div>
-        <div>
-          <h4>${talent.name}</h4>
-          <div class="small">${talent.country} • ${talent.age} anos • ${talent.style}</div>
+        <div class="avatar-stack">
+          ${avatarImg(avatar,'avatar-img',talent.name)}
+          <div>
+            <h4>${talent.name}</h4>
+            <div class="small">${talent.country} • ${talent.age} anos • ${talent.style}</div>
+          </div>
         </div>
       </header>
       <div class="metric-row">
@@ -357,7 +450,8 @@ function renderMarket() {
       <div class="tag-row" style="margin-top:12px">
         <button class="btn-primary" onclick="window.signTalent('${talent.id}')">Contratar ${money(talent.fee)}</button>
       </div>
-    </article>`).join('');
+    </article>`;
+  }).join('');
 }
 window.signTalent = (id) => {
   const talent = state.marketTalents.find(t => t.id === id);
@@ -377,10 +471,16 @@ window.signTalent = (id) => {
 function renderStaff() {
   $('#staffList').innerHTML = state.staffMarket.map(member => {
     const hired = state.staff[member.role] && state.staff[member.role].id === member.id;
+    const avatar = STAFF_AVATARS[member.role] || 'assets/branding/staff/finance.png';
     return `
-      <article class="staff-card">
-        <h4>${member.role} • ${member.name}</h4>
-        <p class="muted">${member.tier} • contratação ${money(member.cost)} • salário ${money(member.salary)}</p>
+      <article class="staff-card panel-card has-logo">
+        <div class="staff-head">
+          ${avatarImg(avatar,'avatar-img',member.role)}
+          <div>
+            <h4>${member.role} • ${member.name}</h4>
+            <p class="muted">${member.tier} • contratação ${money(member.cost)} • salário ${money(member.salary)}</p>
+          </div>
+        </div>
         <div class="metric-row">
           ${Object.entries(member.effects).map(([k,v]) => `<span class="metric">${k}: ${v > 0 ? '+' : ''}${v}</span>`).join('')}
         </div>
@@ -437,14 +537,20 @@ function updateRanking() {
 }
 function renderRanking() {
   const header = `<div class="ranking-row"><strong>#</strong><strong>Jogador</strong><strong>País</strong><strong>OVR</strong><strong>Pontos</strong></div>`;
-  const body = state.ranking.slice(0, 40).map(row => `
+  const body = state.ranking.slice(0, 40).map(row => {
+    const avatar = avatarForPlayer(row.name);
+    return `
     <div class="ranking-row">
       <div>${row.rank}</div>
-      <div>${row.isUser ? '⭐ ' : ''}${row.name}</div>
+      <div class="ranking-player">
+        ${avatarImg(avatar,'mini-avatar',row.name)}
+        <span class="ranking-player-name">${row.isUser ? '⭐ ' : ''}${row.name}</span>
+      </div>
       <div>${row.country}</div>
       <div>${Math.round(row.overall)}</div>
       <div>${Math.round(row.points)}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   $('#rankingTable').innerHTML = header + body;
 }
 
@@ -611,9 +717,14 @@ function finishMatch(playerWon) {
 
 function renderMatch() {
   const match = state.match;
+  const matchWrap = $('#matchBrandWrap');
+  const activeName = state.activeTournament ? state.activeTournament.event.name : (match?.event?.name || '');
+  const activeLogo = logoForTournament(activeName);
+  if (matchWrap) matchWrap.innerHTML = activeLogo ? `${logoImg(activeLogo,'tour-logo large',activeName)}` : '';
   $('#roundLabel').textContent = state.activeTournament ? `Rodada ${state.activeTournament.rounds[state.activeTournament.roundIndex] || 'fim'}` : 'Rodada -';
   $('#tournamentLabel').textContent = state.activeTournament ? state.activeTournament.event.name : 'Nenhum torneio';
   if (!match) {
+    const badge = document.querySelector('.score-card .tour-badge'); if (badge) badge.remove();
     $('#scorePlayer').textContent = '0'; $('#scoreOpponent').textContent = '0'; $('#setLabel').textContent = 'Set 1'; $('#pointLabel').textContent = '0-0';
     $('#matchLog').textContent = state.activeTournament ? `Torneio ativo em ${state.activeTournament.event.name}. Toque em iniciar rodada.` : 'Nenhuma partida em andamento.';
     drawCourt();
@@ -624,6 +735,14 @@ function renderMatch() {
   $('#setLabel').textContent = `Set ${match.set}`;
   $('#pointLabel').textContent = match.pointText;
   $('#matchLog').textContent = match.log.slice(-12).join('\n');
+  const scoreCard = document.querySelector('.score-card');
+  if (scoreCard) {
+    const old = scoreCard.querySelector('.tour-badge'); if (old) old.remove();
+    const badge = document.createElement('div'); badge.className='tour-badge';
+    const logo = logoForTournament(match.event.name);
+    badge.innerHTML = `${logo ? `<img class="tour-logo" src="${logo}" alt="${match.event.name}">` : ''}<div class="copy"><strong>${match.event.name}</strong><div class="event-surface">${match.event.surface} • ${match.round}</div></div>`;
+    scoreCard.appendChild(badge);
+  }
   const autoBtn = $('#autoMatchBtn');
   if (autoBtn) autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : 'Auto 1x';
   refreshAutoButtons();

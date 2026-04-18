@@ -172,3 +172,86 @@ input { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid 
 .pulse-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);margin-top:8px;}
 .pulse-row strong{display:block;}
 @media (max-width:720px){.rank-grid{grid-template-columns:1fr;}}
+
+
+.hero-visual {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(3,10,20,0.18), rgba(3,10,20,0.55)), url('../assets/branding/backgrounds/home-hero.png') center/cover no-repeat;
+  min-height: 260px;
+}
+.hero-visual::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(140deg, rgba(5,11,20,0.75), rgba(5,11,20,0.22) 42%, rgba(5,11,20,0.55));
+  pointer-events: none;
+}
+.hero-visual > * { position: relative; z-index: 1; }
+.match-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 14px;
+  background: linear-gradient(180deg, rgba(5,9,15,0.30), rgba(5,9,15,0.68)), url('../assets/branding/backgrounds/match-night.png') center/cover no-repeat;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.match-stage::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 28%);
+  pointer-events: none;
+}
+.match-stage > * { position: relative; z-index: 1; }
+.brand-logo, .tour-logo {
+  width: 44px; height: 44px; object-fit: contain; flex: 0 0 44px;
+  border-radius: 12px; padding: 4px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+}
+.tour-logo.large { width: 58px; height: 58px; }
+.avatar-img {
+  width: 58px; height: 58px; object-fit: contain; flex: 0 0 58px;
+  border-radius: 14px; background: radial-gradient(circle at top, rgba(255,255,255,0.13), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.08); padding: 2px;
+}
+.avatar-stack {
+  display:flex; align-items:center; gap:10px;
+}
+.avatar {
+  width: 58px; height: 58px; border-radius: 14px; display:grid; place-items:center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.list-item.logo-item { align-items:center; }
+.list-main { display:flex; align-items:center; gap:12px; min-width:0; }
+.list-main .copy { min-width:0; }
+.list-main .copy strong, .ranking-player-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+.player-card header, .market-card header, .staff-card .staff-head { display:flex; gap:12px; align-items:flex-start; }
+.staff-card .staff-head { margin-bottom: 12px; }
+.player-card h4, .market-card h4, .staff-card h4 { margin:0 0 4px 0; }
+.ranking-row {
+  grid-template-columns: 34px minmax(0,1.7fr) .7fr .6fr .7fr;
+  align-items:center;
+}
+.ranking-player {
+  display:flex; align-items:center; gap:10px; min-width:0;
+}
+.ranking-player .mini-avatar {
+  width: 34px; height:34px; object-fit:contain; border-radius:10px; background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+}
+.small-logo {
+  width:32px; height:32px; object-fit:contain; background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:3px;
+}
+.score-card .tour-badge { display:flex; align-items:center; gap:10px; margin-top:10px; }
+.score-card .tour-badge .copy { min-width:0; }
+.event-surface { text-transform: uppercase; letter-spacing: .08em; font-size: 11px; color: var(--muted); }
+.facility-visual { display:flex; align-items:center; gap:10px; }
+.panel-card.has-logo { position:relative; overflow:hidden; }
+.panel-card.has-logo::after { content:''; position:absolute; right:-18px; bottom:-18px; width:90px; height:90px; background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 65%); }
+@media (max-width: 768px) {
+  .hero-visual { min-height: 230px; }
+  .brand-logo, .tour-logo { width: 38px; height:38px; }
+  .tour-logo.large { width:48px; height:48px; }
+  .avatar-img, .avatar { width:50px; height:50px; }
+  .ranking-row { grid-template-columns: 28px minmax(0,1.6fr) .6fr .55fr .7fr; }
+  .ranking-player .mini-avatar { width:28px; height:28px; }
+}

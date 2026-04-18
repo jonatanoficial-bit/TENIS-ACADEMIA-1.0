@@ -122,3 +122,10 @@ Como o projeto e estatico, o deploy funciona bem no GitHub Pages. O save do jogo
 
 ## Licenciamento e dados
 Esta build e um prototipo jogavel para evolucao iterativa. Em uma versao publica comercial, revise licenciamento de nomes, marcas e identidades visuais de torneios e organizacoes.
+
+
+## Build visual integrada
+
+Versão 2.6.0 (20260418-122440).
+
+Esta build inclui integração de logos de torneios, avatares transparentes de jogadores/staff e fundos premium mobile-first.
