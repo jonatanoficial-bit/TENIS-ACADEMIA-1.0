@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <div id="buildOverlay" class="build-overlay">v1.8.0 • 20260417-185815</div>
+  <div id="buildOverlay" class="build-overlay">v2.7.0 • 20260418-131205</div>
   <div class="app-shell">
     <header class="topbar glass">
       <div>
@@ -18,7 +18,7 @@
         <h1>Ace Academy Manager</h1>
       </div>
       <div class="hud-row hud-scroll">
-        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v1.8.0 • 20260417-185815</strong></div>
+        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v2.7.0 • 20260418-131205</strong></div>
         <div class="pill"><span>Temporada</span><strong id="seasonLabel">2026</strong></div>
         <div class="pill"><span>Semana</span><strong id="weekLabel">1</strong></div>
         <div class="pill"><span>Caixa</span><strong id="moneyLabel">$0</strong></div>
@@ -53,7 +53,7 @@
           <button class="tab-btn" data-tab="adminhint">Admin</button>
         </nav>
 
-        <div id="mobileBuildBadge" class="mobile-build-badge glass">v1.8.0 • 20260417-185815</div>
+        <div id="mobileBuildBadge" class="mobile-build-badge glass">v2.7.0 • 20260418-131205</div>
         <section class="sidebar-actions">
           <button id="advanceWeekBtn" class="btn-primary">Avançar Semana</button>
           <button id="saveBtn" class="btn-secondary">Salvar</button>
@@ -79,6 +79,15 @@
             <article class="stat-card"><span>Patrocínio</span><strong id="sponsorLabel">$0</strong></article>
             <article class="stat-card"><span>Custos / semana</span><strong id="costsLabel">$0</strong></article>
             <article class="stat-card"><span>Atletas ativos</span><strong id="rosterCountLabel">0</strong></article>
+          </div>
+          <div class="owner-hub glass-card-lite">
+            <div id="ownerHubCard" class="owner-hub-card"></div>
+            <div class="owner-hub-actions">
+              <button class="hub-btn" data-jump-tab="calendar">Agenda</button>
+              <button class="hub-btn" data-jump-tab="match">Partida</button>
+              <button class="hub-btn" data-jump-tab="ranking">Ranking</button>
+              <button class="hub-btn" data-jump-tab="roster">Atletas</button>
+            </div>
           </div>
           <div class="dashboard-grid">
             <article class="panel-card">
@@ -125,7 +134,7 @@
               <div class="score-card mobile-priority">
                 <div class="score-row"><span id="matchPlayerName">Seu atleta</span><strong id="scorePlayer">0</strong></div>
                 <div class="score-row"><span id="matchOpponentName">Adversário</span><strong id="scoreOpponent">0</strong></div>
-                <div class="score-meta"><span id="matchBuildInline" class="metric-build">v1.8.0 • 20260417-185815</span><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
+                <div class="score-meta"><span id="matchBuildInline" class="metric-build">v2.7.0 • 20260418-131205</span><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
                 <div class="score-meta secondary-meta"><span id="roundLabel">Rodada -</span><span id="tournamentLabel">Nenhum torneio</span></div>
               </div>
               <canvas id="matchCanvas" width="960" height="540"></canvas>
@@ -180,7 +189,28 @@
       </section>
     </main>
 
-    <nav class="mobile-dock glass" aria-label="Ações rápidas mobile">
+    
+    <div id="ownerSetupModal" class="setup-modal hidden" aria-hidden="true">
+      <div class="setup-backdrop"></div>
+      <div class="setup-card glass">
+        <div class="section-head"><div><p class="eyebrow">Nova carreira</p><h3>Monte sua academia</h3></div></div>
+        <div class="form-grid setup-grid">
+          <label>Seu nome<input id="ownerNameInput" type="text" maxlength="28" placeholder="Jonatan Vale" /></label>
+          <label>País<input id="ownerCountryInput" type="text" maxlength="3" placeholder="BRA" /></label>
+          <label>Nome da academia<input id="academyNameInput" type="text" maxlength="32" placeholder="Ace Academy" /></label>
+          <label>Sigla / logo<input id="academyLogoInput" type="text" maxlength="3" placeholder="A" /></label>
+        </div>
+        <div>
+          <p class="eyebrow">Avatar do dono</p>
+          <div id="ownerAvatarChoices" class="choice-grid"></div>
+        </div>
+        <div class="setup-actions">
+          <button id="saveOwnerSetupBtn" class="btn-primary">Entrar na carreira</button>
+        </div>
+      </div>
+    </div>
+
+<nav class="mobile-dock glass" aria-label="Ações rápidas mobile">
       <button class="dock-btn active" data-tab="dashboard">Dashboard</button>
       <button class="dock-btn" data-tab="roster">Atletas</button>
       <button class="dock-btn" data-tab="match">Partida</button>

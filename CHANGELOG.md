@@ -22,3 +22,9 @@
 - profundidade maior de ranking com projeção até top 350
 - pulso da temporada com janela competitiva e chance de convite
 - carreira mais coerente para a reta final antes da lapidação visual
+
+## v2.6.1 - 20260418-125544
+
+- corrigido bug de 404 em logos, avatares e staff
+- adicionados caminhos de fallback para hosts estaticos
+- reforcado carregamento dos fundos principais
