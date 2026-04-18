@@ -28,3 +28,10 @@
 - corrigido bug de 404 em logos, avatares e staff
 - adicionados caminhos de fallback para hosts estaticos
 - reforcado carregamento dos fundos principais
+
+## v2.7.2 - 20260418-161009
+
+- corrigido bug em que a tela de nova carreira sobrepunha o lobby
+- corrigido botao Entrar na carreira com fechamento forcado do modal
+- ownerSetupComplete salvo no estado e no localStorage
+- dashboard aberto automaticamente apos concluir a criacao da academia
