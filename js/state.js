@@ -29,8 +29,8 @@ export function buildInitialState(content) {
     }))
   ];
   return {
-    version: '0.4.0',
-    academy: { ...academy, bankruptcyWarnings: 0 },
+    version: '2.7.0',
+    academy: { ...academy, bankruptcyWarnings: 0, owner: null },
     roster,
     ranking,
     calendar: content.calendar,

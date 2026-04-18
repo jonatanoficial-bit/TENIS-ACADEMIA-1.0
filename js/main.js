@@ -19,7 +19,7 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
-const BUILD_LABEL = 'v2.6.0 • 20260418-122440';
+const BUILD_LABEL = 'v2.7.0 • 20260418-131205';
 let autoPlayTimer = null;
 let autoPlaySpeed = 1;
 let courtClock = 0;
@@ -81,6 +81,43 @@ function logoForTournament(name='') {
   const hit = TOURNAMENT_LOGOS.find(([needle]) => key.includes(needle));
   return hit ? hit[1] : '';
 }
+
+function assetCandidates(src='') {
+  if (!src) return [];
+  const clean = src.replace(/^\.\//, '').replace(/^\//, '');
+  const parts = clean.split('/');
+  const base = parts[parts.length - 1];
+  const type = parts.length >= 3 ? parts[parts.length - 2] : '';
+  const candidates = [
+    `./${clean}`,
+    clean,
+    `./${base}`,
+    base
+  ];
+  if (type) {
+    candidates.push(`./branding-flat/${type}/${base}`);
+    candidates.push(`branding-flat/${type}/${base}`);
+  }
+  return [...new Set(candidates)];
+}
+
+function attachFallback(el, src='') {
+  const candidates = assetCandidates(src);
+  if (!el || !candidates.length) return;
+  let idx = 0;
+  el.src = candidates[idx];
+  el.dataset.assetCandidates = JSON.stringify(candidates);
+  el.onerror = () => {
+    idx += 1;
+    if (idx < candidates.length) {
+      el.src = candidates[idx];
+    } else {
+      el.onerror = null;
+      el.classList.add('asset-missing');
+    }
+  };
+}
+
 function avatarForPlayer(name='') {
   const lower = (name || '').toLowerCase();
   if (lower.includes('gabriel')) return PLAYER_AVATARS[0];
@@ -96,12 +133,103 @@ function avatarForPlayer(name='') {
   return PLAYER_AVATARS[idx];
 }
 function avatarImg(src, cls='avatar-img', alt='avatar') {
-  return src ? `<img class="${cls}" src="${src}" alt="${alt}">` : '';
+  return src ? `<img class="${cls}" data-asset-src="${src}" alt="${alt}">` : '';
 }
 function logoImg(src, cls='tour-logo', alt='logo') {
-  return src ? `<img class="${cls}" src="${src}" alt="${alt}">` : '';
+  return src ? `<img class="${cls}" data-asset-src="${src}" alt="${alt}">` : '';
 }
 
+
+const OWNER_AVATARS = PLAYER_AVATARS;
+
+
+function flagEmoji(code='BRA') {
+  const map = { BRA:'🇧🇷', ARG:'🇦🇷', CHI:'🇨🇱', USA:'🇺🇸', GBR:'🇬🇧', ESP:'🇪🇸', GER:'🇩🇪', FRA:'🇫🇷', ITA:'🇮🇹', AUS:'🇦🇺', JPN:'🇯🇵', CHN:'🇨🇳', QAT:'🇶🇦', PRT:'🇵🇹', BEL:'🇧🇪', SWE:'🇸🇪', AUT:'🇦🇹', SRB:'🇷🇸', RUS:'🇷🇺' };
+  return map[(code||'BRA').toUpperCase()] || '🏳️';
+}
+function ownerData() {
+  const owner = state.academy.owner || {};
+  return {
+    name: owner.name || 'Seu nome',
+    country: (owner.country || 'BRA').toUpperCase(),
+    academyName: state.academy.name || 'Ace Academy',
+    logo: owner.logo || 'A',
+    avatar: owner.avatar || PLAYER_AVATARS[0]
+  };
+}
+function openOwnerSetup(force=false) {
+  const modal = $('#ownerSetupModal');
+  if (!modal) return;
+  const owner = ownerData();
+  $('#ownerNameInput').value = force ? '' : owner.name;
+  $('#ownerCountryInput').value = force ? 'BRA' : owner.country;
+  $('#academyNameInput').value = state.academy.name || 'Ace Academy';
+  $('#academyLogoInput').value = owner.logo || 'A';
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+  renderOwnerChoices(owner.avatar);
+}
+function closeOwnerSetup() {
+  const modal = $('#ownerSetupModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden','true');
+}
+function renderOwnerChoices(active) {
+  const host = $('#ownerAvatarChoices');
+  if (!host) return;
+  host.innerHTML = OWNER_AVATARS.map((src, idx) => `<button class="choice-avatar ${src===active?'active':''}" data-owner-avatar="${src}" type="button">${avatarImg(src,'avatar-img',`avatar-${idx}`)}</button>`).join('');
+  host.querySelectorAll('[data-owner-avatar]').forEach(btn => btn.addEventListener('click', () => {
+    host.querySelectorAll('[data-owner-avatar]').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+  }));
+  hydrateAssetImages();
+}
+function saveOwnerSetup() {
+  const ownerName = ($('#ownerNameInput')?.value || '').trim() || 'Manager';
+  const country = ($('#ownerCountryInput')?.value || 'BRA').trim().toUpperCase().slice(0,3);
+  const academyName = ($('#academyNameInput')?.value || 'Ace Academy').trim();
+  const logo = (($('#academyLogoInput')?.value || 'A').trim().toUpperCase().slice(0,3)) || 'A';
+  const active = document.querySelector('.choice-avatar.active');
+  const avatar = active?.dataset.ownerAvatar || PLAYER_AVATARS[0];
+  state.academy.name = academyName;
+  state.academy.owner = { name: ownerName, country, avatar, logo };
+  state.inbox.unshift({ title: `Bem-vindo, ${ownerName}`, body: `A ${academyName} está pronta para atacar o circuito global.`, week: state.academy.week });
+  closeOwnerSetup();
+  render();
+}
+function renderOwnerHub() {
+  const host = $('#ownerHubCard');
+  if (!host) return;
+  const owner = ownerData();
+  host.innerHTML = `
+    <div>${avatarImg(owner.avatar,'owner-avatar',owner.name)}</div>
+    <div class="owner-meta">
+      <p class="eyebrow">Lobby da academia</p>
+      <h4>${owner.academyName}</h4>
+      <div class="owner-sub">
+        <span class="owner-logo-badge">${owner.logo}</span>
+        <div>
+          <strong>${owner.name}</strong>
+          <div class="small"><span class="flag">${flagEmoji(owner.country)}</span> ${owner.country} • Dono da academia</div>
+        </div>
+      </div>
+      <div class="owner-money">${money(state.academy.money)}</div>
+    </div>`;
+  hydrateAssetImages();
+}
+function launchEvent(eventName='') {
+  const event = state.calendar.find(e => e.name === eventName) || state.calendar.find(e => e.week === state.academy.week);
+  if (!event) return;
+  if (event.week !== state.academy.week) {
+    state.academy.week = event.week;
+    state.match = null;
+    state.activeTournament = null;
+    addLog(`Semana ajustada para ${event.week} • ${event.name}.`);
+  }
+  switchTab('match');
+  render();
+}
 
 boot();
 
@@ -115,6 +243,8 @@ async function boot() {
   startCourtAnimation();
   drawCourt();
   render();
+  hydrateAssetImages();
+  if (!state.academy.owner) openOwnerSetup(true);
 }
 
 function applyAdminOverrides(content) {
@@ -123,7 +253,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '2.6.0';
+  state.version = '2.7.0';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -131,6 +261,7 @@ function migrateState() {
   state.objectives ||= { current: 'Entrar no Top 120' };
   state.flags ||= {};
   state.academy.bankruptcyWarnings ??= 0;
+  state.academy.owner ??= null;
   state.activeTournament ??= null;
   state.roster.forEach(p => {
     p.health ??= 100;
@@ -150,6 +281,14 @@ function applyBuildMarkers() {
   if (overlay) overlay.textContent = BUILD_LABEL;
   if (mobile) mobile.textContent = BUILD_LABEL;
   if (inline) inline.textContent = BUILD_LABEL;
+}
+
+function hydrateAssetImages() {
+  document.querySelectorAll('img[data-asset-src]').forEach((img) => {
+    if (img.dataset.assetHydrated === '1') return;
+    img.dataset.assetHydrated = '1';
+    attachFallback(img, img.dataset.assetSrc || '');
+  });
 }
 
 function refreshAutoButtons() {
@@ -183,6 +322,7 @@ function stopAutoPlay() {
     autoPlayTimer = null;
     addMatchLog('Autoplay pausado.');
     renderMatch();
+  hydrateAssetImages();
   }
   refreshAutoButtons();
 }
@@ -200,6 +340,8 @@ function startCourtAnimation() {
 function bindUI() {
   $$('#mainTabs .tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   $$('.dock-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+  $$('.hub-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.jumpTab)));
+  $('#saveOwnerSetupBtn')?.addEventListener('click', saveOwnerSetup);
   $('#openCalendarBtn')?.addEventListener('click', () => switchTab('calendar'));
   $('#advanceWeekBtn').addEventListener('click', advanceWeek);
   $('#saveBtn').addEventListener('click', () => { saveState(state); addLog('Save realizado manualmente.'); render(); });
@@ -209,6 +351,7 @@ function bindUI() {
     migrateState();
     addLog('Nova carreira iniciada.');
     render();
+    openOwnerSetup(true);
   });
   $('#startMatchBtn').addEventListener('click', startScheduledMatch);
   $('#playPointBtn').addEventListener('click', playPoint);
@@ -223,6 +366,7 @@ function bindUI() {
     currentStrategy = btn.dataset.strategy;
     addMatchLog(`Estratégia alterada para ${btn.textContent}.`);
     renderMatch();
+  hydrateAssetImages();
   }));
 }
 
@@ -239,6 +383,7 @@ function render() {
   $('#weekLabel').textContent = state.academy.week;
   $('#moneyLabel').textContent = money(state.academy.money);
   $('#goalLabel').textContent = state.objectives.current;
+  renderOwnerHub();
   $('#reputationLabel').textContent = state.academy.reputation;
   $('#sponsorLabel').textContent = money(calculateSponsor());
   $('#costsLabel').textContent = money(calculateWeeklyCosts());
@@ -256,7 +401,9 @@ function render() {
   renderStaff();
   updateRanking();
   renderRanking();
+  hydrateAssetImages();
   renderMatch();
+  hydrateAssetImages();
   saveState(state);
 }
 
@@ -297,19 +444,15 @@ function renderSponsorOffers() {
 
 function renderNextEvents() {
   const list = $('#nextEventsList');
-  const next = state.calendar.filter(e => e.week >= state.academy.week).slice(0, 5);
-  list.innerHTML = next.map(event => {
+  const next = state.calendar.filter(e => e.week >= state.academy.week).slice(0, 4);
+  list.innerHTML = `<div class="tournament-mini-list">${next.map(event => {
     const gate = getTournamentGate(event);
     const logo = logoForTournament(event.name);
-    return `
-      <div class="list-item logo-item">
-        <div class="list-main">
-          ${logoImg(logo,'small-logo',event.name)}
-          <div class="copy"><strong>Semana ${event.week}</strong><div class="small">${event.name} • ${event.tier}</div></div>
-        </div>
-        <div class="small">${gate.label}</div>
-      </div>`;
-  }).join('');
+    return `<button class="next-event-card" onclick="window.launchEvent('${event.name.replace("'", "&#39;")}')">
+      ${logoImg(logo,'tour-logo',event.name)}
+      <div><strong>Semana ${event.week} • ${event.name}</strong><div class="small">${event.tier} • ${event.surface} • ${gate.label}</div></div>
+    </button>`;
+  }).join('')}</div>`;
 }
 
 function renderSummary() {
@@ -335,6 +478,8 @@ function renderFacilities() {
       <button class="btn-secondary" onclick="window.upgradeFacility('${key}')">Upgrade (${money((level + 1) * 18000)})</button>
     </article>`).join('');
 }
+window.launchEvent = launchEvent;
+
 window.upgradeFacility = (key) => {
   const level = state.academy.facilities[key];
   const cost = (level + 1) * 18000;
@@ -344,6 +489,7 @@ window.upgradeFacility = (key) => {
   state.academy.reputation += 2;
   addLog(`Upgrade concluído em ${key}.`);
   render();
+  hydrateAssetImages();
 };
 
 function renderRoster() {
@@ -415,16 +561,16 @@ function renderCalendar() {
     const gate = getTournamentGate(event);
     const logo = logoForTournament(event.name);
     return `
-      <div class="list-item logo-item">
-        <div class="list-main">
-          ${logoImg(logo,'tour-logo',event.name)}
-          <div class="copy">
-            <strong>Semana ${event.week} • ${event.name}</strong>
-            <div class="small">${event.tier} • ${event.surface} • prêmio ${money(event.prize)} • chave ${event.drawSize || 16}</div>
-          </div>
+      <article class="tournament-card" onclick="window.launchEvent('${event.name.replace("'", "&#39;")}')">
+        <div class="tournament-logo-wrap">${logoImg(logo,'tournament-logo',event.name)}</div>
+        <div class="tournament-main">
+          <strong>Semana ${event.week} • ${event.name}</strong>
+          <div class="meta">${event.tier} • ${event.surface} • prêmio ${money(event.prize)} • chave ${event.drawSize || 16}</div>
         </div>
-        <div class="${gate.cls}">${gate.label}</div>
-      </div>`;
+        <div class="tournament-side">
+          <div class="entry-pill ${gate.cls}">${gate.label}</div>
+        </div>
+      </article>`;
   }).join('');
 }
 
@@ -589,6 +735,7 @@ function startScheduledMatch() {
   addLog(`Partida preparada: ${player.name} vs ${opponent.name} em ${event.name} (${round}).`);
   switchTab('match');
   renderMatch();
+  hydrateAssetImages();
 }
 
 function createTournamentRun(player, event) {
@@ -641,6 +788,7 @@ function playPoint() {
   resolveGame();
   drawCourt(won ? 'player' : 'opponent');
   renderMatch();
+  hydrateAssetImages();
 }
 
 function autoPlayGame() {
@@ -720,7 +868,7 @@ function renderMatch() {
   const matchWrap = $('#matchBrandWrap');
   const activeName = state.activeTournament ? state.activeTournament.event.name : (match?.event?.name || '');
   const activeLogo = logoForTournament(activeName);
-  if (matchWrap) matchWrap.innerHTML = activeLogo ? `${logoImg(activeLogo,'tour-logo large',activeName)}` : '';
+  if (matchWrap) matchWrap.innerHTML = activeLogo ? `<div class="tournament-logo-wrap">${logoImg(activeLogo,'tour-logo large',activeName)}</div>` : ''; 
   $('#roundLabel').textContent = state.activeTournament ? `Rodada ${state.activeTournament.rounds[state.activeTournament.roundIndex] || 'fim'}` : 'Rodada -';
   $('#tournamentLabel').textContent = state.activeTournament ? state.activeTournament.event.name : 'Nenhum torneio';
   if (!match) {
@@ -740,7 +888,7 @@ function renderMatch() {
     const old = scoreCard.querySelector('.tour-badge'); if (old) old.remove();
     const badge = document.createElement('div'); badge.className='tour-badge';
     const logo = logoForTournament(match.event.name);
-    badge.innerHTML = `${logo ? `<img class="tour-logo" src="${logo}" alt="${match.event.name}">` : ''}<div class="copy"><strong>${match.event.name}</strong><div class="event-surface">${match.event.surface} • ${match.round}</div></div>`;
+    badge.innerHTML = `${logoImg(logo,'tour-logo',match.event.name)}<div class="copy"><strong>${match.event.name}</strong><div class="event-surface">${match.event.surface} • ${match.round}</div></div>`;
     scoreCard.appendChild(badge);
   }
   const autoBtn = $('#autoMatchBtn');

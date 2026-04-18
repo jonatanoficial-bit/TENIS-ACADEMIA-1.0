@@ -1,12 +1,13 @@
 {
   "app": "Ace Academy Manager",
-  "version": "2.6.0",
-  "build": "20260418-122440",
-  "display": "v2.6.0 \u2022 20260418-122440",
-  "phase": "visual-integration",
+  "version": "2.7.0",
+  "build": "20260418-131205",
+  "display": "v2.7.0 • 20260418-131205",
+  "phase": "premium-mobile-ui-owner-lobby",
   "notes": [
-    "logos ATP 250/500/Masters/Grand Slams integrados",
-    "avatares de jogadores e staff aplicados",
-    "fundos premium aplicados em home e match center"
+    "logos ampliados e cards clicaveis",
+    "lobby da academia com dono, avatar, pais e sigla",
+    "setup inicial do dono e academia",
+    "melhoria visual mobile e branding na partida"
   ]
 }
