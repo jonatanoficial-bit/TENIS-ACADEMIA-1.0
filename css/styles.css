@@ -389,3 +389,30 @@ body.setup-open{
   height: 72px !important;
   object-fit: contain;
 }
+
+
+.setup-modal.hidden{
+  display:none !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  visibility:hidden !important;
+}
+.setup-modal{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+}
+.choice-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap:12px;
+}
+.choice-avatar{
+  min-height:92px;
+}
+.choice-avatar .avatar-img{
+  width:56px !important;
+  height:56px !important;
+  object-fit:contain;
+}

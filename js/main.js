@@ -19,7 +19,7 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
-const BUILD_LABEL = 'v2.7.1 • 20260418-143537';
+const BUILD_LABEL = 'v2.7.2 • 20260418-161009';
 let autoPlayTimer = null;
 let autoPlaySpeed = 1;
 let courtClock = 0;
@@ -165,6 +165,7 @@ function openOwnerSetup(force=false) {
   $('#ownerCountryInput').value = force ? 'BRA' : owner.country;
   $('#academyNameInput').value = state.academy.name || 'Ace Academy';
   $('#academyLogoInput').value = owner.logo || 'A';
+  modal.style.display = 'flex';
   modal.classList.remove('hidden');
   document.body.classList.add('setup-open');
   modal.setAttribute('aria-hidden','false');
@@ -174,8 +175,9 @@ function closeOwnerSetup() {
   const modal = $('#ownerSetupModal');
   if (!modal) return;
   modal.classList.add('hidden');
-  document.body.classList.remove('setup-open');
   modal.setAttribute('aria-hidden','true');
+  modal.style.display = 'none';
+  document.body.classList.remove('setup-open');
 }
 function renderOwnerChoices(active) {
   const host = $('#ownerAvatarChoices');
@@ -197,14 +199,31 @@ function saveOwnerSetup() {
   const logo = (($('#academyLogoInput')?.value || 'A').trim().toUpperCase().slice(0,3)) || 'A';
   const active = document.querySelector('.choice-avatar.active');
   const avatar = active?.dataset.ownerAvatar || PLAYER_AVATARS[0];
+
   state.academy.name = academyName;
   state.academy.owner = { name: ownerName, country, avatar, logo };
+  state.flags ||= {};
+  state.flags.ownerSetupComplete = true;
   state.inbox.unshift({ title: `Bem-vindo, ${ownerName}`, body: `A ${academyName} está pronta para atacar o circuito global.`, week: state.academy.week });
-  saveState(state);
+
+  try {
+    saveState(state);
+    localStorage.setItem('ace_academy_save_v040', JSON.stringify(state));
+  } catch (err) {
+    console.error(err);
+  }
+
   closeOwnerSetup();
-  document.body.classList.remove('setup-open');
+  switchTab('dashboard');
   render();
   hydrateAssetImages();
+
+  setTimeout(() => {
+    closeOwnerSetup();
+    switchTab('dashboard');
+    render();
+    hydrateAssetImages();
+  }, 50);
 }
 function renderOwnerHub() {
   const host = $('#ownerHubCard');
@@ -252,7 +271,7 @@ async function boot() {
   drawCourt();
   render();
   hydrateAssetImages();
-  if (!state.academy.owner) openOwnerSetup(true);
+  if (!state.academy.owner || !state.flags?.ownerSetupComplete) openOwnerSetup(true);
 }
 
 function applyAdminOverrides(content) {
@@ -261,7 +280,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '2.7.1';
+  state.version = '2.7.2';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -357,6 +376,8 @@ function bindUI() {
     clearState();
     state = buildInitialState(content);
     migrateState();
+    state.flags ||= {};
+    state.flags.ownerSetupComplete = false;
     addLog('Nova carreira iniciada.');
     render();
     openOwnerSetup(true);

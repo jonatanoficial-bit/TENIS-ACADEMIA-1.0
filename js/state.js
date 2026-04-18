@@ -29,7 +29,7 @@ export function buildInitialState(content) {
     }))
   ];
   return {
-    version: '2.7.0',
+    version: '2.7.2',
     academy: { ...academy, bankruptcyWarnings: 0, owner: null },
     roster,
     ranking,
@@ -47,7 +47,7 @@ export function buildInitialState(content) {
     ],
     sponsorOffers: [],
     objectives: { current: 'Entrar no Top 120' },
-    flags: {}
+    flags: { ownerSetupComplete: false }
   };
 }
 export function saveState(state) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }

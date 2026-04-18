@@ -1,14 +1,14 @@
 {
   "app": "Ace Academy Manager",
-  "version": "2.7.1",
-  "build": "20260418-143537",
-  "display": "v2.7.1 • 20260418-143537",
-  "phase": "career-button-fix-cache-bust",
+  "version": "2.7.2",
+  "build": "20260418-161009",
+  "display": "v2.7.2 • 20260418-161009",
+  "phase": "owner-setup-modal-fix",
   "notes": [
-    "corrigido botao entrar na carreira com fallback inline",
-    "adicionado save imediato apos criar dono da academia",
-    "cache busting no main.js",
-    "service worker refeito para limpar caches antigos",
-    "logos maiores e padding mobile reforcado"
+    "corrigido loop da tela de iniciar carreira",
+    "salvamento do dono da academia reforcado",
+    "modal agora fecha de forma forcada",
+    "dashboard abre apos entrar na carreira",
+    "cache busting atualizado"
   ]
 }
