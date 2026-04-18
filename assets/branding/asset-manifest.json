@@ -1,0 +1,56 @@
+{
+  "version": "2.6.0",
+  "build": "20260418-122440",
+  "backgrounds": [
+    "home-hero.png",
+    "match-night.png",
+    "lobby-premium.png"
+  ],
+  "players": [
+    "player_blond.png",
+    "player_latino.png",
+    "player_asian.png",
+    "player_black.png",
+    "player_brunette.png"
+  ],
+  "staff": [
+    "finance.png",
+    "doctor.png",
+    "coach.png"
+  ],
+  "logos": [
+    "masters_rome.png",
+    "masters_canada.png",
+    "masters_cincinnati.png",
+    "masters_shanghai.png",
+    "masters_paris.png",
+    "atp_finals.png",
+    "atp500_dubai.png",
+    "atp500_barcelona.png",
+    "atp500_rio.png",
+    "atp500_queens.png",
+    "atp500_halle.png",
+    "atp500_washington.png",
+    "atp500_beijing.png",
+    "atp500_tokyo.png",
+    "atp250_brisbane.png",
+    "atp250_auckland.png",
+    "atp250_marseille.png",
+    "atp250_buenosaires.png",
+    "atp250_santiago.png",
+    "atp250_estoril.png",
+    "atp250_kitzbuhel.png",
+    "atp250_antwerp.png",
+    "atp250_stockholm.png",
+    "atp250_metz.png",
+    "atp250_doha.png",
+    "masters_montecarlo.png",
+    "masters_indianwells.png",
+    "masters_miami.png",
+    "masters_madrid.png",
+    "grandslam_usopen.png",
+    "grandslam_wimbledon.png",
+    "grandslam_australianopen.png",
+    "grandslam_rolandgarros.png"
+  ]
+}
