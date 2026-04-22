@@ -1,14 +1,14 @@
 {
   "app": "Ace Academy Manager",
-  "version": "2.7.2",
-  "build": "20260418-161009",
-  "display": "v2.7.2 • 20260418-161009",
-  "phase": "owner-setup-modal-fix",
+  "version": "2.8.0",
+  "build": "20260418-184440",
+  "display": "v2.8.0 • 20260418-184440",
+  "phase": "premium-ui-bracket-sim",
   "notes": [
-    "corrigido loop da tela de iniciar carreira",
-    "salvamento do dono da academia reforcado",
-    "modal agora fecha de forma forcada",
-    "dashboard abre apos entrar na carreira",
-    "cache busting atualizado"
+    "logos ampliados",
+    "agenda premium com botoes de partida e chave",
+    "simulacao de chave do torneio",
+    "cards da academia mais visuais",
+    "caixa de entrada redesenhada"
   ]
 }
