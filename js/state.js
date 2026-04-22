@@ -29,7 +29,7 @@ export function buildInitialState(content) {
     }))
   ];
   return {
-    version: '2.7.2',
+    version: '2.8.0',
     academy: { ...academy, bankruptcyWarnings: 0, owner: null },
     roster,
     ranking,

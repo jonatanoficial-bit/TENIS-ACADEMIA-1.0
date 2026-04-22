@@ -19,7 +19,7 @@ const STRATEGY_EFFECTS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
-const BUILD_LABEL = 'v2.7.2 • 20260418-161009';
+const BUILD_LABEL = 'v2.8.0 • 20260418-184440';
 let autoPlayTimer = null;
 let autoPlaySpeed = 1;
 let courtClock = 0;
@@ -143,6 +143,169 @@ function logoImg(src, cls='tour-logo', alt='logo') {
 const OWNER_AVATARS = PLAYER_AVATARS;
 
 
+
+function slugifyText(text='') {
+  return (text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function logoMarkup(src, name='', cls='tour-logo', fallbackCls='tournament-logo-fallback') {
+  if (src) return logoImg(src, cls, name);
+  const safe = (name || 'ATP').split(/\s+/).slice(0,2).map(w => w[0] || '').join('').toUpperCase();
+  return `<div class="${fallbackCls}">${safe}</div>`;
+}
+function tournamentKey(event) {
+  return event?.id || slugifyText(event?.name || 'event');
+}
+function makeEntrantFromRow(row) {
+  return {
+    id: row.playerId || slugifyText(row.name),
+    name: row.name,
+    country: row.country || '---',
+    overall: Math.round(row.overall || 70),
+    points: Math.round(row.points || 0),
+    avatar: avatarForPlayer(row.name),
+    isUser: !!row.isUser
+  };
+}
+function pickEntrantsForEvent(player, event, roundsLength) {
+  const total = Math.max(8, 2 ** roundsLength);
+  const nonUsers = state.ranking.filter(r => !r.isUser).slice(0, 96);
+  const entrants = [];
+  if (player) entrants.push(makeEntrantFromRow({ name: player.name, country: player.country, overall: player.overall, points: player.rankingPoints, playerId: player.id, isUser: true }));
+  let cursor = 0;
+  while (entrants.length < total && cursor < nonUsers.length) {
+    const row = nonUsers[cursor++];
+    if (entrants.some(x => x.name === row.name)) continue;
+    entrants.push(makeEntrantFromRow(row));
+  }
+  while (entrants.length < total) {
+    entrants.push(makeEntrantFromRow(nonUsers[entrants.length % nonUsers.length] || { name:`ATP ${entrants.length+1}`, country:'ATP', overall:70, points:100 }));
+  }
+  entrants.sort((a,b) => (b.points + b.overall*4) - (a.points + a.overall*4));
+  return entrants.slice(0,total);
+}
+function seedingPositions(size) {
+  if (size === 2) return [1,2];
+  const prev = seedingPositions(size/2);
+  const out = [];
+  for (const p of prev) { out.push(p); out.push(size + 1 - p); }
+  return out;
+}
+function createDrawMatches(entrants) {
+  const positions = seedingPositions(entrants.length);
+  const slots = Array(entrants.length).fill(null);
+  entrants.forEach((entrant, idx) => {
+    const pos = positions[idx] - 1;
+    slots[pos] = entrant;
+  });
+  const matches = [];
+  for (let i=0; i<slots.length; i+=2) {
+    const a = slots[i]; const b = slots[i+1];
+    matches.push({ id:`m${i/2+1}`, a, b, winner:null, score:'', userMatch: !!(a?.isUser || b?.isUser) });
+  }
+  return matches;
+}
+function createTournamentDraw(player, event, rounds) {
+  const entrants = pickEntrantsForEvent(player, event, rounds.length);
+  const roundDefs = rounds.map((label, idx) => ({ label, matches: idx === 0 ? createDrawMatches(entrants) : [] }));
+  return { key: tournamentKey(event), eventName: event.name, rounds: roundDefs };
+}
+function ensureTournamentRunDraw(player, event, rounds) {
+  if (!state.tournamentDraws) state.tournamentDraws = {};
+  const key = tournamentKey(event);
+  if (!state.tournamentDraws[key]) state.tournamentDraws[key] = createTournamentDraw(player, event, rounds);
+  return state.tournamentDraws[key];
+}
+function pickDrawOpponent(draw, roundIndex) {
+  const round = draw?.rounds?.[roundIndex];
+  if (!round) return null;
+  const match = round.matches.find(m => m.a?.isUser || m.b?.isUser);
+  if (!match) return null;
+  return { match, opponent: match.a?.isUser ? match.b : match.a };
+}
+function decideDrawWinner(a, b) {
+  if (!a && !b) return null;
+  if (!a) return b;
+  if (!b) return a;
+  const aScore = (a.overall || 70) * 5 + (a.points || 0) / 40 + (a.isUser ? 10 : 0) + (Math.random() * 40);
+  const bScore = (b.overall || 70) * 5 + (b.points || 0) / 40 + (b.isUser ? 10 : 0) + (Math.random() * 40);
+  return aScore >= bScore ? a : b;
+}
+function simulatedScore() {
+  const patterns = ['6-4 6-3', '7-5 6-4', '6-2 3-6 6-3', '6-3 6-4', '7-6 6-4'];
+  return patterns[Math.floor(Math.random()*patterns.length)];
+}
+function advanceDrawRound(run, playerWon) {
+  if (!run?.draw) return;
+  const round = run.draw.rounds[run.roundIndex];
+  if (!round) return;
+  round.matches = round.matches.map(match => {
+    if (match.a?.isUser || match.b?.isUser) {
+      const winner = playerWon ? (match.a?.isUser ? match.a : match.b) : (match.a?.isUser ? match.b : match.a);
+      return { ...match, winner, score: simulatedScore() };
+    }
+    const winner = match.winner || decideDrawWinner(match.a, match.b);
+    return { ...match, winner, score: match.score || simulatedScore() };
+  });
+  const nextRound = run.draw.rounds[run.roundIndex + 1];
+  if (nextRound) {
+    const winners = round.matches.map(m => m.winner).filter(Boolean);
+    const matches = [];
+    for (let i=0; i<winners.length; i+=2) {
+      const a = winners[i]; const b = winners[i+1];
+      matches.push({ id:`r${run.roundIndex+2}m${i/2+1}`, a, b, winner:null, score:'', userMatch: !!(a?.isUser || b?.isUser) });
+    }
+    nextRound.matches = matches;
+  }
+}
+function ensureDrawModal() {
+  if (document.querySelector('#drawModal')) return;
+  const node = document.createElement('section');
+  node.id = 'drawModal';
+  node.className = 'draw-modal hidden';
+  node.innerHTML = `<div class="draw-backdrop" data-draw-close="1"></div>
+    <div class="draw-card glass">
+      <div class="draw-head">
+        <div>
+          <p class="eyebrow">Chave do torneio</p>
+          <h3 id="drawTitle">Visão da competição</h3>
+          <div id="drawSub" class="small"></div>
+        </div>
+        <button id="closeDrawBtn" class="mini-btn" type="button">Fechar</button>
+      </div>
+      <div id="drawContent" class="draw-columns"></div>
+    </div>`;
+  document.body.appendChild(node);
+  node.querySelectorAll('[data-draw-close="1"]').forEach(el => el.addEventListener('click', closeDrawModal));
+  node.querySelector('#closeDrawBtn')?.addEventListener('click', closeDrawModal);
+}
+function openDrawModal(eventName='') {
+  ensureDrawModal();
+  const event = state.calendar.find(e => e.name === eventName) || state.activeTournament?.event || state.calendar.find(e => e.week === state.academy.week);
+  if (!event) return;
+  const player = chooseBestPlayer();
+  const rounds = state.activeTournament?.event?.name === event.name ? state.activeTournament.rounds : (event.drawSize >= 64 ? ['R32','R16','QF','SF','F'] : event.drawSize >= 32 ? ['R16','QF','SF','F'] : ['QF','SF','F']);
+  const draw = state.activeTournament?.event?.name === event.name && state.activeTournament.draw
+    ? state.activeTournament.draw
+    : ensureTournamentRunDraw(player, event, rounds);
+  const modal = document.querySelector('#drawModal');
+  modal.classList.remove('hidden');
+  document.body.classList.add('setup-open');
+  document.querySelector('#drawTitle').textContent = event.name;
+  document.querySelector('#drawSub').textContent = `${event.tier} • ${event.surface.toUpperCase()} • chave ${event.drawSize || 32}`;
+  const content = document.querySelector('#drawContent');
+  content.innerHTML = draw.rounds.map((round, idx) => `<div class="draw-col"><div class="draw-col-head">${round.label}</div>${(round.matches||[]).map(match => `
+    <div class="draw-match ${match.a?.isUser || match.b?.isUser ? 'user-path' : ''} ${idx === (state.activeTournament?.roundIndex ?? -1) ? 'active-round' : ''}">
+      <div class="draw-line ${match.winner?.name === match.a?.name ? 'winner' : ''}">${match.a ? `<span class="draw-name">${match.a.name}</span><span class="draw-country">${match.a.country}</span>` : '<span class="draw-name">TBD</span>'}</div>
+      <div class="draw-line ${match.winner?.name === match.b?.name ? 'winner' : ''}">${match.b ? `<span class="draw-name">${match.b.name}</span><span class="draw-country">${match.b.country}</span>` : '<span class="draw-name">TBD</span>'}</div>
+      ${match.score ? `<div class="draw-score">${match.score}</div>` : ''}
+    </div>`).join('')}</div>`).join('');
+}
+function closeDrawModal() {
+  const modal = document.querySelector('#drawModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  document.body.classList.remove('setup-open');
+}
 function flagEmoji(code='BRA') {
   const map = { BRA:'🇧🇷', ARG:'🇦🇷', CHI:'🇨🇱', USA:'🇺🇸', GBR:'🇬🇧', ESP:'🇪🇸', GER:'🇩🇪', FRA:'🇫🇷', ITA:'🇮🇹', AUS:'🇦🇺', JPN:'🇯🇵', CHN:'🇨🇳', QAT:'🇶🇦', PRT:'🇵🇹', BEL:'🇧🇪', SWE:'🇸🇪', AUT:'🇦🇹', SRB:'🇷🇸', RUS:'🇷🇺' };
   return map[(code||'BRA').toUpperCase()] || '🏳️';
@@ -280,7 +443,7 @@ function applyAdminOverrides(content) {
 }
 
 function migrateState() {
-  state.version = '2.7.2';
+  state.version = '2.8.0';
   state.logs ||= [];
   state.summary ||= [];
   state.inbox ||= [];
@@ -368,6 +531,7 @@ function bindUI() {
   $$('#mainTabs .tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   $$('.dock-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   $$('.hub-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.jumpTab)));
+  ensureDrawModal();
   $('#saveOwnerSetupBtn')?.addEventListener('click', saveOwnerSetup);
   $('#openCalendarBtn')?.addEventListener('click', () => switchTab('calendar'));
   $('#advanceWeekBtn').addEventListener('click', advanceWeek);
@@ -400,6 +564,7 @@ function bindUI() {
 }
 
 function switchTab(tab) {
+  state.ui ||= {}; state.ui.currentTab = tab;
   $$('#mainTabs .tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
   $$('.dock-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
   $$('.tab-panel').forEach(panel => panel.classList.toggle('active', panel.id === `tab-${tab}`));
@@ -433,6 +598,7 @@ function render() {
   hydrateAssetImages();
   renderMatch();
   hydrateAssetImages();
+  ensureDrawModal();
   saveState(state);
 }
 
@@ -444,15 +610,18 @@ function getStatusText() {
   return 'Pronto para competir';
 }
 
+
 function renderInbox() {
   const box = $('#inboxList');
   const items = (state.inbox || []).slice(0, 6);
-  box.innerHTML = items.map(msg => `
-    <div class="list-item">
-      <div><strong>${msg.title}</strong><div class="small">${msg.body}</div></div>
-      <div class="small">S${msg.week}</div>
-    </div>`).join('') || '<div class="list-item"><span>Nenhuma mensagem ainda.</span></div>';
+  box.innerHTML = items.map((msg, idx) => `
+    <article class="inbox-card ${idx===0 ? 'featured' : ''}">
+      <div class="inbox-icon">${idx===0 ? '✦' : '✉'}</div>
+      <div class="inbox-copy"><strong>${msg.title}</strong><div class="small">${msg.body}</div></div>
+      <div class="small inbox-week">S${msg.week}</div>
+    </article>`).join('') || '<div class="list-item"><span>Nenhuma mensagem ainda.</span></div>';
 }
+
 
 function renderSponsorOffers() {
   const host = $('#sponsorOffers');
@@ -471,18 +640,23 @@ function renderSponsorOffers() {
 }
 
 
+
 function renderNextEvents() {
   const list = $('#nextEventsList');
   const next = state.calendar.filter(e => e.week >= state.academy.week).slice(0, 4);
   list.innerHTML = `<div class="tournament-mini-list">${next.map(event => {
     const gate = getTournamentGate(event);
     const logo = logoForTournament(event.name);
-    return `<button class="next-event-card" onclick="window.launchEvent('${event.name.replace("'", "&#39;")}')">
-      ${logoImg(logo,'tour-logo',event.name)}
-      <div><strong>Semana ${event.week} • ${event.name}</strong><div class="small">${event.tier} • ${event.surface} • ${gate.label}</div></div>
-    </button>`;
+    return `<div class="next-event-card premium" >
+      <button class="next-event-main" onclick="window.launchEvent('${event.name.replace("'", "&#39;")}')">
+        ${logoMarkup(logo,event.name,'tour-logo large','tournament-logo-fallback large')}
+        <div><strong>Semana ${event.week} • ${event.name}</strong><div class="small">${event.tier} • ${event.surface} • ${gate.label}</div></div>
+      </button>
+      <button class="mini-btn next-bracket-btn" onclick="window.openDrawModal('${event.name.replace("'", "&#39;")}')">Ver chave</button>
+    </div>`;
   }).join('')}</div>`;
 }
+
 
 function renderSummary() {
   $('#weekSummary').innerHTML = state.summary.slice(0, 6).map(text => `<div class="list-item"><span>${text}</span></div>`).join('');
@@ -498,16 +672,29 @@ function renderHealth() {
   risk.innerHTML = rows;
 }
 
+
 function renderFacilities() {
-  const map = { training: 'Centro de Treino', medical: 'Centro Médico', finance: 'Financeiro', scouting: 'Scouting' };
-  $('#facilityList').innerHTML = Object.entries(state.academy.facilities).map(([key, level]) => `
-    <article class="panel-card">
-      <h4>${map[key]}</h4>
-      <p class="muted">Nível ${level}</p>
-      <button class="btn-secondary" onclick="window.upgradeFacility('${key}')">Upgrade (${money((level + 1) * 18000)})</button>
-    </article>`).join('');
+  const map = {
+    training: { title: 'Centro de Treino', staff: state.staff.Tecnico, avatar: STAFF_AVATARS['Tecnico'], desc: 'Evolução técnica, potência e consistência.' },
+    medical: { title: 'Centro Médico', staff: state.staff.Fisioterapeuta, avatar: STAFF_AVATARS['Fisioterapeuta'], desc: 'Recuperação, prevenção e gestão física.' },
+    finance: { title: 'Financeiro', staff: state.staff.Financeiro, avatar: STAFF_AVATARS['Financeiro'], desc: 'Patrocínio, caixa e acordos estratégicos.' },
+    scouting: { title: 'Scouting', staff: state.staff.Psicologo, avatar: STAFF_AVATARS['Psicologo'], desc: 'Leitura de mercado e novos perfis.' }
+  };
+  $('#facilityList').innerHTML = Object.entries(state.academy.facilities).map(([key, level]) => {
+    const info = map[key];
+    const cost = (level + 1) * 18000;
+    return `
+    <article class="facility-card panel-card">
+      <div class="facility-head">${avatarImg(info.avatar,'avatar-img',info.title)}<div><h4>${info.title}</h4><p class="muted">${info.desc}</p></div></div>
+      <div class="facility-level-row"><span class="metric">Nível ${level}</span><span class="metric">Staff ${info.staff ? info.staff.name : 'vago'}</span></div>
+      <div class="facility-progress"><span style="width:${Math.min(100, level*20 + 10)}%"></span></div>
+      <button class="btn-secondary facility-upgrade-btn" onclick="window.upgradeFacility('${key}')">Upgrade ${money(cost)}</button>
+    </article>`;
+  }).join('');
 }
+
 window.launchEvent = launchEvent;
+window.openDrawModal = openDrawModal;
 
 window.upgradeFacility = (key) => {
   const level = state.academy.facilities[key];
@@ -585,23 +772,31 @@ window.restPlayer = (playerId) => {
   render();
 };
 
+
 function renderCalendar() {
   $('#calendarList').innerHTML = state.calendar.map(event => {
     const gate = getTournamentGate(event);
     const logo = logoForTournament(event.name);
     return `
-      <article class="tournament-card" onclick="window.launchEvent('${event.name.replace("'", "&#39;")}')">
-        <div class="tournament-logo-wrap">${logoImg(logo,'tournament-logo',event.name)}</div>
-        <div class="tournament-main">
-          <strong>Semana ${event.week} • ${event.name}</strong>
-          <div class="meta">${event.tier} • ${event.surface} • prêmio ${money(event.prize)} • chave ${event.drawSize || 16}</div>
-        </div>
-        <div class="tournament-side">
+      <article class="tournament-card premium-card">
+        <button class="tournament-hero" onclick="window.launchEvent('${event.name.replace("'", "&#39;")}')">
+          <div class="tournament-logo-wrap hero">${logoMarkup(logo,event.name,'tournament-logo giant','tournament-logo-fallback giant')}</div>
+          <div class="tournament-main">
+            <strong>Semana ${event.week} • ${event.name}</strong>
+            <div class="meta">${event.tier} • ${event.surface} • prêmio ${money(event.prize)} • chave ${event.drawSize || 16}</div>
+          </div>
+        </button>
+        <div class="tournament-side full">
           <div class="entry-pill ${gate.cls}">${gate.label}</div>
+          <div class="tournament-actions-row">
+            <button class="mini-btn" onclick="window.launchEvent('${event.name.replace("'", "&#39;")}')">Ir para partida</button>
+            <button class="mini-btn" onclick="window.openDrawModal('${event.name.replace("'", "&#39;")}')">Chave</button>
+          </div>
         </div>
       </article>`;
   }).join('');
 }
+
 
 function renderMarket() {
   $('#marketList').innerHTML = state.marketTalents.map(talent => {
@@ -719,7 +914,7 @@ function renderRanking() {
       <div>${row.rank}</div>
       <div class="ranking-player">
         ${avatarImg(avatar,'mini-avatar',row.name)}
-        <span class="ranking-player-name">${row.isUser ? '⭐ ' : ''}${row.name}</span>
+        <span class="ranking-player-name" title="${row.name}">${row.isUser ? '⭐ ' : ''}${row.name}</span>
       </div>
       <div>${row.country}</div>
       <div>${Math.round(row.overall)}</div>
@@ -751,7 +946,8 @@ function startScheduledMatch() {
   const run = state.activeTournament;
   if (!run || run.complete) return addLog('Nenhum torneio ativo.');
   const round = run.rounds[run.roundIndex];
-  const opponent = pickOpponent(round, player);
+  const drawPick = pickDrawOpponent(run.draw, run.roundIndex);
+  const opponent = drawPick?.opponent || pickOpponent(round, player);
   state.match = {
     event, round, drawType: run.entryType, playerId: player.id, playerName: player.name, opponentName: opponent.name, playerScore: 0, opponentScore: 0,
     gamesPlayer: 0, gamesOpponent: 0, set: 1, pointText: '0-0', strategy: currentStrategy, inProgress: true,
@@ -772,12 +968,14 @@ function createTournamentRun(player, event) {
   const entryType = gate.label === 'Chave principal' ? 'main' : gate.label === 'Qualifying' ? 'qualifying' : gate.label === 'Wild card possível' ? 'wildcard' : null;
   if (!entryType) return addLog('Seu atleta principal ainda não tem acesso a este evento.');
   const rounds = entryType === 'qualifying' ? ['Q', 'R16', 'QF', 'SF', 'F'] : ['R16', 'QF', 'SF', 'F'];
+  const draw = ensureTournamentRunDraw(player, event, rounds);
   state.activeTournament = {
     playerId: player.id,
     event,
     entryType,
     roundIndex: 0,
     rounds,
+    draw,
     complete: false,
     wins: 0
   };
@@ -869,6 +1067,7 @@ function finishMatch(playerWon) {
   stopAutoPlay();
 
   if (!run) return render();
+  advanceDrawRound(run, playerWon);
   if (!playerWon) {
     run.complete = true;
     state.activeTournament = null;
@@ -897,7 +1096,7 @@ function renderMatch() {
   const matchWrap = $('#matchBrandWrap');
   const activeName = state.activeTournament ? state.activeTournament.event.name : (match?.event?.name || '');
   const activeLogo = logoForTournament(activeName);
-  if (matchWrap) matchWrap.innerHTML = activeLogo ? `<div class="tournament-logo-wrap">${logoImg(activeLogo,'tour-logo large',activeName)}</div>` : ''; 
+  if (matchWrap) matchWrap.innerHTML = `<div class="match-brand-actions">${activeLogo ? `<div class="tournament-logo-wrap hero">${logoMarkup(activeLogo,activeName,'tour-logo large','tournament-logo-fallback large')}</div>` : ''}<button class="mini-btn" type="button" onclick="window.openDrawModal('${activeName.replace("'", "&#39;")}')">Ver chave</button></div>`; 
   $('#roundLabel').textContent = state.activeTournament ? `Rodada ${state.activeTournament.rounds[state.activeTournament.roundIndex] || 'fim'}` : 'Rodada -';
   $('#tournamentLabel').textContent = state.activeTournament ? state.activeTournament.event.name : 'Nenhum torneio';
   if (!match) {
