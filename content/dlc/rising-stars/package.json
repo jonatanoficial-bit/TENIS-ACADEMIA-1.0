@@ -1,0 +1,11 @@
+{
+  "id": "dlc.rising-stars.dev",
+  "name": "Rising Stars Dev Pack",
+  "version": "0.1.0",
+  "description": "Pack opcional com jovens talentos extras, um mini-evento showcase e um patrocinador focado em base.",
+  "files": {
+    "players": "players.json",
+    "tournaments": "tournaments.json",
+    "copy": "copy.json"
+  }
+}

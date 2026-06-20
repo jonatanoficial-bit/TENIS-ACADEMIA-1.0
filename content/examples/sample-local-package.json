@@ -1,0 +1,53 @@
+{
+  "id": "dlc.training-lab.local",
+  "name": "Training Lab Local Pack",
+  "version": "0.0.1",
+  "enabled": true,
+  "payload": {
+    "copy": {
+      "heroTitle": "ACE Academy Manager · Training Lab",
+      "heroSubtitle": "Pacote exemplo para testar overrides e importacao no painel Admin."
+    },
+    "players": {
+      "academyProspects": [
+        {
+          "id": "pros-local-001",
+          "name": "Mateo Duarte",
+          "age": 17,
+          "countryCode": "BR",
+          "overall": 73,
+          "potential": 89,
+          "archetype": "All Court",
+          "preferredSurface": "hard",
+          "serve": 72,
+          "return": 71,
+          "stamina": 74,
+          "focus": 69,
+          "morale": 70,
+          "fitness": 78,
+          "salaryDemand": 5200,
+          "marketValue": 180000,
+          "type": "prospect"
+        }
+      ]
+    },
+    "tournaments": {
+      "events": [
+        {
+          "id": "showcase-local-ace-cup",
+          "name": "ACE Invitational Showcase",
+          "category": "SHOWCASE",
+          "surface": "hard",
+          "city": "Sao Paulo",
+          "country": "Brazil",
+          "startDate": "2026-07-13",
+          "endDate": "2026-07-18",
+          "entryCutoff": 160,
+          "rounds": 4,
+          "prizePool": 85000,
+          "prestige": 42
+        }
+      ]
+    }
+  }
+}

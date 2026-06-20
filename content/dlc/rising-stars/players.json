@@ -1,0 +1,44 @@
+{
+  "academyAdds": [],
+  "prospectMarketAdds": [
+    {
+      "id": "dlc-martin-landaluce",
+      "name": "Martin Landaluce",
+      "age": 20,
+      "countryCode": "ES",
+      "points": 420,
+      "overall": 68,
+      "potential": 89,
+      "fee": 850000,
+      "salary": 16000,
+      "preferredSurface": "hard",
+      "archetype": "All Court"
+    },
+    {
+      "id": "dlc-justin-engel",
+      "name": "Justin Engel",
+      "age": 18,
+      "countryCode": "DE",
+      "points": 138,
+      "overall": 58,
+      "potential": 90,
+      "fee": 300000,
+      "salary": 7600,
+      "preferredSurface": "hard",
+      "archetype": "Aggressive Baseliner"
+    },
+    {
+      "id": "dlc-joao-faria",
+      "name": "Joao Faria",
+      "age": 21,
+      "countryCode": "PT",
+      "points": 266,
+      "overall": 63,
+      "potential": 81,
+      "fee": 460000,
+      "salary": 9800,
+      "preferredSurface": "clay",
+      "archetype": "Baseliner"
+    }
+  ]
+}

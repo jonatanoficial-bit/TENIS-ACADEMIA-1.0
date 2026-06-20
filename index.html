@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>Vale Games Tennis Manager</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="buildOverlay" class="build-overlay">v3.6.0 • 20/06/2026 • 12:14:54</div>
+  <div class="app-shell">
+    <header class="topbar glass">
+      <div>
+        <p class="eyebrow">Vale Games • build mobile-first</p>
+        <h1>Vale Games Tennis Manager</h1>
+      </div>
+      <div class="hud-row hud-scroll">
+        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v3.6.0 • 20/06/2026 • 12:14:54</strong></div>
+        <div class="pill"><span>Temporada</span><strong id="seasonLabel">2026</strong></div>
+        <div class="pill"><span>Semana</span><strong id="weekLabel">1</strong></div>
+        <div class="pill"><span>Caixa</span><strong id="moneyLabel">$0</strong></div>
+        <div class="pill"><span>Meta</span><strong id="goalLabel">Top 120</strong></div>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <aside class="sidebar glass">
+        <section class="hero-card hero-visual">
+          <div class="hero-copy">
+            <p class="eyebrow">Academia • carreira • ranking</p>
+            <h2>Comande a academia que sobe no circuito mundial</h2>
+            <p>Treine talentos, lide com lesões, negocie patrocínios, atravesse qualifying e dispute a elite do tênis em um fluxo pensado primeiro para celular.</p>
+          </div>
+          <div class="hero-badges">
+            <span>Mobile UX</span>
+            <span>ATP-like</span>
+            <span>Patrocínio</span>
+            <span>DLC Ready</span>
+          </div>
+        </section>
+
+        <nav class="nav-tabs" id="mainTabs" aria-label="Abas principais">
+          <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+          <button class="tab-btn" data-tab="roster">Atletas</button>
+          <button class="tab-btn" data-tab="training">Treino</button>
+          <button class="tab-btn" data-tab="calendar">Calendário</button>
+          <button class="tab-btn" data-tab="match">Partida</button>
+          <button class="tab-btn" data-tab="market">Mercado</button>
+          <button class="tab-btn" data-tab="staff">Staff</button>
+          <button class="tab-btn" data-tab="ranking">Ranking</button>
+          <button class="tab-btn" data-tab="adminhint">Admin</button>
+        </nav>
+
+        <div id="mobileBuildBadge" class="mobile-build-badge glass">v3.6.0 • 20/06/2026 • 12:14:54</div>
+        <section class="sidebar-actions">
+          <button id="advanceWeekBtn" class="btn-primary">Avançar Semana</button>
+          <button id="saveBtn" class="btn-secondary">Salvar</button>
+          <button id="resetBtn" class="btn-ghost">Novo Jogo</button>
+          <a class="btn-ghost" href="admin.html">Abrir Admin</a>
+        </section>
+      </aside>
+
+      <section class="content-stack">
+        <section class="tab-panel active glass" id="tab-dashboard">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Visão geral</p>
+              <h3>Painel da Academia</h3>
+            </div>
+            <div class="status-dot-row">
+              <span class="status-dot"></span>
+              <span id="statusText">Pronto para competir</span>
+            </div>
+          </div>
+          <div class="cards-grid">
+            <article class="stat-card"><span>Reputação</span><strong id="reputationLabel">0</strong></article>
+            <article class="stat-card"><span>Patrocínio</span><strong id="sponsorLabel">$0</strong></article>
+            <article class="stat-card"><span>Custos / semana</span><strong id="costsLabel">$0</strong></article>
+            <article class="stat-card"><span>Atletas ativos</span><strong id="rosterCountLabel">0</strong></article>
+          </div>
+          <div class="owner-hub glass-card-lite">
+            <div id="ownerHubCard" class="owner-hub-card"></div>
+            <div class="owner-hub-actions">
+              <button class="hub-btn" data-jump-tab="calendar">Agenda</button>
+              <button class="hub-btn" data-jump-tab="match">Partida</button>
+              <button class="hub-btn" data-jump-tab="ranking">Ranking</button>
+              <button class="hub-btn" data-jump-tab="roster">Atletas</button>
+            </div>
+          </div>
+          <div class="dashboard-grid">
+            <article class="panel-card">
+              <div class="panel-title-row"><h4>Agenda imediata</h4><button id="openCalendarBtn" class="mini-btn">Ver tudo</button></div>
+              <div id="nextEventsList" class="list-block"></div>
+            </article>
+            <article class="panel-card">
+              <div class="panel-title-row"><h4>Resumo da semana</h4></div>
+              <div id="weekSummary" class="list-block"></div>
+            </article>
+            <article class="panel-card">
+              <div class="panel-title-row"><h4>Risco e saúde</h4></div>
+              <div id="healthOverview" class="list-block"></div>
+            </article>
+            <article class="panel-card">
+              <div class="panel-title-row"><h4>Caixa de entrada</h4></div>
+              <div id="inboxList" class="list-block"></div>
+            </article>
+            <article class="panel-card full-width">
+              <div class="panel-title-row"><h4>Academia</h4></div>
+              <div id="facilityList" class="facility-grid"></div>
+            </article>
+            <article class="panel-card full-width">
+              <div class="panel-title-row"><h4>Oportunidades de patrocínio</h4></div>
+              <div id="sponsorOffers" class="market-grid"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="tab-panel glass" id="tab-roster">
+          <div class="section-head"><div><p class="eyebrow">Gestão esportiva</p><h3>Seus atletas</h3></div></div>
+          <div id="rosterList" class="roster-grid"></div>
+        </section>
+
+
+        <section class="tab-panel glass" id="tab-training">
+          <div class="section-head"><div><p class="eyebrow">Performance semanal</p><h3>Training Lab</h3></div><div class="training-build">Plano protegido • schema 7</div></div>
+          <div class="training-summary-grid">
+            <article class="stat-card"><span>Ciclo da academia</span><strong id="trainingCycleLabel">Equilibrado</strong></article>
+            <article class="stat-card"><span>Carga média</span><strong id="trainingLoadLabel">Moderada</strong></article>
+            <article class="stat-card"><span>Risco projetado</span><strong id="trainingRiskLabel">Baixo</strong></article>
+            <article class="stat-card"><span>Próximo processamento</span><strong id="trainingWeekLabel">Semana 2</strong></article>
+          </div>
+          <article class="panel-card training-control-card">
+            <div><h4>Diretriz do ciclo</h4><p class="muted">Define o viés geral da academia. Cada atleta ainda recebe um plano individual.</p></div>
+            <select id="academyTrainingCycle" aria-label="Ciclo de treinamento"><option value="balanced">Equilibrado</option><option value="technical">Desenvolvimento técnico</option><option value="physical">Base física</option><option value="match">Preparação competitiva</option><option value="recovery">Recuperação</option></select>
+          </article>
+          <div id="trainingPlanList" class="training-plan-grid"></div>
+          <article class="panel-card training-report-card"><div class="panel-title-row"><h4>Relatório da última semana</h4></div><div id="trainingReport" class="list-block"></div></article>
+        </section>
+
+        <section class="tab-panel glass" id="tab-calendar">
+          <div class="section-head"><div><p class="eyebrow">Circuito global</p><h3>World Tour Ecosystem</h3></div><div class="world-tour-badges"><span id="tourEventCount">0 eventos</span><span id="tourLastUpdate">Ranking semanal</span></div></div>
+          <div id="worldTourFeed" class="world-tour-feed"></div>
+          <div id="calendarList" class="calendar-grid"></div>
+        </section>
+
+        <section class="tab-panel glass" id="tab-match">
+          <div class="section-head"><div><p class="eyebrow">Broadcast Match Center</p><h3>Partida realista ponto a ponto</h3></div><div id="matchBrandWrap" class="match-brand-wrap"></div></div>
+          <div class="match-layout">
+            <div class="match-stage">
+              <div class="score-card mobile-priority">
+                <div class="score-row"><span id="matchPlayerName">Seu atleta</span><strong id="scorePlayer">0</strong></div>
+                <div class="score-row"><span id="matchOpponentName">Adversário</span><strong id="scoreOpponent">0</strong></div>
+                <div class="score-meta"><span id="matchBuildInline" class="metric-build">v3.6.0 • 20/06/2026 • 12:14:54</span><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
+                <div class="score-meta secondary-meta"><span id="roundLabel">Rodada -</span><span id="tournamentLabel">Nenhum torneio</span></div>
+              </div>
+              <canvas id="matchCanvas" width="960" height="540"></canvas>
+            </div>
+            <div class="match-side">
+              <div class="action-grid touch-grid">
+                <button class="action-btn active" data-strategy="balanced">Equilibrado</button>
+                <button class="action-btn" data-strategy="aggressive">Agressivo</button>
+                <button class="action-btn" data-strategy="defensive">Defensivo</button>
+                <button class="action-btn" data-strategy="serve">Focar Saque</button>
+                <button class="action-btn" data-strategy="pressure">Pressionar</button>
+                <button class="action-btn" data-strategy="control">Controlar</button>
+              </div>
+              <div class="match-actions touch-actions">
+                <button id="startMatchBtn" class="btn-primary">Iniciar rodada da semana</button>
+                <button id="playPointBtn" class="btn-secondary">Jogar ponto</button>
+                <button id="autoMatchBtn" class="btn-ghost">Auto 1x</button>
+                <div class="auto-controls" aria-label="Controles de autoplay">
+                  <button id="auto1xBtn" class="mini-btn active">1x</button>
+                  <button id="auto2xBtn" class="mini-btn">2x</button>
+                  <button id="auto4xBtn" class="mini-btn">4x</button>
+                  <button id="pauseAutoBtn" class="mini-btn">Pausar</button>
+                </div>
+              </div>
+              <article class="panel-card match-scout-card">
+                <div class="panel-title-row"><h4>Dossiê tático</h4></div>
+                <div id="matchScoutPanel" class="match-scout-panel"></div>
+              </article>
+              <article class="panel-card match-stats-card">
+                <div class="panel-title-row"><h4>Estatísticas ao vivo</h4></div>
+                <div id="matchStatsPanel" class="match-stats-grid"></div>
+              </article>
+              <article class="panel-card match-report-card">
+                <div class="panel-title-row"><h4>Relatório premium</h4></div>
+                <div id="matchReportPanel" class="match-report-panel"></div>
+              </article>
+              <div id="matchLog" class="match-log broadcast-log"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="tab-panel glass" id="tab-market">
+          <div class="section-head"><div><p class="eyebrow">Scouting</p><h3>Mercado de talentos</h3></div></div>
+          <div id="marketList" class="market-grid"></div>
+        </section>
+
+        <section class="tab-panel glass" id="tab-staff">
+          <div class="section-head"><div><p class="eyebrow">Backroom</p><h3>Staff e departamentos</h3></div></div>
+          <div id="staffDepartmentSummary" class="staff-summary"></div><div id="staffList" class="cards-grid"></div>
+        </section>
+
+        <section class="tab-panel glass" id="tab-ranking">
+          <div class="section-head"><div><p class="eyebrow">Mundo ATP-like</p><h3>Ranking Mundial</h3></div></div>
+          <div id="rankingTable" class="ranking-table"></div>
+        </section>
+
+        <section class="tab-panel glass" id="tab-adminhint">
+          <div class="section-head"><div><p class="eyebrow">Ferramentas</p><h3>Área Administrativa</h3></div></div>
+          <div class="admin-hint">
+            <p>Use a área Admin para importar/exportar saves, ativar DLCs locais e editar conteúdo básico sem backend.</p>
+            <a class="btn-primary inline-btn" href="admin.html">Abrir Admin</a>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    
+    <div id="ownerSetupModal" class="setup-modal hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="careerSetupTitle">
+      <div class="setup-backdrop"></div>
+      <div class="setup-card glass">
+        <div class="setup-progress"><span>1</span><div><strong>Criação de carreira</strong><small>Perfil, academia e estratégia inicial</small></div><b>v3.6.0</b></div>
+        <div class="section-head"><div><p class="eyebrow">Career Genesis</p><h3 id="careerSetupTitle">Construa sua identidade no circuito</h3></div></div>
+        <div id="setupValidation" class="setup-validation hidden" role="alert"></div>
+        <div class="form-grid setup-grid">
+          <label>Nome do treinador<input id="ownerNameInput" type="text" maxlength="28" placeholder="Jonatan Vale" autocomplete="name" /></label>
+          <label>Nacionalidade<input id="ownerCountryInput" type="text" maxlength="3" placeholder="BRA" autocapitalize="characters" /></label>
+          <label>Idade<input id="ownerAgeInput" type="number" min="18" max="85" value="36" inputmode="numeric" /></label>
+          <label>Gênero<select id="ownerGenderInput"><option value="masculino">Masculino</option><option value="feminino">Feminino</option><option value="nao-informado">Prefiro não informar</option></select></label>
+          <label>Origem profissional<select id="ownerBackgroundInput"><option value="ex-jogador">Ex-jogador profissional</option><option value="base">Treinador de base</option><option value="analista">Analista de desempenho</option><option value="preparador">Preparador físico</option><option value="empresario">Empresário esportivo</option></select></label>
+          <label>Especialidade<select id="ownerSpecialtyInput"><option value="tecnica">Desenvolvimento técnico</option><option value="tatica">Inteligência tática</option><option value="fisica">Preparação física</option><option value="mental">Força mental</option><option value="negociacao">Negociação e carreira</option></select></label>
+          <label>Nome da academia<input id="academyNameInput" type="text" maxlength="32" placeholder="Vale Tennis Academy" /></label>
+          <label>Cidade-sede<input id="academyCityInput" type="text" maxlength="32" placeholder="São Paulo" /></label>
+          <label>Sigla / escudo<input id="academyLogoInput" type="text" maxlength="3" placeholder="VTA" autocapitalize="characters" /></label>
+          <label>Filosofia<select id="academyPhilosophyInput"><option value="formacao">Formação de talentos</option><option value="elite">Alta performance</option><option value="equilibrada">Equilíbrio financeiro e esportivo</option><option value="global">Scouting internacional</option></select></label>
+          <label>Dificuldade<select id="careerDifficultyInput"><option value="casual">Acessível</option><option value="normal" selected>Profissional</option><option value="hard">Elite</option></select></label>
+          <label>Moeda<select id="careerCurrencyInput"><option value="BRL">Real brasileiro (R$)</option><option value="USD">Dólar (US$)</option><option value="EUR">Euro (€)</option></select></label>
+        </div>
+        <div>
+          <p class="eyebrow">Avatar do treinador</p>
+          <div id="ownerAvatarChoices" class="choice-grid"></div>
+        </div>
+        <div class="career-preview" id="careerPreview"><strong>Sua carreira</strong><span>Preencha os dados para visualizar o perfil inicial.</span></div>
+        <div class="setup-actions">
+          <button id="saveOwnerSetupBtn" class="btn-primary" type="button">Criar carreira e entrar</button>
+        </div>
+        <p class="setup-footnote">Os dados são salvos localmente. Em caso de interrupção, o jogo preserva a última versão estável.</p>
+      </div>
+    </div>
+
+<div id="systemErrorBanner" class="system-error-banner hidden" role="alert" aria-live="assertive">
+  <strong>Falha recuperável</strong><span id="systemErrorText">O jogo encontrou um problema.</span>
+  <button id="dismissErrorBtn" type="button">Fechar</button>
+</div>
+<div class="runtime-build-stamp" id="runtimeBuildStamp" title="Identificação técnica da versão">v3.6.0 • 20/06/2026 • 12:14:54</div>
+
+<nav class="mobile-dock glass" aria-label="Ações rápidas mobile">
+      <button class="dock-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="dock-btn" data-tab="roster">Atletas</button>
+      <button class="dock-btn" data-tab="training">Treino</button>
+      <button class="dock-btn" data-tab="match">Partida</button>
+      <button class="dock-btn" data-tab="ranking">Ranking</button>
+      <button class="dock-btn" data-tab="calendar">Agenda</button>
+    </nav>
+  </div>
+
+  <script type="module" src="js/main.js?v=3.6.0-20260620-121454"></script>
+</body>
+</html>

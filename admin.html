@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ace Academy Manager • Admin</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <section class="admin-card glass" id="loginCard">
+      <p class="eyebrow">Admin local</p>
+      <h1>Painel de Conteúdo</h1>
+      <p>Login inicial: <strong>admin</strong> / <strong>ace2026</strong></p>
+      <div class="form-grid">
+        <label>Usuário<input id="adminUser" value="admin" /></label>
+        <label>Senha<input id="adminPass" type="password" value="ace2026" /></label>
+      </div>
+      <button id="loginBtn" class="btn-primary">Entrar</button>
+      <p id="loginMessage" class="muted"></p>
+    </section>
+
+    <section class="admin-card glass hidden" id="adminPanel">
+      <div class="section-head"><div><p class="eyebrow">Conteúdo modular</p><h2>Gerenciar DLCs e Save</h2></div></div>
+      <div class="cards-grid">
+        <article class="panel-card">
+          <h3>DLCs detectadas</h3>
+          <div id="dlcAdminList" class="list-block"></div>
+        </article>
+        <article class="panel-card">
+          <h3>Instalar DLC por JSON</h3>
+          <input id="dlcFileInput" type="file" accept="application/json" />
+          <button id="installDlcBtn" class="btn-secondary">Instalar</button>
+          <p class="muted">O arquivo é salvo em localStorage como expansão local.</p>
+        </article>
+        <article class="panel-card">
+          <h3>Exportar / Importar save</h3>
+          <div class="stack-gap">
+            <button id="exportSaveBtn" class="btn-secondary">Exportar Save</button>
+            <input id="saveFileInput" type="file" accept="application/json" />
+            <button id="importSaveBtn" class="btn-secondary">Importar Save</button>
+          </div>
+        </article>
+        <article class="panel-card">
+          <h3>Editar textos</h3>
+          <label>Nome da Academia<input id="academyNameInput" placeholder="Ace Academy" /></label>
+          <button id="saveAcademyNameBtn" class="btn-secondary">Salvar nome</button>
+        </article>
+      </div>
+      <div class="admin-actions"><a href="index.html" class="btn-ghost">Voltar ao jogo</a></div>
+      <pre id="adminLog" class="admin-log"></pre>
+    </section>
+  </main>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

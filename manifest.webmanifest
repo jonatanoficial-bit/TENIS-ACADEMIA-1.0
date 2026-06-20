@@ -1,0 +1,16 @@
+{
+  "name": "Vale Games Tennis Manager",
+  "short_name": "Vale Tennis",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#08101d",
+  "theme_color": "#08101d",
+  "icons": [
+    {
+      "src": "assets/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

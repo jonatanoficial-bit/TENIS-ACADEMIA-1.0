@@ -1,0 +1,7 @@
+{
+  "version": "0.2.0",
+  "packs": [
+    {"id": "base-2026", "type": "base", "path": "content/base/base-pack.json", "active": true},
+    {"id": "challenger-boost", "type": "dlc", "path": "content/dlc/challenger-boost.json", "active": false}
+  ]
+}
