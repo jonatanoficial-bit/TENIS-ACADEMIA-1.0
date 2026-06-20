@@ -143,6 +143,120 @@ function logoImg(src, cls='tour-logo', alt='logo') {
   return src ? `<img class="${cls}" data-asset-src="${src}" alt="${alt}">` : '';
 }
 
+function hashNumber(text='') {
+  return Math.abs([...String(text)].reduce((acc, char) => ((acc << 5) - acc) + char.charCodeAt(0), 0));
+}
+function flagEmoji(country='') {
+  const code = String(country || '').slice(0, 2).toUpperCase();
+  if (code.length !== 2 || /[^A-Z]/.test(code)) return '🏳️';
+  return code.replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
+function pctNumber(a, b) { return b ? Math.round((a / b) * 100) : 0; }
+function rallyAverage(statsA, statsB) {
+  const count = (statsA?.rallyCount || 0) + (statsB?.rallyCount || 0);
+  return count ? (((statsA?.rallyTotal || 0) + (statsB?.rallyTotal || 0)) / count).toFixed(1) : '0.0';
+}
+function safePlayerName(player, fallback='Atleta') { return player?.name || fallback; }
+function scoreSnapshot(match) {
+  if (!match) return '0-0';
+  const sets = `${match.setsPlayer || 0}-${match.setsOpponent || 0}`;
+  const games = `${match.gamesPlayer || 0}-${match.gamesOpponent || 0}`;
+  return `Sets ${sets} • Games ${games} • ${match.pointText || '0-0'}`;
+}
+function serveDirectionFor(match, serverSide) {
+  const strategy = currentStrategy;
+  const options = strategy === 'serve' ? ['aberto', 'corpo', 'T', 'aberto'] : strategy === 'control' ? ['corpo', 'T', 'corpo'] : ['aberto', 'T', 'corpo'];
+  const idx = (hashNumber(`${match?.event?.name || ''}-${match?.set || 1}-${match?.playerScore || 0}-${match?.opponentScore || 0}-${serverSide}-${Date.now()}`) + Math.floor(Math.random()*99)) % options.length;
+  return options[idx];
+}
+function serveSpeedFor(server, surface, firstIn) {
+  const serve = attrValue(server, 'serve');
+  const power = attrValue(server, 'power', attrValue(server, 'forehand'));
+  const surfaceBoost = surfaceKey(surface) === 'grass' ? 4 : surfaceKey(surface) === 'clay' ? -3 : 0;
+  const base = firstIn ? 158 : 130;
+  return Math.round(clamp(base + serve * 0.45 + power * 0.18 + surfaceBoost + (Math.random()*14 - 7), firstIn ? 160 : 122, firstIn ? 226 : 178));
+}
+function pointTacticalRead(point, match) {
+  if (!point) return 'Aguardando leitura do analista.';
+  if (point.type === 'Ace') return `Saque ${point.direction || 'aberto'} com ${point.speed || 190} km/h criou ponto grátis.`;
+  if (point.type === 'Dupla falta') return 'Pressão no segundo saque gerou falha mental.';
+  if (point.rally >= 12) return `Rally longo de ${point.rally} bolas testou resistência e consistência.`;
+  if (point.type === 'Winner') return `Execução agressiva encaixou após ${point.rally} bolas.`;
+  return `Erro apareceu após ${point.rally || 0} bolas; ajuste risco e paciência.`;
+}
+function broadcastRecommendation(match, player, opponent) {
+  if (!match) return 'Inicie uma rodada para receber leitura do analista.';
+  const p = match.stats?.player || emptyMatchStats();
+  const o = match.stats?.opponent || emptyMatchStats();
+  const playerFirst = pctNumber(p.firstServeIn, p.firstServeTotal);
+  const oppErrors = o.unforcedErrors || 0;
+  const pErrors = p.unforcedErrors || 0;
+  const surface = surfaceKey(match.event?.surface);
+  if (p.doubleFaults >= 3 || playerFirst < 48) return 'Recomendação: reduzir risco no saque e jogar com mais controle por dois games.';
+  if (pErrors > oppErrors + 3) return 'Recomendação: trocar para Controlar ou Defensivo e alongar menos os pontos.';
+  if (surface === 'clay' && attrValue(player,'consistency') >= attrValue(opponent,'consistency')) return 'Recomendação: alongar rallies no saibro e atacar só a bola curta.';
+  if (attrValue(opponent,'backhand') < attrValue(opponent,'forehand') - 6) return 'Recomendação: insistir no backhand do adversário nas devoluções.';
+  if ((match.momentum || 0) < -4) return 'Recomendação: pausa tática, saque no corpo e foco no primeiro ponto do game.';
+  return 'Recomendação: manter padrão atual e pressionar o segundo saque adversário.';
+}
+function renderBroadcastIntro(match) {
+  const host = $('#matchBroadcastIntro');
+  if (!host) return;
+  const event = match?.event || state.activeTournament?.event || state.calendar.find(e => e.week === state.academy.week) || {};
+  const player = match ? getMatchPlayer(state.roster.find(p => p.id === match.playerId) || {}) : getMatchPlayer(chooseBestPlayer() || {});
+  const opponent = match ? getMatchPlayer(match.opponent || {}) : null;
+  const logo = logoForTournament(event.name || '');
+  const playerRank = player?.id ? getPlayerRank(player.id) : '—';
+  const oppRank = opponent?.rank || opponent?.ranking || (opponent ? Math.max(1, Math.round(180 - (opponent.overall || 60))) : '—');
+  const reco = match ? broadcastRecommendation(match, player, opponent) : 'Entre na partida para abrir dossiê, placar de transmissão e estatísticas ao vivo.';
+  host.innerHTML = `
+    <article class="broadcast-hero-card">
+      <div class="broadcast-event-block">
+        <div class="broadcast-logo-frame">${logoMarkup(logo, event.name || 'Torneio', 'tour-logo xl', 'tournament-logo-fallback xl')}</div>
+        <div class="broadcast-event-copy">
+          <p class="eyebrow">Broadcast Match Center Pro</p>
+          <h4>${event.name || 'Semana de preparação'}</h4>
+          <div class="broadcast-chips"><span>${event.tier || 'Circuito'}</span><span>${event.surface || 'Piso indefinido'}</span><span>${match?.round || state.activeTournament?.rounds?.[state.activeTournament.roundIndex] || 'Pré-jogo'}</span><span>${BUILD_LABEL}</span></div>
+        </div>
+      </div>
+      <div class="broadcast-vs-grid">
+        <div class="broadcast-player-card user">
+          ${avatarImg(avatarForPlayer(player?.name || 'player'), 'avatar-img broadcast-avatar', safePlayerName(player,'Seu atleta'))}
+          <div><strong>${safePlayerName(player,'Seu atleta')}</strong><span>${flagEmoji(player?.country)} ${player?.country || '---'} • Rank ${playerRank}</span><small>OVR ${Math.round(player?.overall || 0)} • Forma ${Math.round(player?.form || player?.morale || 70)} • Saúde ${Math.round(player?.health || 100)}</small></div>
+        </div>
+        <div class="broadcast-versus">VS</div>
+        <div class="broadcast-player-card rival">
+          ${opponent ? avatarImg(avatarForPlayer(opponent?.name || 'opponent'), 'avatar-img broadcast-avatar', safePlayerName(opponent,'Adversário')) : '<div class="avatar broadcast-avatar">?</div>'}
+          <div><strong>${opponent ? safePlayerName(opponent,'Adversário') : 'Adversário a definir'}</strong><span>${opponent ? `${flagEmoji(opponent.country)} ${opponent.country || '---'} • Rank ${oppRank}` : 'Toque em iniciar rodada'}</span><small>${opponent ? `OVR ${Math.round(opponent.overall || 0)} • Piso ${surfaceLabel(surfaceKey(event.surface || 'hard'))}` : 'A chave será carregada com fallback seguro.'}</small></div>
+        </div>
+      </div>
+      <div class="broadcast-analyst-strip"><strong>Analista:</strong><span>${reco}</span></div>
+    </article>`;
+  hydrateAssetImages();
+}
+function appendReplay(point, match) {
+  if (!match || !point) return;
+  match.replayTape ||= [];
+  match.replayTape.push({
+    text: `${point.serve} • ${point.type} • ${point.speed || '—'} km/h • ${point.rally || 0} bolas`,
+    detail: pointTacticalRead(point, match),
+    at: new Date().toISOString()
+  });
+  match.replayTape = match.replayTape.slice(-8);
+}
+function withMatchGuard(label, fn) {
+  if (!state.match?.inProgress || state.match.finished) { addLog('Inicie uma partida primeiro.'); return; }
+  const player = state.roster.find(p => p.id === state.match.playerId);
+  const snapshot = { match: structuredClone(state.match), player: player ? structuredClone(player) : null };
+  try { fn(); }
+  catch (error) {
+    if (player && snapshot.player) Object.assign(player, snapshot.player);
+    state.match = snapshot.match;
+    showSystemError(`${label} cancelado com segurança. O estado anterior foi restaurado.`, error);
+    renderMatch();
+  }
+}
+
 
 const OWNER_AVATARS = PLAYER_AVATARS;
 
@@ -595,6 +709,10 @@ function bindUI() {
   });
   $('#startMatchBtn').addEventListener('click', startScheduledMatch);
   $('#playPointBtn').addEventListener('click', playPoint);
+  $('#playGameBtn')?.addEventListener('click', simulateCurrentGame);
+  $('#playSetBtn')?.addEventListener('click', simulateCurrentSet);
+  $('#playMatchBtn')?.addEventListener('click', simulateFullMatch);
+  $('#tacticalPauseBtn')?.addEventListener('click', tacticalPause);
   $('#autoMatchBtn').addEventListener('click', () => setAutoPlay(1));
   $('#auto1xBtn')?.addEventListener('click', () => setAutoPlay(1));
   $('#auto2xBtn')?.addEventListener('click', () => setAutoPlay(2));
@@ -1202,14 +1320,14 @@ function startScheduledMatch() {
   const logo = logoForTournament(event.name);
   const firstServer = (state.academy.week + (run.roundIndex || 0)) % 2 === 0 ? 'player' : 'opponent';
   state.match = {
-    engineVersion: 'v3.6-real-point-engine', event, round, drawType: run.entryType,
+    engineVersion: 'v3.7-broadcast-pro-engine', presentation: 'broadcast-pro', event, round, drawType: run.entryType,
     playerId: player.id, playerName: player.name, opponentName: opponent.name, opponent,
     sets: [], set: 1, setsPlayer: 0, setsOpponent: 0,
     gamesPlayer: 0, gamesOpponent: 0, playerScore: 0, opponentScore: 0,
     tiebreak: false, server: firstServer, pointText: '0-0', strategy: currentStrategy,
     inProgress: true, finished: false, lastWinner: null, lastPointAt: performance.now(), momentum: 0,
     stats: { player: emptyMatchStats(), opponent: emptyMatchStats() },
-    lastPoint: null, report: [], logo,
+    lastPoint: null, lastServeSpeed: 0, replayTape: [], report: [], logo,
     log: [`${event.name} ${round}: ${player.name} vs ${opponent.name}. Piso ${event.surface || 'hard'} • saque inicial: ${firstServer === 'player' ? player.name : opponent.name}.`]
   };
   stopAutoPlay();
@@ -1218,6 +1336,7 @@ function startScheduledMatch() {
   addLog(`Partida preparada: ${player.name} vs ${opponent.name} em ${event.name} (${round}).`);
   switchTab('match');
   renderMatch();
+  renderBroadcastIntro(state.match);
   hydrateAssetImages();
 }
 
@@ -1254,6 +1373,9 @@ function simulateTennisPoint(match, player, opponent) {
   serverStats.firstServeTotal += 1;
   serverStats.servicePoints += 1;
   const firstIn = Math.random() * 100 < firstServeChance;
+  const serveDirection = serveDirectionFor(match, serverSide);
+  const serveSpeed = serveSpeedFor(server, surface, firstIn);
+  match.lastServeSpeed = serveSpeed;
   if (firstIn) serverStats.firstServeIn += 1;
 
   const aceChance = firstIn ? clamp(1.5 + (serverServe - receiverReturn) * 0.10 + (surfaceKey(surface) === 'grass' ? 2.2 : 0) + (serverSide === 'player' ? effects.serve * 0.34 : 0), 0.6, 16) : 0;
@@ -1261,7 +1383,7 @@ function simulateTennisPoint(match, player, opponent) {
     serverStats.aces += 1;
     serverStats.points += 1;
     serverStats.firstServeWon += 1;
-    return { winner: serverSide, type: 'Ace', serve: '1º saque', rally: 1, text: `Ace de ${server.name}.` };
+    return { winner: serverSide, type: 'Ace', serve: '1º saque', rally: 1, speed: serveSpeed, direction: serveDirection, text: `Ace de ${server.name} sacando ${serveDirection} a ${serveSpeed} km/h.` };
   }
 
   if (!firstIn) {
@@ -1270,7 +1392,7 @@ function simulateTennisPoint(match, player, opponent) {
       serverStats.doubleFaults += 1;
       receiverStats.points += 1;
       receiverStats.returnPointsWon += 1;
-      return { winner: receiverSide, type: 'Dupla falta', serve: '2º saque', rally: 0, text: `Dupla falta de ${server.name}.` };
+      return { winner: receiverSide, type: 'Dupla falta', serve: '2º saque', rally: 0, speed: serveSpeed, direction: serveDirection, text: `Dupla falta de ${server.name} tentando sacar ${serveDirection}.` };
     }
   }
 
@@ -1298,7 +1420,7 @@ function simulateTennisPoint(match, player, opponent) {
   if (firstIn && winner === serverSide) serverStats.firstServeWon += 1;
   if (!firstIn && winner === serverSide) serverStats.secondServeWon += 1;
   const shot = rally > 10 ? 'rally longo' : firstIn ? 'devolução pressionada' : 'segundo saque atacado';
-  return { winner, type: isError ? 'Erro não forçado' : 'Winner', serve: firstIn ? '1º saque' : '2º saque', rally, text: isError ? `${loser === 'player' ? player.name : opponent.name} erra após ${rally} bolas.` : `${winner === 'player' ? player.name : opponent.name} fecha com ${shot}.` };
+  return { winner, type: isError ? 'Erro não forçado' : 'Winner', serve: firstIn ? '1º saque' : '2º saque', rally, speed: serveSpeed, direction: serveDirection, tactical: shot, text: isError ? `${loser === 'player' ? player.name : opponent.name} erra após ${rally} bolas depois de saque ${serveDirection}.` : `${winner === 'player' ? player.name : opponent.name} fecha com ${shot} após saque ${serveDirection}.` };
 }
 
 function playPoint() {
@@ -1321,9 +1443,11 @@ function playPoint() {
     player.health = Math.max(42, (player.health || 100) - 0.08 - Math.max(0, effects.stamina) * 0.05 - (point.rally || 0) * 0.012);
     maybeInjure(player, point.rally > 14 ? 1.4 : 0.8);
     updateTennisScore(point.winner);
-    addMatchLog(`${point.serve} • ${point.type}: ${point.text}`);
+    appendReplay(point, state.match);
+    addMatchLog(`${point.serve} • ${point.type} • ${point.speed || '—'} km/h: ${point.text}`);
     drawCourt(won ? 'player' : 'opponent');
     renderMatch();
+    renderBroadcastIntro(state.match);
     hydrateAssetImages();
   } catch (error) {
     Object.assign(player, snapshot.player);
@@ -1342,6 +1466,60 @@ function autoPlayGame() {
     guard += 1;
   }
 }
+
+function simulateCurrentGame() {
+  withMatchGuard('Simulação de game', () => {
+    stopAutoPlay();
+    const startKey = `${state.match.gamesPlayer}-${state.match.gamesOpponent}-${state.match.set}-${state.match.tiebreak}`;
+    let guard = 0;
+    while (!state.match.finished && `${state.match.gamesPlayer}-${state.match.gamesOpponent}-${state.match.set}-${state.match.tiebreak}` === startKey && guard < 90) {
+      playPoint();
+      guard += 1;
+    }
+    addMatchLog(`Simulação de game concluída com ${guard} pontos.`);
+    renderMatch();
+  });
+}
+function simulateCurrentSet() {
+  withMatchGuard('Simulação de set', () => {
+    stopAutoPlay();
+    const startSet = state.match.set;
+    let guard = 0;
+    while (!state.match.finished && state.match.set === startSet && guard < 520) {
+      playPoint();
+      guard += 1;
+    }
+    addMatchLog(`Simulação de set concluída com ${guard} pontos.`);
+    renderMatch();
+  });
+}
+function simulateFullMatch() {
+  withMatchGuard('Simulação da partida', () => {
+    stopAutoPlay();
+    let guard = 0;
+    while (!state.match.finished && guard < 1200) {
+      playPoint();
+      guard += 1;
+    }
+    if (!state.match.finished) addMatchLog('Limite de segurança atingido. Partida preservada para continuar manualmente.');
+    else addMatchLog(`Partida simulada até o fim com ${guard} pontos.`);
+    renderMatch();
+  });
+}
+function tacticalPause() {
+  if (!state.match) return addLog('Inicie uma partida para usar a pausa tática.');
+  stopAutoPlay();
+  const player = getMatchPlayer(state.roster.find(p => p.id === state.match.playerId) || {});
+  const opponent = getMatchPlayer(state.match.opponent || {});
+  const msg = broadcastRecommendation(state.match, player, opponent);
+  addMatchLog(`Pausa tática: ${msg}`);
+  state.match.replayTape ||= [];
+  state.match.replayTape.push({ text: 'Pausa tática', detail: msg, at: new Date().toISOString() });
+  state.match.replayTape = state.match.replayTape.slice(-8);
+  renderMatch();
+  renderBroadcastIntro(state.match);
+}
+
 
 function updateTennisScore(winnerSide) {
   const match = state.match;
@@ -1454,6 +1632,7 @@ function finishMatch(playerWon) {
 
 function renderMatch() {
   const match = state.match;
+  renderBroadcastIntro(match);
   const matchWrap = $('#matchBrandWrap');
   const activeName = state.activeTournament ? state.activeTournament.event.name : (match?.event?.name || '');
   const activeLogo = logoForTournament(activeName);
@@ -1470,31 +1649,50 @@ function renderMatch() {
     if (statsHost) statsHost.innerHTML = '<div class="empty-state">Inicie uma partida para ver estatísticas reais ponto a ponto.</div>';
     if (reportHost) reportHost.innerHTML = '<div class="empty-state">Relatório final aparecerá aqui após a partida.</div>';
     if (scoutHost) scoutHost.innerHTML = '<div class="empty-state">O dossiê tático será montado com atleta, adversário, piso e staff.</div>';
-    drawCourt(); return;
+    drawCourt();
+    hydrateAssetImages();
+    return;
   }
   $('#scorePlayer').textContent = match.gamesPlayer;
   $('#scoreOpponent').textContent = match.gamesOpponent;
   $('#setLabel').textContent = `Set ${match.set} • sets ${match.setsPlayer}-${match.setsOpponent}`;
   $('#pointLabel').textContent = match.pointText;
-  $('#matchLog').textContent = match.log.slice(-14).join('\n');
+  $('#matchLog').textContent = match.log.slice(-16).join('\n');
   const player = getMatchPlayer(state.roster.find(p => p.id === match.playerId) || {});
   const opp = getMatchPlayer(match.opponent || {});
   const scoreCard = document.querySelector('.score-card');
   if (scoreCard) {
     const old = scoreCard.querySelector('.tour-badge'); if (old) old.remove();
-    const badge = document.createElement('div'); badge.className='tour-badge broadcast';
+    const badge = document.createElement('div'); badge.className='tour-badge broadcast pro';
     const logo = logoForTournament(match.event.name);
-    badge.innerHTML = `${logoImg(logo,'tour-logo',match.event.name)}<div class="copy"><strong>${match.event.name}</strong><div class="event-surface">${match.event.surface} • ${match.round} • Saque: ${currentServerName(match)}</div><div class="set-strip">${match.sets?.length ? match.sets.map((s,i)=>`S${i+1} ${s.player}-${s.opponent}`).join(' • ') : 'Melhor de 3 sets'}</div></div>`;
+    badge.innerHTML = `${logoImg(logo,'tour-logo',match.event.name)}<div class="copy"><strong>${match.event.name}</strong><div class="event-surface">${match.event.surface} • ${match.round} • Saque: ${currentServerName(match)}</div><div class="set-strip">${match.sets?.length ? match.sets.map((s,i)=>`S${i+1} ${s.player}-${s.opponent}${s.tiebreak ? ` (${s.tiebreak})` : ''}`).join(' • ') : 'Melhor de 3 sets'} • ${match.engineVersion}</div></div>`;
     scoreCard.appendChild(badge);
   }
   const p = match.stats.player, o = match.stats.opponent;
-  if (statsHost) statsHost.innerHTML = `<article class="match-stat-card"><span>Aces</span><strong>${p.aces} - ${o.aces}</strong></article><article class="match-stat-card"><span>Duplas faltas</span><strong>${p.doubleFaults} - ${o.doubleFaults}</strong></article><article class="match-stat-card"><span>Winners</span><strong>${p.winners} - ${o.winners}</strong></article><article class="match-stat-card"><span>Erros não forçados</span><strong>${p.unforcedErrors} - ${o.unforcedErrors}</strong></article><article class="match-stat-card"><span>1º saque</span><strong>${statsPct(p.firstServeIn,p.firstServeTotal)} - ${statsPct(o.firstServeIn,o.firstServeTotal)}</strong></article><article class="match-stat-card"><span>Break points</span><strong>${p.breakPointsWon}/${p.breakPoints} - ${o.breakPointsWon}/${o.breakPoints}</strong></article>`;
+  const rallyAvg = rallyAverage(p, o);
+  const momentumLabel = (match.momentum || 0) > 2 ? 'Seu atleta' : (match.momentum || 0) < -2 ? 'Adversário' : 'Neutro';
+  if (statsHost) statsHost.innerHTML = `
+    <article class="match-stat-card"><span>Aces</span><strong>${p.aces} - ${o.aces}</strong></article>
+    <article class="match-stat-card"><span>Duplas faltas</span><strong>${p.doubleFaults} - ${o.doubleFaults}</strong></article>
+    <article class="match-stat-card"><span>Winners</span><strong>${p.winners} - ${o.winners}</strong></article>
+    <article class="match-stat-card"><span>Erros não forçados</span><strong>${p.unforcedErrors} - ${o.unforcedErrors}</strong></article>
+    <article class="match-stat-card"><span>1º saque</span><strong>${statsPct(p.firstServeIn,p.firstServeTotal)} - ${statsPct(o.firstServeIn,o.firstServeTotal)}</strong></article>
+    <article class="match-stat-card"><span>Break points</span><strong>${p.breakPointsWon}/${p.breakPoints} - ${o.breakPointsWon}/${o.breakPoints}</strong></article>
+    <article class="match-stat-card"><span>Velocidade último saque</span><strong>${match.lastServeSpeed || 0} km/h</strong></article>
+    <article class="match-stat-card"><span>Rally médio</span><strong>${rallyAvg} bolas</strong></article>
+    <article class="match-stat-card wide"><span>Momentum</span><strong>${momentumLabel} • ${Math.round((match.momentum || 0) * 10) / 10}</strong><div class="momentum-bar"><i style="width:${clamp(50 + (match.momentum || 0) * 5, 5, 95)}%"></i></div></article>`;
   const last = match.lastPoint;
-  if (scoutHost) scoutHost.innerHTML = `<div class="scout-row"><strong>${player.name}</strong><span>SAQ ${Math.round(attrValue(player,'serve'))} • DEV ${Math.round(attrValue(player,'return'))} • MENT ${Math.round(attrValue(player,'composure',attrValue(player,'mental')))}</span></div><div class="scout-row"><strong>${opp.name}</strong><span>SAQ ${Math.round(attrValue(opp,'serve'))} • DEV ${Math.round(attrValue(opp,'return'))} • MENT ${Math.round(attrValue(opp,'composure',attrValue(opp,'mental')))}</span></div><div class="last-point-card"><span>Último ponto</span><strong>${last ? `${last.type} • ${last.rally} bolas` : 'Aguardando'}</strong><p>${last?.text || 'Use jogar ponto ou auto para iniciar o rally.'}</p></div>`;
-  if (reportHost) reportHost.innerHTML = match.finished ? createBroadcastReport(match).map(line=>`<div class="report-line">${line}</div>`).join('') : `<div class="report-line">Motor v3.6 ativo: ponto a ponto, saque, rally, tiebreak e pressão do placar.</div><div class="report-line">Momentum: ${Math.round((match.momentum||0)*10)/10} • Piso: ${match.event.surface || 'hard'} • Estratégia: ${currentStrategy}</div>`;
+  const replay = (match.replayTape || []).slice(-4).reverse();
+  if (scoutHost) scoutHost.innerHTML = `
+    <div class="scout-row"><strong>${player.name}</strong><span>SAQ ${Math.round(attrValue(player,'serve'))} • DEV ${Math.round(attrValue(player,'return'))} • MENT ${Math.round(attrValue(player,'composure',attrValue(player,'mental')))}</span></div>
+    <div class="scout-row"><strong>${opp.name}</strong><span>SAQ ${Math.round(attrValue(opp,'serve'))} • DEV ${Math.round(attrValue(opp,'return'))} • MENT ${Math.round(attrValue(opp,'composure',attrValue(opp,'mental')))}</span></div>
+    <div class="last-point-card"><span>Último ponto</span><strong>${last ? `${last.type} • ${last.speed || '—'} km/h • ${last.rally} bolas` : 'Aguardando'}</strong><p>${last?.text || 'Use simular ponto/game/set/partida para iniciar o rally.'}</p><small>${pointTacticalRead(last, match)}</small></div>
+    <div class="replay-tape">${replay.length ? replay.map(item=>`<div class="replay-line"><strong>${item.text}</strong><span>${item.detail}</span></div>`).join('') : '<div class="replay-line muted">Mini replay aparecerá conforme os pontos forem jogados.</div>'}</div>`;
+  if (reportHost) reportHost.innerHTML = match.finished ? createBroadcastReport(match).map(line=>`<div class="report-line">${line}</div>`).join('') : `<div class="report-line">Motor v3.7 ativo: transmissão pro, ponto a ponto, saque, rally, tiebreak e pressão do placar.</div><div class="report-line">${broadcastRecommendation(match, player, opp)}</div><div class="report-line">Placar: ${scoreSnapshot(match)} • Estratégia: ${currentStrategy}</div>`;
   const autoBtn = $('#autoMatchBtn');
   if (autoBtn) autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : 'Auto 1x';
   refreshAutoButtons();
+  hydrateAssetImages();
 }
 function addMatchLog(text) { if (!state.match) return; state.match.log.push(text); state.match.log = state.match.log.slice(-80); }
 
@@ -1668,9 +1866,12 @@ function drawCourt(lastWinner = null) {
 
   ctx.clearRect(0, 0, w, h);
 
+  const surface = surfaceKey(match?.event?.surface || 'hard');
+  const surfacePalettes = { clay: ['#8f4a2d', '#d0773f'], grass: ['#0d4d2d', '#2e8f4d'], indoor: ['#202042', '#5151a8'], hard: ['#0e3a69', '#0d6c66'] };
+  const palette = surfacePalettes[surface] || surfacePalettes.hard;
   const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, '#0e3a69');
-  g.addColorStop(1, '#0d6c66');
+  g.addColorStop(0, palette[0]);
+  g.addColorStop(1, palette[1]);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 
@@ -1743,6 +1944,16 @@ function drawCourt(lastWinner = null) {
   ctx.font = '500 14px Inter, system-ui, sans-serif';
   const autoLabel = autoPlayTimer ? `Auto ${autoPlaySpeed}x` : 'Manual';
   ctx.fillText(`Estratégia ${currentStrategy.toUpperCase()} • ${autoLabel}`, 30, 61);
+  if (match?.lastPoint) {
+    ctx.fillStyle = 'rgba(5,10,18,0.70)';
+    ctx.fillRect(w - 340, 16, 318, 72);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 16px Inter, system-ui, sans-serif';
+    ctx.fillText(`${match.lastPoint.type} • ${match.lastServeSpeed || 0} km/h`, w - 326, 42);
+    ctx.fillStyle = '#c7d8ea';
+    ctx.font = '500 13px Inter, system-ui, sans-serif';
+    ctx.fillText(`${scoreSnapshot(match)}`, w - 326, 64);
+  }
 }
 
 

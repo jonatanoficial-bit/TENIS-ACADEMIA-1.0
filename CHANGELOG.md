@@ -1,3 +1,15 @@
+# v3.7.0 — Broadcast Match Center Pro
+
+Build: 20260620-131729 • Data/hora visível: 20/06/2026 13:17:29
+
+- Adicionado painel de entrada Broadcast Match Center Pro com logo do torneio, piso, rodada, cards de atleta e adversário.
+- Adicionados botões de simular ponto, game, set e partida completa, com limite de segurança e rollback em falhas.
+- Último ponto agora registra velocidade do saque, direção, tipo de ponto, rally, leitura tática e mini replay.
+- Estatísticas ao vivo ampliadas com momentum, velocidade máxima de saque, média de rally e aproveitamento de primeiro saque.
+- Canvas da quadra recebeu variação visual por superfície e overlay de transmissão com placar, saque e último ponto.
+- Interface mobile-first refinada para uso em celulares, com controles em grade, chips compactos e cards roláveis.
+- Schema de save atualizado para 10 e cache PWA separado da build anterior.
+
 # v3.6.0 — Rebuild Match Engine & Premium Match Foundation
 
 Build: 20260620-121454 • Data/hora visível: 20/06/2026 12:14:54

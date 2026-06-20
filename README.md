@@ -1,11 +1,22 @@
 # Vale Games Tennis Manager
 
-**Versão atual:** v3.0.0 — Core Consolidation  
-**Build:** 20260609-115317  
-**Data/hora:** 20/06/2026 11:53:17 (America/Sao_Paulo)
+**Versão atual:** v3.7.0 — Broadcast Match Center Pro  
+**Build:** 20260620-131729  
+**Data/hora:** 20/06/2026 13:17:29 (America/Sao_Paulo)
 
 
 Build focada em **mobile-first real** e avanço de gameplay.
+
+
+## v3.7.0 — Broadcast Match Center Pro
+
+- Match Center transformado em central de transmissão premium.
+- Entrada de torneio com logo, piso, rodada, cards de atleta e adversário.
+- Controles de simulação por ponto, game, set e partida inteira com proteção anti-loop.
+- Último ponto ganhou velocidade de saque, direção, rally, leitura tática e mini replay textual.
+- Estatísticas ao vivo ampliadas com momentum, velocidade de saque, rally médio e aproveitamento de primeiro saque.
+- Visual mobile-first refinado para painel de partida em telas pequenas.
+- Build, data e hora continuam visíveis em todas as áreas críticas.
 
 ## Novidades da v0.3.0
 
