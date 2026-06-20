@@ -1,3 +1,14 @@
+
+## v3.8.0 — Tournament Identity System — 20260620-133614
+
+- Novo hub Tournament Identity System no calendário.
+- Dossiê visual de torneio com logo, piso, prestígio, bolsa, pontos, público estimado e DNA tático.
+- Calendário premium com identidade por categoria e superfície.
+- World Tour feed com logos e botão de dossiê.
+- Match Center passa a exibir prestígio, piso traduzido e categoria com ícone.
+- Migração para schema 11 com estado `tournamentIdentity`.
+- Auditoria mobile-first e fallback de assets preservados.
+
 # v3.7.0 — Broadcast Match Center Pro
 
 Build: 20260620-131729 • Data/hora visível: 20/06/2026 13:17:29

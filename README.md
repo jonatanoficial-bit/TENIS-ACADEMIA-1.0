@@ -1,8 +1,14 @@
+# Vale Games Tennis Manager — v3.8.0
+
+Build `20260620-133614` • Tournament Identity System • 20/06/2026 13:36:14 BRT.
+
+Esta build reforça o Tournament Identity System: cada torneio ganha dossiê visual, logo em destaque, identidade por piso/categoria, prestígio, bolsa, pontos, chave e integração com calendário, World Tour e Match Center.
+
 # Vale Games Tennis Manager
 
-**Versão atual:** v3.7.0 — Broadcast Match Center Pro  
-**Build:** 20260620-131729  
-**Data/hora:** 20/06/2026 13:17:29 (America/Sao_Paulo)
+**Versão atual:** v3.8.0 — Tournament Identity System  
+**Build:** 20260620-133614  
+**Data/hora:** 20/06/2026 13:36:14 (America/Sao_Paulo)
 
 
 Build focada em **mobile-first real** e avanço de gameplay.

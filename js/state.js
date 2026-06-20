@@ -5,7 +5,7 @@ const STORAGE_KEY = 'vale_tennis_manager_save';
 const LEGACY_KEYS = ['ace_academy_save_v040', 'ace-manager-save'];
 const BACKUP_KEY = 'vale_tennis_manager_save_backup';
 const CORRUPT_KEY = 'vale_tennis_manager_corrupt_save';
-const CURRENT_SCHEMA = 10;
+const CURRENT_SCHEMA = 11;
 
 const clone = (value) => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 
@@ -39,7 +39,7 @@ export function buildInitialState(content) {
     sponsorOffers: [], objectives: { current: 'Entrar no Top 120' },
     worldTour: { weeklyResults: [], rankingHistory: [], lastSimulatedWeek: 0, lastSimulatedSeason: academy.season },
     trainingLab: { cycle: 'balanced', autoApply: true, lastProcessedWeek: 0, lastReport: [], plans: Object.fromEntries(roster.map(p => [p.id, { focus: 'balanced', intensity: 'moderate' }])) },
-    flags: { ownerSetupComplete: false, safeMode: false }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
+    flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
   };
 }
 
@@ -79,6 +79,9 @@ export function migrateSave(data) {
   state.worldTour ||= { weeklyResults: [], rankingHistory: [], lastSimulatedWeek: 0, lastSimulatedSeason: state.academy?.season || 2026 };
   state.worldTour.weeklyResults ||= []; state.worldTour.rankingHistory ||= []; state.worldTour.lastSimulatedWeek ??= 0; state.worldTour.lastSimulatedSeason ??= state.academy?.season || 2026;
   state.trainingLab ||= { cycle: 'balanced', autoApply: true, lastProcessedWeek: 0, lastReport: [], plans: {} };
+  state.tournamentIdentity ||= { spotlightHistory: [], lastViewedEvent: null };
+  state.tournamentIdentity.spotlightHistory ||= [];
+  state.tournamentIdentity.lastViewedEvent ??= null;
   state.broadcast ||= { presentationMode: 'pro', replayArchive: [], lastAudit: null };
   state.broadcast.replayArchive ||= [];
   state.broadcast.presentationMode ||= 'pro';

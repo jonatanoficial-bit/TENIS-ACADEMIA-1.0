@@ -86,6 +86,134 @@ function logoForTournament(name='') {
   return hit ? hit[1] : '';
 }
 
+
+const SURFACE_THEMES = {
+  hard: { label: 'Piso duro', cls: 'hard', accent: '#52d7ff', tempo: 'médio-rápido', tactical: 'Saque sólido, devolução agressiva e troca curta com controle de erro.' },
+  clay: { label: 'Saibro', cls: 'clay', accent: '#f07a45', tempo: 'lento', tactical: 'Rallies longos, paciência, consistência e preparação física acima da média.' },
+  grass: { label: 'Grama', cls: 'grass', accent: '#9aff81', tempo: 'rápido', tactical: 'Primeiro saque, slice baixo, rede e tomada de decisão em poucos golpes.' },
+  indoor: { label: 'Indoor', cls: 'indoor', accent: '#b48cff', tempo: 'rápido', tactical: 'Saque mais pesado, devolução curta e pouca interferência externa.' }
+};
+const TIER_THEMES = {
+  'Grand Slam': { label:'Grand Slam', cls:'grand-slam', stars:5, aura:'evento máximo', trophy:'🏆', pressure:96 },
+  'Masters 1000': { label:'Masters 1000', cls:'masters', stars:4, aura:'elite mundial', trophy:'💎', pressure:88 },
+  'ATP 500': { label:'ATP 500', cls:'atp500', stars:3, aura:'tour premium', trophy:'🥇', pressure:74 },
+  'ATP 250': { label:'ATP 250', cls:'atp250', stars:2, aura:'circuito regular', trophy:'🏅', pressure:58 },
+  'Finals': { label:'Finals', cls:'finals', stars:5, aura:'final de temporada', trophy:'👑', pressure:94 },
+  'Seleções': { label:'Seleções', cls:'team', stars:3, aura:'competição nacional', trophy:'🌍', pressure:80 },
+  'Challenger': { label:'Challenger', cls:'challenger', stars:1, aura:'desenvolvimento', trophy:'🎾', pressure:42 }
+};
+function escapeAttr(value='') { return String(value).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtml(value='') { return String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function eventSurfaceTheme(event={}) {
+  const key = surfaceKey(event.surface || 'hard');
+  return SURFACE_THEMES[key] || SURFACE_THEMES.hard;
+}
+function eventTierTheme(event={}) {
+  return TIER_THEMES[event.tier] || TIER_THEMES[event.category] || TIER_THEMES['ATP 250'];
+}
+function eventIdentity(event={}) {
+  const tier = eventTierTheme(event);
+  const surface = eventSurfaceTheme(event);
+  const prestige = Math.round(event.prestige || tier.pressure || 55);
+  const prizePool = event.prizePool || (event.prize || 0) * Math.max(8, event.drawSize || 32);
+  const logo = logoForTournament(event.name || '');
+  const seed = stableNumber(`${event.id || event.name}-${event.city || ''}-${event.country || ''}`);
+  const weather = surface.cls === 'indoor' ? 'condições controladas' : surface.cls === 'clay' ? 'vento e quique alto' : surface.cls === 'grass' ? 'piso baixo e úmido' : 'calor e velocidade média';
+  const attendance = Math.round((prestige * 700) + ((seed % 9000) + 2500));
+  const atmosphere = prestige >= 95 ? 'pressão de arena lotada e mídia global' : prestige >= 80 ? 'ambiente internacional com alta cobrança' : prestige >= 60 ? 'torneio competitivo com chance de pontos importantes' : 'evento de desenvolvimento para construir ranking';
+  return { ...event, tier, surface, prestige, prizePool, logo, weather, attendance, atmosphere };
+}
+function prestigeStars(value=0) {
+  const n = Math.max(1, Math.min(5, Math.ceil((value || 50) / 20)));
+  return '★★★★★'.slice(0,n) + '☆☆☆☆☆'.slice(0,5-n);
+}
+function shortMoney(value=0) {
+  const n = Number(value || 0);
+  if (n >= 1000000) return `$${(n/1000000).toFixed(n >= 10000000 ? 0 : 1)}M`;
+  if (n >= 1000) return `$${Math.round(n/1000)}k`;
+  return money(n);
+}
+function tournamentHeroMarkup(event, opts={}) {
+  const id = eventIdentity(event);
+  const safeName = escapeAttr(id.name || 'Torneio');
+  const compact = opts.compact ? ' compact' : '';
+  return `<article class="tournament-identity-card ${id.tier.cls} surface-${id.surface.cls}${compact}">
+    <div class="identity-bg-glow"></div>
+    <div class="identity-logo-panel">${logoMarkup(id.logo, id.name, 'tournament-logo giant', 'tournament-logo-fallback giant')}</div>
+    <div class="identity-copy">
+      <p class="eyebrow">${id.tier.label} • ${id.surface.label}</p>
+      <h4>${escapeHtml(id.name || 'Torneio')}</h4>
+      <div class="identity-meta"><span>${escapeHtml(id.city || id.country || 'Circuito mundial')}</span><span>${id.tier.trophy} ${id.tier.aura}</span><span>${prestigeStars(id.prestige)}</span></div>
+      <div class="identity-kpis"><span>Prestígio <strong>${id.prestige}</strong></span><span>Pontos <strong>${id.winnerPoints || 250}</strong></span><span>Bolsa <strong>${shortMoney(id.prizePool)}</strong></span><span>Chave <strong>${id.drawSize || 32}</strong></span></div>
+      <p class="identity-tactical">${escapeHtml(id.surface.tactical)}</p>
+    </div>
+    <div class="identity-actions">
+      <button class="mini-btn" onclick="window.openTournamentIdentity('${safeName}')">Identidade</button>
+      <button class="mini-btn" onclick="window.openDrawModal('${safeName}')">Chave</button>
+    </div>
+  </article>`;
+}
+function renderTournamentIdentityHub() {
+  const host = $('#tournamentIdentityHub');
+  if (!host || !state?.calendar) return;
+  const week = state.academy.week;
+  const current = state.calendar.find(e => e.week === week) || state.calendar.find(e => e.week > week) || state.calendar[0];
+  const nextMajors = state.calendar.filter(e => e.week >= week && ['Grand Slam','Masters 1000','Finals'].includes(e.tier)).slice(0,3);
+  const spotlight = current ? tournamentHeroMarkup(current) : '<div class="empty-state">Nenhum torneio disponível.</div>';
+  const majors = nextMajors.length ? nextMajors.map(e => tournamentHeroMarkup(e, {compact:true})).join('') : '<div class="empty-state">Sem eventos premium próximos.</div>';
+  host.innerHTML = `<div class="identity-section-head"><div><p class="eyebrow">Tournament Identity System</p><h4>Circuito com identidade visual</h4></div><span>${BUILD_LABEL}</span></div><div class="identity-hub-grid"><div>${spotlight}</div><div class="identity-next-stack">${majors}</div></div>`;
+  hydrateAssetImages();
+}
+function ensureTournamentIdentityModal() {
+  if (document.querySelector('#tournamentIdentityModal')) return;
+  const node = document.createElement('section');
+  node.id = 'tournamentIdentityModal';
+  node.className = 'tournament-identity-modal hidden';
+  node.innerHTML = `<div class="identity-modal-backdrop" data-identity-close="1"></div>
+    <div class="identity-modal-card glass">
+      <div class="draw-head"><div><p class="eyebrow">Dossiê do torneio</p><h3 id="identityModalTitle">Torneio</h3><div id="identityModalSub" class="small"></div></div><button id="closeIdentityBtn" class="mini-btn" type="button">Fechar</button></div>
+      <div id="identityModalContent" class="identity-modal-content"></div>
+    </div>`;
+  document.body.appendChild(node);
+  node.querySelectorAll('[data-identity-close="1"]').forEach(el => el.addEventListener('click', closeTournamentIdentity));
+  node.querySelector('#closeIdentityBtn')?.addEventListener('click', closeTournamentIdentity);
+}
+function openTournamentIdentity(eventName='') {
+  ensureTournamentIdentityModal();
+  const event = state.calendar.find(e => e.name === eventName) || state.activeTournament?.event || state.calendar.find(e => e.week === state.academy.week) || state.calendar[0];
+  if (!event) return;
+  state.tournamentIdentity ||= { spotlightHistory: [], lastViewedEvent: null };
+  state.tournamentIdentity.lastViewedEvent = event.name;
+  const id = eventIdentity(event);
+  const modal = document.querySelector('#tournamentIdentityModal');
+  modal.classList.remove('hidden');
+  document.body.classList.add('setup-open');
+  document.querySelector('#identityModalTitle').textContent = id.name;
+  document.querySelector('#identityModalSub').textContent = `${id.tier.label} • ${id.surface.label} • semana ${id.week} • ${id.city || id.country || 'Circuito mundial'}`;
+  const recent = (state.worldTour?.weeklyResults || []).filter(r => r.eventName === id.name).slice(0,3);
+  document.querySelector('#identityModalContent').innerHTML = `
+    <div class="identity-modal-hero ${id.tier.cls} surface-${id.surface.cls}">
+      <div class="identity-logo-panel huge">${logoMarkup(id.logo, id.name, 'tournament-logo giant', 'tournament-logo-fallback giant')}</div>
+      <div><p class="eyebrow">${id.tier.trophy} ${id.tier.aura}</p><h2>${escapeHtml(id.name)}</h2><p>${escapeHtml(id.atmosphere)}</p><div class="identity-meta"><span>${prestigeStars(id.prestige)}</span><span>${escapeHtml(id.weather)}</span><span>Público estimado ${id.attendance.toLocaleString('pt-BR')}</span></div></div>
+    </div>
+    <div class="identity-modal-kpis">
+      <article><span>Prestígio</span><strong>${id.prestige}/100</strong></article><article><span>Pontos campeão</span><strong>${id.winnerPoints || 250}</strong></article><article><span>Bolsa total</span><strong>${shortMoney(id.prizePool)}</strong></article><article><span>Entrada mínima</span><strong>Top ${id.minRank || id.entryCutoff || 120}</strong></article>
+    </div>
+    <div class="identity-detail-grid">
+      <article class="panel-card"><h4>DNA tático do evento</h4><p>${escapeHtml(id.surface.tactical)}</p><p class="muted">Tempo de quadra: ${id.surface.tempo}. Piso: ${id.surface.label}. Chave: ${id.drawSize || 32} jogadores.</p></article>
+      <article class="panel-card"><h4>Uso dos assets</h4><p>Logo oficial do pacote visual aplicado no calendário, hub de torneios, tela de partida, chave e dossiê.</p><p class="muted">Fallback ativo caso a imagem não carregue.</p></article>
+      <article class="panel-card"><h4>Histórico recente</h4>${recent.length ? recent.map(r=>`<div class="report-line">${escapeHtml(r.champion)} campeão sobre ${escapeHtml(r.finalist)} • S${r.week}/${r.season}</div>`).join('') : '<p class="muted">Ainda não há campeão salvo nesta carreira.</p>'}</article>
+      <article class="panel-card"><h4>Decisão de gestão</h4><p>${getTournamentGate(id).label}</p><button class="btn-primary" onclick="window.launchEvent('${escapeAttr(id.name)}'); window.closeTournamentIdentity();">Ir para este torneio</button></article>
+    </div>`;
+  hydrateAssetImages();
+}
+function closeTournamentIdentity() {
+  const modal = document.querySelector('#tournamentIdentityModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  document.body.classList.remove('setup-open');
+}
+
 function assetCandidates(src='') {
   if (!src) return [];
   const clean = src.replace(/^\.\//, '').replace(/^\//, '');
@@ -210,13 +338,13 @@ function renderBroadcastIntro(match) {
   const oppRank = opponent?.rank || opponent?.ranking || (opponent ? Math.max(1, Math.round(180 - (opponent.overall || 60))) : '—');
   const reco = match ? broadcastRecommendation(match, player, opponent) : 'Entre na partida para abrir dossiê, placar de transmissão e estatísticas ao vivo.';
   host.innerHTML = `
-    <article class="broadcast-hero-card">
+    <article class="broadcast-hero-card ${eventIdentity(event).tier.cls} surface-${eventIdentity(event).surface.cls}">
       <div class="broadcast-event-block">
         <div class="broadcast-logo-frame">${logoMarkup(logo, event.name || 'Torneio', 'tour-logo xl', 'tournament-logo-fallback xl')}</div>
         <div class="broadcast-event-copy">
           <p class="eyebrow">Broadcast Match Center Pro</p>
           <h4>${event.name || 'Semana de preparação'}</h4>
-          <div class="broadcast-chips"><span>${event.tier || 'Circuito'}</span><span>${event.surface || 'Piso indefinido'}</span><span>${match?.round || state.activeTournament?.rounds?.[state.activeTournament.roundIndex] || 'Pré-jogo'}</span><span>${BUILD_LABEL}</span></div>
+          <div class="broadcast-chips"><span>${eventIdentity(event).tier.trophy} ${event.tier || 'Circuito'}</span><span>${eventIdentity(event).surface.label}</span><span>Prestígio ${eventIdentity(event).prestige}</span><span>${match?.round || state.activeTournament?.rounds?.[state.activeTournament.roundIndex] || 'Pré-jogo'}</span><span>${BUILD_LABEL}</span></div>
         </div>
       </div>
       <div class="broadcast-vs-grid">
@@ -758,6 +886,7 @@ function render() {
   renderTrainingLab();
   renderWorldTourFeed();
   renderCalendar();
+  renderTournamentIdentityHub();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -766,6 +895,7 @@ function render() {
   renderMatch();
   hydrateAssetImages();
   ensureDrawModal();
+  ensureTournamentIdentityModal();
   ensurePlayerProfileModal();
   saveState(state);
 }
@@ -820,7 +950,7 @@ function renderNextEvents() {
         ${logoMarkup(logo,event.name,'tour-logo large','tournament-logo-fallback large')}
         <div><strong>Semana ${event.week} • ${event.name}</strong><div class="small">${event.tier} • ${event.surface} • ${gate.label}</div></div>
       </button>
-      <button class="mini-btn next-bracket-btn" onclick="window.openDrawModal('${event.name.replace("'", "&#39;")}')">Ver chave</button>
+      <div class="next-event-actions"><button class="mini-btn next-bracket-btn" onclick="window.openTournamentIdentity('${event.name.replace("'", "&#39;")}')">Identidade</button><button class="mini-btn next-bracket-btn" onclick="window.openDrawModal('${event.name.replace("'", "&#39;")}')">Ver chave</button></div>
     </div>`;
   }).join('')}</div>`;
 }
@@ -863,6 +993,8 @@ function renderFacilities() {
 
 window.launchEvent = launchEvent;
 window.openDrawModal = openDrawModal;
+window.openTournamentIdentity = openTournamentIdentity;
+window.closeTournamentIdentity = closeTournamentIdentity;
 
 window.upgradeFacility = (key) => {
   const level = state.academy.facilities[key];
@@ -1050,30 +1182,35 @@ function renderWorldTourFeed() {
   const recent = (state.worldTour?.weeklyResults || []).slice(0,4);
   $('#tourEventCount').textContent = `${state.calendar.length} eventos`;
   $('#tourLastUpdate').textContent = `S${state.worldTour?.lastSimulatedWeek || 0} • ${state.worldTour?.lastSimulatedSeason || state.academy.season}`;
-  const live = current.length ? current.map(event => `<article class="tour-live-card"><span class="tour-status">SEMANA ATUAL</span><strong>${event.name}</strong><small>${event.tier} • ${event.surface} • ${event.city||event.country||'Circuito mundial'}</small></article>`).join('') : '<article class="tour-live-card"><span class="tour-status quiet">SEM EVENTO</span><strong>Semana de preparação</strong><small>Treine, recupere atletas e planeje a próxima viagem.</small></article>';
-  const past = recent.map(result => `<article class="tour-result-card"><span>${result.tier||'Tour'}</span><strong>${result.champion}</strong><small>campeão de ${result.eventName} • final sobre ${result.finalist}</small></article>`).join('');
-  host.innerHTML = `<div class="tour-live-grid">${live}</div>${past ? `<div class="tour-results-strip">${past}</div>` : ''}`;
+  const live = current.length ? current.map(event => { const id = eventIdentity(event); return `<article class="tour-live-card branded ${id.tier.cls} surface-${id.surface.cls}">${logoMarkup(id.logo,event.name,'tour-logo','tournament-logo-fallback')}<div><span class="tour-status">SEMANA ATUAL</span><strong>${event.name}</strong><small>${event.tier} • ${id.surface.label} • ${event.city||event.country||'Circuito mundial'}</small></div><button class="mini-btn" onclick="window.openTournamentIdentity('${escapeAttr(event.name)}')">Dossiê</button></article>`; }).join('') : '<article class="tour-live-card"><span class="tour-status quiet">SEM EVENTO</span><strong>Semana de preparação</strong><small>Treine, recupere atletas e planeje a próxima viagem.</small></article>';
+  const past = recent.map(result => { const ev = state.calendar.find(e=>e.name===result.eventName) || {}; const logo = logoForTournament(result.eventName); return `<article class="tour-result-card branded">${logoMarkup(logo,result.eventName,'tour-logo','tournament-logo-fallback')}<div><span>${result.tier||'Tour'}</span><strong>${result.champion}</strong><small>campeão de ${result.eventName} • final sobre ${result.finalist}</small></div></article>`; }).join('');
+  host.innerHTML = `<div class="tour-live-grid branded-grid">${live}</div>${past ? `<div class="tour-results-strip branded-results">${past}</div>` : ''}`;
+  hydrateAssetImages();
 }
 
 function renderCalendar() {
   const nearby = state.calendar.filter(event => event.week >= Math.max(1,state.academy.week-1) && event.week <= Math.min(52,state.academy.week+10));
   $('#calendarList').innerHTML = nearby.map(event => {
     const gate = getTournamentGate(event);
-    const logo = logoForTournament(event.name);
+    const identity = eventIdentity(event);
+    const safeName = escapeAttr(event.name);
     return `
-      <article class="tournament-card premium-card">
-        <button class="tournament-hero" onclick="window.launchEvent('${event.name.replace("'", "&#39;")}')">
-          <div class="tournament-logo-wrap hero">${logoMarkup(logo,event.name,'tournament-logo giant','tournament-logo-fallback giant')}</div>
+      <article class="tournament-card premium-card identity-calendar-card ${identity.tier.cls} surface-${identity.surface.cls}">
+        <button class="tournament-hero" onclick="window.launchEvent('${safeName}')">
+          <div class="tournament-logo-wrap hero">${logoMarkup(identity.logo,event.name,'tournament-logo giant','tournament-logo-fallback giant')}</div>
           <div class="tournament-main">
-            <strong>Semana ${event.week} • ${event.name}</strong>
-            <div class="meta">${event.tier} • ${event.surface} • ${event.city || event.country || "Circuito mundial"} • prêmio ${money(event.prize)} • chave ${event.drawSize || 16}</div>
+            <div class="identity-card-topline"><span>Semana ${event.week}</span><span>${identity.tier.trophy} ${identity.tier.label}</span><span>${prestigeStars(identity.prestige)}</span></div>
+            <strong>${event.name}</strong>
+            <div class="meta">${identity.surface.label} • ${event.city || event.country || "Circuito mundial"} • bolsa ${shortMoney(identity.prizePool)} • campeão ${event.winnerPoints || 250} pts • chave ${event.drawSize || 16}</div>
+            <div class="identity-calendar-tactic">${identity.surface.tactical}</div>
           </div>
         </button>
         <div class="tournament-side full">
           <div class="entry-pill ${gate.cls}">${gate.label}</div>
           <div class="tournament-actions-row">
-            <button class="mini-btn" onclick="window.launchEvent('${event.name.replace("'", "&#39;")}')">Ir para partida</button>
-            <button class="mini-btn" onclick="window.openDrawModal('${event.name.replace("'", "&#39;")}')">Chave</button>
+            <button class="mini-btn" onclick="window.openTournamentIdentity('${safeName}')">Identidade</button>
+            <button class="mini-btn" onclick="window.launchEvent('${safeName}')">Partida</button>
+            <button class="mini-btn" onclick="window.openDrawModal('${safeName}')">Chave</button>
           </div>
         </div>
       </article>`;
@@ -1688,7 +1825,7 @@ function renderMatch() {
     <div class="scout-row"><strong>${opp.name}</strong><span>SAQ ${Math.round(attrValue(opp,'serve'))} • DEV ${Math.round(attrValue(opp,'return'))} • MENT ${Math.round(attrValue(opp,'composure',attrValue(opp,'mental')))}</span></div>
     <div class="last-point-card"><span>Último ponto</span><strong>${last ? `${last.type} • ${last.speed || '—'} km/h • ${last.rally} bolas` : 'Aguardando'}</strong><p>${last?.text || 'Use simular ponto/game/set/partida para iniciar o rally.'}</p><small>${pointTacticalRead(last, match)}</small></div>
     <div class="replay-tape">${replay.length ? replay.map(item=>`<div class="replay-line"><strong>${item.text}</strong><span>${item.detail}</span></div>`).join('') : '<div class="replay-line muted">Mini replay aparecerá conforme os pontos forem jogados.</div>'}</div>`;
-  if (reportHost) reportHost.innerHTML = match.finished ? createBroadcastReport(match).map(line=>`<div class="report-line">${line}</div>`).join('') : `<div class="report-line">Motor v3.7 ativo: transmissão pro, ponto a ponto, saque, rally, tiebreak e pressão do placar.</div><div class="report-line">${broadcastRecommendation(match, player, opp)}</div><div class="report-line">Placar: ${scoreSnapshot(match)} • Estratégia: ${currentStrategy}</div>`;
+  if (reportHost) reportHost.innerHTML = match.finished ? createBroadcastReport(match).map(line=>`<div class="report-line">${line}</div>`).join('') : `<div class="report-line">Motor v3.8 ativo: transmissão pro, ponto a ponto, saque, rally, tiebreak e pressão do placar.</div><div class="report-line">${broadcastRecommendation(match, player, opp)}</div><div class="report-line">Placar: ${scoreSnapshot(match)} • Estratégia: ${currentStrategy}</div>`;
   const autoBtn = $('#autoMatchBtn');
   if (autoBtn) autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : 'Auto 1x';
   refreshAutoButtons();
