@@ -1,4 +1,18 @@
-## v3.14.0 — Mobile Premium UX — build 20260622-154315
+# Changelog
+
+## v3.15.0 — Economy, Sponsors & Commercial Career (20260622-171608)
+
+- Nova aba `Economia` / Diretoria Financeira.
+- `commercialCareer` persistente no save com ledger, contratos ativos, pipeline, investidores, política de viagem e risco comercial.
+- Patrocínios deixam de ser bônus simples e passam a ter score, tier, categoria, prazo, penalidade e receita semanal contratual.
+- Investidores adicionam capital, pressão e avaliação do board.
+- Orçamento de viagem altera custo, fadiga e reputação em semanas de torneio.
+- Fluxo semanal registra entradas, saídas, viagens e alertas no livro caixa.
+- Integração com staff financeiro, reputação, Newsroom e caixa da academia.
+- Mobile-first: painel financeiro em cards compactos, rolagem por toque e compatibilidade desde 320 px.
+- Migração de save para schema 18.
+
+v3.14.0 — Mobile Premium UX — build 20260622-154315
 
 - Adiciona Central Mobile Premium UX com modos automático, compacto e conforto.
 - Reestrutura dock mobile como trilho horizontal com scroll-snap e centralização da aba ativa.

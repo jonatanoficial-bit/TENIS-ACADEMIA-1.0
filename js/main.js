@@ -137,6 +137,25 @@ const MOBILE_UX_MODES = {
 };
 const MOBILE_UX_BREAKPOINTS = [320, 360, 390, 412, 760, 1100];
 
+
+const COMMERCIAL_SPONSOR_BRANDS = [
+  { name: 'Apex Rackets', tier: 'Global', baseBonus: 68000, weekly: 9200, requirement: 'manter atleta no Top 80', category: 'equipamento', prestige: 9 },
+  { name: 'Blue Court Energy', tier: 'Continental', baseBonus: 42000, weekly: 6400, requirement: 'chegar às quartas em ATP 250/500', category: 'bebida esportiva', prestige: 7 },
+  { name: 'Vale Performance Wear', tier: 'Nacional', baseBonus: 30000, weekly: 4800, requirement: 'crescer reputação e presença em torneios', category: 'uniforme', prestige: 6 },
+  { name: 'Golden Serve Bank', tier: 'Premium', baseBonus: 54000, weekly: 7800, requirement: 'fluxo de caixa positivo por 8 semanas', category: 'financeiro', prestige: 8 },
+  { name: 'Local Sports Hub', tier: 'Regional', baseBonus: 18000, weekly: 2800, requirement: 'manter academia ativa no circuito', category: 'regional', prestige: 4 }
+];
+const COMMERCIAL_INVESTORS = [
+  { name: 'Fundo Elite Court', capital: 180000, weeks: 26, equity: 8, pressure: 10, goal: 'Top 120 em 26 semanas' },
+  { name: 'Grupo Global Racquet', capital: 320000, weeks: 52, equity: 14, pressure: 18, goal: 'Top 80 e presença em ATP 500' },
+  { name: 'Anjo do Esporte Local', capital: 90000, weeks: 18, equity: 4, pressure: 5, goal: 'caixa positivo e base saudável' }
+];
+const TRAVEL_BUDGET_MODES = {
+  lean: { label: 'Enxuto', desc: 'Economiza viagem e hospedagem, mas aumenta desgaste e reduz conforto.', cost: -0.18, fatigue: 4, reputation: -0.4 },
+  balanced: { label: 'Equilibrado', desc: 'Custo normal com risco controlado para calendário profissional.', cost: 0, fatigue: 0, reputation: 0 },
+  premium: { label: 'Premium', desc: 'Mais conforto e recuperação em torneios, com custo alto.', cost: 0.26, fatigue: -3, reputation: 0.8 }
+};
+
 const TOURNAMENT_LOGOS = [
   ['brisbane', 'assets/branding/logos/atp250_brisbane.png'],
   ['auckland', 'assets/branding/logos/atp250_auckland.png'],
@@ -1107,6 +1126,7 @@ function migrateState() {
   ensurePlayerCareerSystem();
   ensureNewsroomSystem();
   ensureMobileUXSystem();
+  ensureCommercialCareerSystem();
   applyMobileUXRuntime();
 }
 
@@ -1359,7 +1379,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -1468,6 +1488,7 @@ function render() {
   renderTournamentIdentityHub();
   renderNewsroom();
   renderMobileUX();
+  renderCommercialCareer();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -1482,6 +1503,7 @@ function render() {
 }
 
 function getStatusText() {
+  if (state.commercialCareer?.riskScore >= 78) return 'Alerta financeiro comercial';
   if (state.academy.money < 0) return 'Risco de falência';
   if (state.sponsorOffers?.length) return 'Novas propostas comerciais disponíveis';
   if (state.roster.some(p => p.injuredWeeks > 0)) return 'Lesões exigem gestão';
@@ -1506,10 +1528,12 @@ function renderSponsorOffers() {
   const host = $('#sponsorOffers');
   const offers = state.sponsorOffers || [];
   host.innerHTML = offers.length ? offers.map(offer => `
-    <article class="offer-card">
+    <article class="offer-card commercial-offer-card">
       <div>
+        <div class="identity-card-topline"><span>${offer.tier || 'Regional'}</span><span>${offer.category || 'patrocínio'}</span><span>score ${commercialOfferScore(offer)}</span></div>
         <h4>${offer.name}</h4>
         <p class="muted">Bônus imediato ${money(offer.signingBonus)} • semanal ${money(offer.weeklyBoost)} • exigência ${offer.requirement}</p>
+        <div class="commercial-contract-line"><span>${offer.weeks || 26} semanas</span><span>penalidade ${money(offer.penalty || Math.round((offer.signingBonus||0)*0.18))}</span></div>
       </div>
       <div class="tag-row">
         <button class="btn-primary" onclick="window.acceptSponsorOffer('${offer.id}')">Aceitar</button>
@@ -1517,6 +1541,180 @@ function renderSponsorOffers() {
       </div>
     </article>`).join('') : '<div class="list-item"><span>Sem propostas nesta semana.</span></div>';
 }
+
+
+function ensureCommercialCareerSystem() {
+  state.commercialCareer ||= { ledger: [], activeSponsors: [], sponsorPipeline: [], investorOffers: [], travelBudgetMode: 'balanced', riskScore: 24, cashflowTrend: 0, lastProcessedToken: null, boardConfidence: 64 };
+  const cc = state.commercialCareer;
+  cc.ledger ||= [];
+  cc.activeSponsors ||= [];
+  cc.sponsorPipeline ||= [];
+  cc.investorOffers ||= [];
+  cc.travelBudgetMode ||= 'balanced';
+  cc.riskScore ??= 24;
+  cc.cashflowTrend ??= 0;
+  cc.lastProcessedToken ??= null;
+  cc.boardConfidence ??= 64;
+  cc.activeSponsors.forEach(contract => {
+    contract.weeksLeft ??= contract.weeks || 26;
+    contract.weeklyBoost ??= 0;
+    contract.penalty ??= Math.round((contract.signingBonus || 0) * 0.18);
+    contract.status ||= 'ativo';
+  });
+}
+function travelMode() {
+  ensureCommercialCareerSystem();
+  return TRAVEL_BUDGET_MODES[state.commercialCareer.travelBudgetMode] || TRAVEL_BUDGET_MODES.balanced;
+}
+function commercialOfferScore(offer) {
+  const repFit = Math.min(30, Math.round((state.academy.reputation || 0) * 0.45));
+  const financeFit = Math.min(18, Math.round(getStaffBonus('Financeiro', 'sponsor') * 1.2));
+  const cashNeed = state.academy.money < 120000 ? 12 : state.academy.money > 450000 ? -4 : 4;
+  return clamp(Math.round(48 + (offer.prestige || 5) * 3 + repFit + financeFit + cashNeed - (offer.pressure || 0)), 0, 100);
+}
+function commercialWeeklySponsorBoost() {
+  ensureCommercialCareerSystem();
+  return (state.commercialCareer.activeSponsors || []).filter(s => s.status !== 'encerrado').reduce((sum, s) => sum + (s.weeklyBoost || 0), 0);
+}
+function investorPressure() {
+  ensureCommercialCareerSystem();
+  return (state.commercialCareer.investorOffers || []).filter(i => i.accepted).reduce((sum, i) => sum + (i.pressure || 0), 0);
+}
+function commercialTravelAdjustment() {
+  const mode = travelMode();
+  const activeEvent = state.activeTournament?.event;
+  const eventCost = activeEvent ? Math.max(1800, Math.round((activeEvent.drawSize || 16) * 160 + (activeEvent.winnerPoints || 250) * 10)) : 0;
+  return Math.round(eventCost * (1 + mode.cost));
+}
+function calculateCommercialRisk(income = calculateSponsor(), costs = calculateWeeklyCosts()) {
+  ensureCommercialCareerSystem();
+  const runway = costs > 0 ? state.academy.money / costs : 9;
+  const debtRisk = state.academy.money < 0 ? 28 : runway < 4 ? 16 : runway < 8 ? 8 : -5;
+  const sponsorRisk = Math.max(0, 18 - state.commercialCareer.activeSponsors.length * 6);
+  const investorRisk = investorPressure() * 0.55;
+  const flowRisk = income < costs ? 16 : -8;
+  return clamp(Math.round(34 + debtRisk + sponsorRisk + investorRisk + flowRisk - state.academy.reputation * 0.18), 0, 100);
+}
+function pushLedger(type, label, amount, note='') {
+  ensureCommercialCareerSystem();
+  state.commercialCareer.ledger.unshift({ id: `${type}-${Date.now()}-${Math.floor(Math.random()*999)}`, type, label, amount: Math.round(amount || 0), note, week: state.academy.week, season: state.academy.season, at: new Date().toISOString() });
+  state.commercialCareer.ledger = state.commercialCareer.ledger.slice(0, 80);
+}
+function processCommercialWeek(weeklyIncome, weeklyCosts) {
+  ensureCommercialCareerSystem();
+  const token = `${state.academy.season}-${state.academy.week}`;
+  if (state.commercialCareer.lastProcessedToken === token) return;
+  state.commercialCareer.lastProcessedToken = token;
+  const travel = commercialTravelAdjustment();
+  if (travel > 0) {
+    state.academy.money -= travel;
+    state.roster.forEach(p => { p.fatigue = clamp((p.fatigue || 0) + travelMode().fatigue, 0, 100); });
+    pushLedger('travel', `Viagem ${state.activeTournament?.event?.name || 'Circuito'}`, -travel, travelMode().label);
+  }
+  (state.commercialCareer.activeSponsors || []).forEach(contract => {
+    contract.weeksLeft = Math.max(0, (contract.weeksLeft ?? contract.weeks ?? 26) - 1);
+    if (contract.weeksLeft === 0 && contract.status !== 'encerrado') {
+      contract.status = 'encerrado';
+      state.inbox.unshift({ title: `Patrocínio encerrado: ${contract.name}`, body: `O contrato com ${contract.name} terminou. Busque nova receita para proteger o fluxo de caixa.`, week: state.academy.week });
+      pushLedger('sponsor-end', `Fim de contrato ${contract.name}`, 0, 'renovação necessária');
+    }
+  });
+  state.commercialCareer.activeSponsors = state.commercialCareer.activeSponsors.filter(s => s.status !== 'encerrado' || (s.weeksLeft || 0) > -2);
+  (state.commercialCareer.investorOffers || []).filter(i => i.accepted).forEach(investor => {
+    investor.weeksLeft = Math.max(0, (investor.weeksLeft ?? investor.weeks ?? 26) - 1);
+    if (investor.weeksLeft === 0 && !investor.closed) {
+      investor.closed = true;
+      state.commercialCareer.boardConfidence = clamp(state.commercialCareer.boardConfidence + (state.academy.money > 0 ? 7 : -12), 0, 100);
+      state.inbox.unshift({ title: `Ciclo de investidor encerrado`, body: `${investor.name} avaliou a academia. Confiança do board: ${Math.round(state.commercialCareer.boardConfidence)}.`, week: state.academy.week });
+    }
+  });
+  state.commercialCareer.cashflowTrend = Math.round(weeklyIncome - weeklyCosts - travel);
+  state.commercialCareer.riskScore = calculateCommercialRisk(weeklyIncome, weeklyCosts);
+  pushLedger('weekly', 'Fluxo operacional semanal', weeklyIncome - weeklyCosts - travel, `Entrada ${money(weeklyIncome)} • saída ${money(weeklyCosts + travel)}`);
+  if (state.commercialCareer.riskScore >= 78) {
+    state.inbox.unshift({ title: 'Diretoria financeira em alerta', body: 'O risco comercial está alto. Revise patrocínios, viagem, staff e calendário antes de comprometer o caixa.', week: state.academy.week });
+  }
+}
+function renderCommercialCareer() {
+  const host = $('#commercialCareerHub');
+  if (!host) return;
+  ensureCommercialCareerSystem();
+  const cc = state.commercialCareer;
+  const weeklyIncome = calculateSponsor();
+  const weeklyCosts = calculateWeeklyCosts();
+  const travel = commercialTravelAdjustment();
+  const net = weeklyIncome - weeklyCosts - travel;
+  cc.riskScore = calculateCommercialRisk(weeklyIncome, weeklyCosts);
+  const activeSponsors = cc.activeSponsors.filter(s => s.status !== 'encerrado');
+  const investors = cc.investorOffers.filter(i => i.accepted && !i.closed);
+  const offers = state.sponsorOffers || [];
+  const riskClass = cc.riskScore >= 78 ? 'danger' : cc.riskScore >= 55 ? 'warn' : 'ok';
+  host.innerHTML = `
+    <section class="commercial-hero">
+      <div><p class="eyebrow">${BUILD_LABEL}</p><h2>Carreira comercial da academia</h2><p>Controle caixa, contratos, investidores e custo de viagem para sustentar uma academia internacional sem virar apenas arcade.</p></div>
+      <div class="commercial-risk ${riskClass}"><span>Risco</span><strong>${cc.riskScore}</strong><small>${riskClass === 'danger' ? 'crítico' : riskClass === 'warn' ? 'atenção' : 'controlado'}</small></div>
+    </section>
+    <div class="commercial-kpis">
+      <article class="stat-card"><span>Caixa</span><strong>${money(state.academy.money)}</strong></article>
+      <article class="stat-card"><span>Fluxo projetado</span><strong>${money(net)}</strong></article>
+      <article class="stat-card"><span>Receita semanal</span><strong>${money(weeklyIncome)}</strong></article>
+      <article class="stat-card"><span>Custos + viagem</span><strong>${money(weeklyCosts + travel)}</strong></article>
+      <article class="stat-card"><span>Contratos ativos</span><strong>${activeSponsors.length}</strong></article>
+      <article class="stat-card"><span>Board</span><strong>${Math.round(cc.boardConfidence)}%</strong></article>
+    </div>
+    <section class="commercial-grid">
+      <article class="panel-card commercial-card"><div class="panel-title-row"><div><h4>Orçamento de viagem</h4><p class="muted">Afeta custo, fadiga e reputação em semanas de torneio.</p></div><span class="metric-build">${travelMode().label}</span></div><div class="mobile-ux-toggle-grid commercial-mode-grid">${Object.entries(TRAVEL_BUDGET_MODES).map(([key,opt])=>`<button class="mobile-ux-option ${cc.travelBudgetMode===key?'active':''}" onclick="window.setTravelBudgetMode('${key}')"><strong>${opt.label}</strong><span>${opt.desc}</span></button>`).join('')}</div></article>
+      <article class="panel-card commercial-card"><div class="panel-title-row"><div><h4>Patrocínios ativos</h4><p class="muted">Contratos com duração, metas e impacto semanal.</p></div></div><div class="list-block">${activeSponsors.map(s=>`<div class="list-item"><div><strong>${s.name}</strong><div class="small">${s.tier || 'Regional'} • ${s.requirement || 'metas comerciais'} • ${s.weeksLeft || 0} sem.</div></div><b>${money(s.weeklyBoost)}</b></div>`).join('') || '<div class="list-item"><span>Nenhum contrato ativo.</span><strong>Buscar</strong></div>'}</div></article>
+      <article class="panel-card commercial-card"><div class="panel-title-row"><div><h4>Propostas comerciais</h4><p class="muted">Avalie score, prazo, bônus e pressão antes de aceitar.</p></div><button class="mini-btn" onclick="window.forceSponsorPipeline()">Prospectar</button></div><div class="commercial-offers-list">${offers.map(o=>`<article class="offer-card compact"><div><div class="identity-card-topline"><span>${o.tier || 'Regional'}</span><span>${o.category || 'patrocínio'}</span><span>score ${commercialOfferScore(o)}</span></div><h4>${o.name}</h4><p class="muted">${money(o.signingBonus)} agora • ${money(o.weeklyBoost)}/semana • ${o.weeks || 26} sem.</p></div><div class="tag-row"><button class="btn-primary" onclick="window.acceptSponsorOffer('${o.id}')">Assinar</button><button class="btn-ghost" onclick="window.rejectSponsorOffer('${o.id}')">Recusar</button></div></article>`).join('') || '<div class="list-item"><span>Sem proposta aberta.</span><strong>Prospectar</strong></div>'}</div></article>
+      <article class="panel-card commercial-card"><div class="panel-title-row"><div><h4>Investidores</h4><p class="muted">Capital acelera a academia, mas aumenta pressão e cobrança.</p></div><button class="mini-btn" onclick="window.generateInvestorOffer()">Nova oferta</button></div><div class="list-block">${investors.map(i=>`<div class="list-item"><div><strong>${i.name}</strong><div class="small">${i.goal} • equity ${i.equity}% • ${i.weeksLeft || i.weeks} sem.</div></div><b>${money(i.capital)}</b></div>`).join('') || cc.investorOffers.filter(i=>!i.accepted && !i.closed).slice(0,2).map(i=>`<div class="list-item"><div><strong>${i.name}</strong><div class="small">${i.goal} • equity ${i.equity}% • pressão ${i.pressure}</div></div><button class="mini-btn" onclick="window.acceptInvestorOffer('${i.id}')">Aceitar</button></div>`).join('') || '<div class="list-item"><span>Nenhuma proposta de investidor.</span><strong>Estável</strong></div>'}</div></article>
+    </section>
+    <section class="panel-card commercial-ledger"><div class="panel-title-row"><h4>Livro caixa recente</h4><span class="metric-build">schema ${BUILD_INFO.schemaVersion}</span></div><div class="list-block">${cc.ledger.slice(0,8).map(item=>`<div class="list-item"><div><strong>${item.label}</strong><div class="small">S${item.week}/${item.season} • ${item.note || item.type}</div></div><b class="${item.amount < 0 ? 'danger' : 'ok'}">${money(item.amount)}</b></div>`).join('') || '<div class="list-item"><span>Nenhum lançamento ainda.</span><strong>OK</strong></div>'}</div></section>`;
+}
+window.setTravelBudgetMode = (mode='balanced') => {
+  ensureCommercialCareerSystem();
+  if (!TRAVEL_BUDGET_MODES[mode]) return;
+  const snapshot = JSON.stringify(state.commercialCareer);
+  try {
+    state.commercialCareer.travelBudgetMode = mode;
+    state.commercialCareer.ledger.unshift({ id:`travel-mode-${Date.now()}`, type:'policy', label:`Política de viagem: ${TRAVEL_BUDGET_MODES[mode].label}`, amount:0, note:TRAVEL_BUDGET_MODES[mode].desc, week:state.academy.week, season:state.academy.season, at:new Date().toISOString() });
+    state.commercialCareer.ledger = state.commercialCareer.ledger.slice(0,80);
+    if (!saveState(state)) throw new Error('Falha ao salvar política comercial');
+    render();
+  } catch (error) {
+    state.commercialCareer = JSON.parse(snapshot);
+    showSystemError('A política comercial foi restaurada porque o save falhou.', error);
+    render();
+  }
+};
+window.forceSponsorPipeline = () => { maybeCreateSponsorOffer(true); render(); };
+window.generateInvestorOffer = () => {
+  ensureCommercialCareerSystem();
+  const template = COMMERCIAL_INVESTORS[(state.academy.week + state.commercialCareer.investorOffers.length) % COMMERCIAL_INVESTORS.length];
+  const offer = { ...template, id:`investor-${state.academy.season}-${state.academy.week}-${Date.now()}`, weeksLeft: template.weeks, accepted:false, closed:false };
+  state.commercialCareer.investorOffers.unshift(offer);
+  state.commercialCareer.investorOffers = state.commercialCareer.investorOffers.slice(0, 8);
+  addLog(`Nova proposta de investidor: ${offer.name}.`);
+  render();
+};
+window.acceptInvestorOffer = (id) => {
+  ensureCommercialCareerSystem();
+  const offer = state.commercialCareer.investorOffers.find(i => i.id === id);
+  if (!offer) return;
+  const snapshot = { money: state.academy.money, cc: JSON.stringify(state.commercialCareer), inbox: [...state.inbox] };
+  try {
+    offer.accepted = true; offer.weeksLeft = offer.weeks; offer.acceptedAt = new Date().toISOString();
+    state.academy.money += offer.capital;
+    state.commercialCareer.boardConfidence = clamp(state.commercialCareer.boardConfidence + 5 - offer.pressure * .2, 0, 100);
+    pushLedger('investor', `Investimento ${offer.name}`, offer.capital, `${offer.equity}% equity • ${offer.goal}`);
+    state.inbox.unshift({ title:`Investidor entrou: ${offer.name}`, body:`Capital de ${money(offer.capital)} recebido. A cobrança por ${offer.goal} aumentou.`, week:state.academy.week });
+    if (!saveState(state)) throw new Error('Falha ao salvar investidor');
+    render();
+  } catch (error) {
+    state.academy.money = snapshot.money; state.commercialCareer = JSON.parse(snapshot.cc); state.inbox = snapshot.inbox;
+    showSystemError('A negociação com investidor foi revertida com segurança.', error);
+    render();
+  }
+};
 
 
 
@@ -2276,19 +2474,35 @@ window.hireStaff = (id) => {
   }
 };
 window.acceptSponsorOffer = (id) => {
+  ensureCommercialCareerSystem();
   const offer = (state.sponsorOffers || []).find(o => o.id === id);
   if (!offer) return;
-  state.academy.money += offer.signingBonus;
-  state.academy.sponsor += offer.weeklyBoost;
-  state.inbox.unshift({ title: `Contrato assinado: ${offer.name}`, body: `Entrada imediata de ${money(offer.signingBonus)} e reforço semanal de ${money(offer.weeklyBoost)}.`, week: state.academy.week });
-  state.sponsorOffers = state.sponsorOffers.filter(o => o.id !== id);
-  addLog(`Novo patrocínio firmado com ${offer.name}.`);
-  render();
+  const snapshot = { money: state.academy.money, sponsor: state.academy.sponsor, offers: [...state.sponsorOffers], cc: JSON.stringify(state.commercialCareer), inbox: [...state.inbox], logs: [...state.logs] };
+  try {
+    const contract = { ...offer, weeksLeft: offer.weeks || 26, status: 'ativo', signedAt: new Date().toISOString(), penalty: offer.penalty || Math.round((offer.signingBonus || 0) * 0.18) };
+    state.academy.money += offer.signingBonus;
+    state.academy.sponsor += Math.round((offer.weeklyBoost || 0) * 0.35);
+    state.commercialCareer.activeSponsors.unshift(contract);
+    state.commercialCareer.boardConfidence = clamp(state.commercialCareer.boardConfidence + Math.max(2, Math.round(commercialOfferScore(offer)/18)), 0, 100);
+    state.inbox.unshift({ title: `Contrato assinado: ${offer.name}`, body: `Entrada imediata de ${money(offer.signingBonus)}, ${money(offer.weeklyBoost)} semanais por ${contract.weeksLeft} semanas e meta: ${offer.requirement}.`, week: state.academy.week });
+    pushLedger('sponsor', `Assinatura ${offer.name}`, offer.signingBonus, `${offer.tier || 'Regional'} • ${offer.requirement}`);
+    state.sponsorOffers = state.sponsorOffers.filter(o => o.id !== id);
+    addLog(`Novo patrocínio firmado com ${offer.name}.`);
+    if (!saveState(state)) throw new Error('Falha ao salvar contrato comercial');
+    render();
+  } catch (error) {
+    state.academy.money = snapshot.money; state.academy.sponsor = snapshot.sponsor; state.sponsorOffers = snapshot.offers; state.commercialCareer = JSON.parse(snapshot.cc); state.inbox = snapshot.inbox; state.logs = snapshot.logs;
+    showSystemError('O contrato de patrocínio foi revertido com segurança.', error);
+    render();
+  }
 };
 window.rejectSponsorOffer = (id) => {
+  ensureCommercialCareerSystem();
   const offer = (state.sponsorOffers || []).find(o => o.id === id);
   if (!offer) return;
   state.sponsorOffers = state.sponsorOffers.filter(o => o.id !== id);
+  state.commercialCareer.boardConfidence = clamp(state.commercialCareer.boardConfidence - 1, 0, 100);
+  pushLedger('sponsor-reject', `Proposta recusada: ${offer.name}`, 0, offer.requirement || 'sem meta');
   addLog(`Proposta de ${offer.name} recusada.`);
   render();
 };
@@ -2894,10 +3108,12 @@ function renderMatch() {
 function addMatchLog(text) { if (!state.match) return; state.match.log.push(text); state.match.log = state.match.log.slice(-80); }
 
 function advanceWeek() {
+  ensureCommercialCareerSystem();
   processWeeklyTraining();
   const weeklyIncome = calculateSponsor();
   const weeklyCosts = calculateWeeklyCosts();
   state.academy.money += weeklyIncome - weeklyCosts;
+  processCommercialWeek(weeklyIncome, weeklyCosts);
   if (state.activeTournament && state.activeTournament.event.week < state.academy.week) state.activeTournament = null;
   state.roster.forEach(player => {
     const physio = getStaffBonus('Fisioterapeuta', 'recovery') + getStaffBonus('Nutricionista','recovery') + getStaffBonus('Preparador Fisico','recovery');
@@ -2973,22 +3189,38 @@ function maybeCreateWeeklyNews() {
   state.inbox = state.inbox.slice(0, 18);
 }
 
-function maybeCreateSponsorOffer() {
+function maybeCreateSponsorOffer(force=false) {
+  ensureCommercialCareerSystem();
   state.sponsorOffers ||= [];
-  if (state.sponsorOffers.length >= 2) return;
-  const trigger = state.academy.week % 4 === 0 || state.academy.reputation >= 28;
-  if (!trigger || Math.random() > 0.55) return;
-  const id = `offer-${state.academy.season}-${state.academy.week}-${Math.floor(Math.random()*999)}`;
-  const rep = state.academy.reputation;
+  if (!force && state.sponsorOffers.length >= 3) return;
+  const trigger = force || state.academy.week % 4 === 0 || state.academy.reputation >= 28 || state.commercialCareer.riskScore >= 60;
+  if (!trigger || (!force && Math.random() > 0.62)) return;
+  const rep = state.academy.reputation || 0;
+  const rank = getPlayerRank(chooseBestPlayer()?.id || 'none');
+  const templates = COMMERCIAL_SPONSOR_BRANDS.filter(b => (rep >= 38 || b.tier !== 'Global') && (rep >= 24 || b.tier !== 'Premium'));
+  const brand = templates[(state.academy.week + state.sponsorOffers.length + Math.floor(rep)) % templates.length] || COMMERCIAL_SPONSOR_BRANDS.at(-1);
+  const multiplier = 1 + rep / 85 + Math.max(0, 180 - rank) / 900 + getStaffBonus('Financeiro', 'sponsor') / 180;
+  const id = `offer-${state.academy.season}-${state.academy.week}-${Math.floor(Math.random()*9999)}`;
   const offer = {
     id,
-    name: rep >= 40 ? 'Apex Rackets' : rep >= 26 ? 'Blue Court Energy' : 'Local Sports Hub',
-    signingBonus: 12000 + rep * 420,
-    weeklyBoost: 1800 + rep * 75,
-    requirement: rep >= 40 ? 'manter atleta no Top 80' : rep >= 26 ? 'avançar em ATP 250/500' : 'crescer reputação regional'
+    name: brand.name,
+    tier: brand.tier,
+    category: brand.category,
+    prestige: brand.prestige,
+    signingBonus: Math.round(brand.baseBonus * multiplier),
+    weeklyBoost: Math.round(brand.weekly * multiplier),
+    requirement: brand.requirement,
+    weeks: brand.tier === 'Global' ? 52 : brand.tier === 'Premium' ? 40 : 26,
+    penalty: Math.round(brand.baseBonus * 0.16 * multiplier),
+    pressure: brand.prestige + (brand.tier === 'Global' ? 8 : 2),
+    createdAt: new Date().toISOString()
   };
+  if (state.sponsorOffers.some(o => o.name === offer.name)) offer.name = `${offer.name} ${state.academy.week}`;
   state.sponsorOffers.unshift(offer);
-  state.inbox.unshift({ title: `Nova proposta: ${offer.name}`, body: `Oferta comercial com bônus de assinatura de ${money(offer.signingBonus)}.`, week: state.academy.week });
+  state.sponsorOffers = state.sponsorOffers.slice(0, 4);
+  state.commercialCareer.sponsorPipeline.unshift({ id: offer.id, name: offer.name, score: commercialOfferScore(offer), week: state.academy.week, season: state.academy.season });
+  state.commercialCareer.sponsorPipeline = state.commercialCareer.sponsorPipeline.slice(0, 16);
+  state.inbox.unshift({ title: `Nova proposta: ${offer.name}`, body: `Oferta ${offer.tier} com bônus de assinatura de ${money(offer.signingBonus)} e ${offer.weeks} semanas de contrato.`, week: state.academy.week });
 }
 
 function evaluateObjectives() {
@@ -3002,12 +3234,18 @@ function evaluateObjectives() {
 
 
 function calculateSponsor() {
-  return Math.round(state.academy.sponsor * (1 + state.academy.reputation / 140 + getStaffBonus('Financeiro', 'sponsor') / 100));
+  ensureCommercialCareerSystem();
+  const base = state.academy.sponsor * (1 + state.academy.reputation / 140 + getStaffBonus('Financeiro', 'sponsor') / 100);
+  const contracts = commercialWeeklySponsorBoost();
+  const newsroomBoost = (state.newsroom?.sentiment || 62) > 70 ? 0.04 : (state.newsroom?.sentiment || 62) < 42 ? -0.05 : 0;
+  return Math.max(0, Math.round((base + contracts) * (1 + newsroomBoost)));
 }
 function calculateWeeklyCosts() {
+  ensureCommercialCareerSystem();
   const salaries = state.roster.reduce((sum, p) => sum + p.salary, 0) + Object.values(state.staff).filter(Boolean).reduce((sum, s) => sum + s.salary, 0);
   const financeCut = getStaffBonus('Financeiro', 'costs');
-  return Math.round((state.academy.weeklyCosts + salaries) * (1 - Math.abs(Math.min(0, financeCut)) / 100));
+  const investorFee = investorPressure() * 220;
+  return Math.round((state.academy.weeklyCosts + salaries + investorFee) * (1 - Math.abs(Math.min(0, financeCut)) / 100));
 }
 function getStaffBonus(role, key) { const member = state.staff[role]; return member?.effects?.[key] || 0; }
 function getDepartmentBonus(key) { return Object.values(state.staff || {}).filter(Boolean).reduce((sum,m)=>sum+(m.effects?.[key]||0),0); }

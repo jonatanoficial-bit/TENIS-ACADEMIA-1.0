@@ -5,7 +5,7 @@ const STORAGE_KEY = 'vale_tennis_manager_save';
 const LEGACY_KEYS = ['ace_academy_save_v040', 'ace-manager-save'];
 const BACKUP_KEY = 'vale_tennis_manager_save_backup';
 const CORRUPT_KEY = 'vale_tennis_manager_corrupt_save';
-const CURRENT_SCHEMA = 17;
+const CURRENT_SCHEMA = 18;
 
 const clone = (value) => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 
@@ -39,7 +39,7 @@ export function buildInitialState(content) {
     sponsorOffers: [], objectives: { current: 'Entrar no Top 120' },
     worldTour: { weeklyResults: [], rankingHistory: [], lastSimulatedWeek: 0, lastSimulatedSeason: academy.season },
     trainingLab: { cycle: 'balanced', autoApply: true, lastProcessedWeek: 0, lastReport: [], plans: Object.fromEntries(roster.map(p => [p.id, { focus: 'balanced', intensity: 'moderate' }])) },
-    tournamentDraws: {}, tournamentLife: { championHistory: [], drawAudit: [], lastViewedDraw: null }, flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, playerCareer: { weeklyEvents: [], conversations: [], promises: [], lastProcessedToken: null }, tacticalIntelligence: { plan: { serveTarget: 'body', rallyPlan: 'balanced', attackPattern: 'weakness', returnPlan: 'secondServePressure', riskMode: 'balanced' }, history: [], lastAppliedWeek: 0, analyst: 'Plano equilibrado ativo.' }, visualAcademy: { activeScene: 'office', lastViewedScene: 'office', environmentAudit: [], premiumMode: true }, newsroom: { items: [], pressQuestions: [], sentiment: 62, reputationPulse: 0, lastProcessedToken: null, lastInterviewWeek: 0 }, mobileUX: { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
+    tournamentDraws: {}, tournamentLife: { championHistory: [], drawAudit: [], lastViewedDraw: null }, flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, playerCareer: { weeklyEvents: [], conversations: [], promises: [], lastProcessedToken: null }, tacticalIntelligence: { plan: { serveTarget: 'body', rallyPlan: 'balanced', attackPattern: 'weakness', returnPlan: 'secondServePressure', riskMode: 'balanced' }, history: [], lastAppliedWeek: 0, analyst: 'Plano equilibrado ativo.' }, visualAcademy: { activeScene: 'office', lastViewedScene: 'office', environmentAudit: [], premiumMode: true }, newsroom: { items: [], pressQuestions: [], sentiment: 62, reputationPulse: 0, lastProcessedToken: null, lastInterviewWeek: 0 }, mobileUX: { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] }, commercialCareer: { ledger: [], activeSponsors: [], sponsorPipeline: [], investorOffers: [], travelBudgetMode: 'balanced', riskScore: 24, cashflowTrend: 0, lastProcessedToken: null, boardConfidence: 64 }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
   };
 }
 
@@ -125,6 +125,16 @@ export function migrateSave(data) {
   state.mobileUX.reduceMotion ??= false;
   state.mobileUX.auditLog ||= [];
   state.mobileUX.lastViewport ??= null;
+  state.commercialCareer ||= { ledger: [], activeSponsors: [], sponsorPipeline: [], investorOffers: [], travelBudgetMode: 'balanced', riskScore: 24, cashflowTrend: 0, lastProcessedToken: null, boardConfidence: 64 };
+  state.commercialCareer.ledger ||= [];
+  state.commercialCareer.activeSponsors ||= [];
+  state.commercialCareer.sponsorPipeline ||= [];
+  state.commercialCareer.investorOffers ||= [];
+  state.commercialCareer.travelBudgetMode ||= 'balanced';
+  state.commercialCareer.riskScore ??= 24;
+  state.commercialCareer.cashflowTrend ??= 0;
+  state.commercialCareer.lastProcessedToken ??= null;
+  state.commercialCareer.boardConfidence ??= 64;
   state.trainingLab.plans ||= {}; state.trainingLab.lastReport ||= []; state.trainingLab.autoApply ??= true; state.trainingLab.cycle ||= 'balanced';
   state.staff ||= {};
   ['Tecnico','Preparador Fisico','Fisioterapeuta','Psicologo','Nutricionista','Analista','Scouting','Financeiro'].forEach(role => { state.staff[role] ??= null; });

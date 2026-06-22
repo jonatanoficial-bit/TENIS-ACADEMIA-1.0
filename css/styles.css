@@ -918,3 +918,81 @@ body[data-scene="calendar"]::before{background-image:radial-gradient(circle at 2
   .tab-panel{padding:10px;}
   #matchCanvas{max-height:48vh;object-fit:contain;}
 }
+
+/* v3.15.0 — Economy, Sponsors & Commercial Career */
+.commercial-career-panel { overflow: hidden; }
+.commercial-head { align-items: flex-start; gap: 12px; }
+.commercial-career-hub { display: grid; gap: 16px; }
+.commercial-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(255,209,102,.16), rgba(113,246,201,.08)),
+    radial-gradient(circle at top right, rgba(255,255,255,.15), transparent 34%),
+    rgba(5,12,22,.55);
+  box-shadow: 0 22px 50px rgba(0,0,0,.22);
+}
+.commercial-hero h2 { margin: 4px 0 8px; font-size: clamp(1.4rem, 4vw, 2.25rem); }
+.commercial-hero p { max-width: 760px; color: rgba(230,241,255,.78); }
+.commercial-risk {
+  min-width: 118px;
+  aspect-ratio: 1;
+  border-radius: 28px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(4,10,18,.62);
+}
+.commercial-risk span, .commercial-risk small { color: rgba(229,241,255,.68); font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+.commercial-risk strong { font-size: 2.2rem; line-height: 1; }
+.commercial-risk.ok strong { color: #71f6c9; }
+.commercial-risk.warn strong { color: #ffd166; }
+.commercial-risk.danger strong { color: #ff8fa5; }
+.commercial-kpis {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(130px, 1fr));
+  gap: 12px;
+}
+.commercial-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.commercial-card { min-width: 0; }
+.commercial-mode-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.commercial-contract-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.commercial-contract-line span {
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: rgba(255,255,255,.08);
+  color: rgba(232,242,255,.78);
+  font-size: .78rem;
+}
+.commercial-offers-list { display: grid; gap: 10px; }
+.offer-card.compact { padding: 13px; }
+.commercial-ledger .list-item b.ok { color: #71f6c9; }
+.commercial-ledger .list-item b.danger { color: #ff8fa5; }
+@media (max-width: 920px) {
+  .commercial-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .commercial-grid { grid-template-columns: 1fr; }
+  .commercial-hero { grid-template-columns: 1fr; }
+  .commercial-risk { width: 118px; min-width: 0; aspect-ratio: 1; justify-self: start; }
+}
+@media (max-width: 430px) {
+  .commercial-hero { padding: 16px; border-radius: 20px; }
+  .commercial-kpis { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .commercial-mode-grid { grid-template-columns: 1fr; }
+  .commercial-risk { width: 96px; border-radius: 22px; }
+  .commercial-risk strong { font-size: 1.75rem; }
+}
