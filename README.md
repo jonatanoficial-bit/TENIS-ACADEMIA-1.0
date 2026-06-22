@@ -1,4 +1,4 @@
-# Vale Games Tennis Manager — v3.9.0
+# Vale Games Tennis Manager — v3.11.0 — Tactical Intelligence — build 20260622-110507
 
 Build `20260622-101533` • Real Draws & Tournament Life • 22/06/2026 10:15:33 BRT.
 
@@ -134,3 +134,11 @@ Novidades desta fase:
 Versão 2.6.0 (20260418-122440).
 
 Esta build inclui integração de logos de torneios, avatares transparentes de jogadores/staff e fundos premium mobile-first.
+
+
+## Build v3.10.0 — Player Personality & Real Careers
+Esta build adiciona a camada de carreira humana dos atletas, com personalidade, pressão, confiança, relação com treinador, conversas, metas e eventos persistentes. A versão/build/data/hora aparecem no jogo e o save migra para schema 13.
+
+
+### v3.11.0 — Tactical Intelligence
+Build 20260622-110507 (22/06/2026 11:05:07) com plano tático aplicado ao Match Center: saque aberto/corpo/T, pressão no segundo saque, ataque ao backhand/fraqueza, rallies longos/curtos/rede e modos de risco. Todas as mudanças preservam versão/build/data/hora visíveis e migração para schema 14.

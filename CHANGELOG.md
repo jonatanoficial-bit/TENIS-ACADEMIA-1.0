@@ -1,3 +1,20 @@
+
+
+## v3.11.0 — Tactical Intelligence — build 20260622-110507
+- Adiciona plano tático profundo antes/durante a partida: alvo de saque, devolução, padrão de ataque, duração do rally e risco.
+- Conecta decisões táticas ao motor ponto a ponto: primeiro saque, ace, dupla falta, rally, winners, erros e chance de break.
+- Cria painel Tactical Intelligence mobile-first no Match Center.
+- Adiciona recomendação automática do analista conforme adversário, piso, fadiga e pressão.
+- Mantém rollback e fallback para ajustes táticos inválidos; schema 14.
+
+## v3.10.0 — Player Personality & Real Careers
+- Build 20260622-104227 (22/06/2026 10:42:27, São Paulo).
+- Adicionado sistema humano de atletas: personalidade, moral, confiança, pressão, relação com treinador, felicidade, ambição e disciplina.
+- Nova aba Carreira com painel mobile-first de conversas, metas da temporada e eventos humanos.
+- Conversas com atleta agora afetam moral, confiança, pressão e relacionamento com proteção anti-quebra.
+- Partidas e semanas passam a influenciar carreira psicológica; eventos são salvos no histórico persistente.
+- Migração de save para schema 13 preservando builds anteriores.
+
 ## v3.9.0 — Real Draws & Tournament Life — 20260622-101533
 
 - Criado sistema de chaves reais por tamanho de torneio, com bracket de 8/16/32/64/128.

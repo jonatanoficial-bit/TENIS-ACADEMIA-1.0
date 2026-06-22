@@ -19,6 +19,40 @@ const STRATEGY_EFFECTS = {
   pressure: { offense: 3, defense: 0, serve: 0, stamina: 2.2, error: 2.1, pressure: 5 },
   control: { offense: 1, defense: 3, serve: 0, stamina: -0.4, error: -1.2, pressure: 1 }
 };
+
+const TACTICAL_DEFAULT_PLAN = { serveTarget: 'body', rallyPlan: 'balanced', attackPattern: 'weakness', returnPlan: 'secondServePressure', riskMode: 'balanced' };
+const TACTICAL_OPTIONS = {
+  serveTarget: {
+    wide: { label: 'Sacar aberto', desc: 'Abre a quadra e aumenta chance de ace, mas cobra precisão.', firstServe: -2, ace: 2.2, error: 0.6, direction: 'aberto' },
+    body: { label: 'Sacar no corpo', desc: 'Reduz ângulo da devolução e protege pontos de pressão.', firstServe: 2, ace: -0.4, error: -0.6, direction: 'corpo' },
+    t: { label: 'Sacar no T', desc: 'Busca potência e ponto curto, especialmente em indoor/grama.', firstServe: -1, ace: 1.4, error: 0.2, direction: 'T' },
+    mixed: { label: 'Variar direção', desc: 'Evita leitura do adversário e estabiliza o saque.', firstServe: 1, ace: 0.5, error: -0.2, direction: 'misto' }
+  },
+  rallyPlan: {
+    short: { label: 'Encurtar pontos', desc: 'Primeira bola agressiva, rede e risco controlado para poupar energia.', rally: -2.1, offense: 3.2, defense: -1.2, stamina: -0.9, error: 1.2 },
+    balanced: { label: 'Rally equilibrado', desc: 'Plano sem extremos, bom para ler o jogo antes de arriscar.', rally: 0, offense: 0, defense: 0, stamina: 0, error: 0 },
+    long: { label: 'Alongar rallies', desc: 'Testa resistência e consistência do adversário, forte no saibro.', rally: 2.6, offense: -1, defense: 3.1, stamina: 1.4, error: -0.6 },
+    net: { label: 'Subir à rede', desc: 'Encurta trocas e aumenta winners/erros conforme voleio e timing.', rally: -2.6, offense: 4.4, defense: -2.5, stamina: -0.6, error: 1.9 }
+  },
+  attackPattern: {
+    weakness: { label: 'Atacar fraqueza', desc: 'O analista escolhe automaticamente o golpe mais frágil do adversário.', offense: 2.2, pressure: 1.8, error: 0.4 },
+    backhand: { label: 'Atacar backhand', desc: 'Insiste no lado geralmente mais vulnerável em rallies e devoluções.', offense: 1.5, pressure: 2.4, error: 0.5 },
+    forehand: { label: 'Evitar forehand forte', desc: 'Protege contra a melhor bola do rival e reduz winners sofridos.', offense: -0.5, defense: 2.8, error: -0.4 },
+    openCourt: { label: 'Abrir a quadra', desc: 'Usa ângulos para puxar o rival para fora e finalizar no espaço.', offense: 3.3, pressure: 1.1, error: 1.2 },
+    middle: { label: 'Jogar no corpo', desc: 'Tira ângulo, reduz erro e força decisão do adversário.', offense: -0.4, defense: 1.5, error: -1.1 }
+  },
+  returnPlan: {
+    neutral: { label: 'Devolução neutra', desc: 'Bloqueia a bola e entra no rally com segurança.', return: 0, second: 0, error: 0 },
+    secondServePressure: { label: 'Pressionar 2º saque', desc: 'Ataca a segunda bola e aumenta chance de break, com risco extra.', return: 1.2, second: 4.2, error: 1.2 },
+    chip: { label: 'Bloquear/slice', desc: 'Reduz erro na devolução e força o rival a construir o ponto.', return: 0.6, second: 1.2, error: -1.1 },
+    deep: { label: 'Devolver profundo', desc: 'Joga no fundo para tirar tempo do sacador.', return: 2.1, second: 2.2, error: 0.5 }
+  },
+  riskMode: {
+    safe: { label: 'Risco baixo', desc: 'Menos erro, menos winner. Bom quando o atleta está pressionado.', offense: -1.8, defense: 2.1, error: -2.6, firstServe: 2.4 },
+    balanced: { label: 'Risco equilibrado', desc: 'Mantém margem e agressividade em níveis profissionais.', offense: 0, defense: 0, error: 0, firstServe: 0 },
+    aggressive: { label: 'Risco alto', desc: 'Busca dominar pontos curtos, mas aumenta erros e desgaste mental.', offense: 3.8, defense: -1.8, error: 2.9, firstServe: -2.4 }
+  }
+};
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
 let autoPlayTimer = null;
@@ -45,6 +79,30 @@ const STAFF_AVATARS = {
   'Nutricionista': 'assets/branding/staff/doctor.png',
   'Analista': 'assets/branding/staff/finance.png'
 };
+
+const PLAYER_PERSONALITIES = {
+  fighter: { label: 'Competidor feroz', icon: '🔥', desc: 'Cresce em jogos grandes, mas cobra resultados e torneios fortes.', pressure: 8, ambition: 88, discipline: 74, conflict: 10 },
+  disciplined: { label: 'Profissional disciplinado', icon: '📋', desc: 'Aceita rotina pesada, evolui com constância e raramente cria ruído.', pressure: -4, ambition: 72, discipline: 92, conflict: -6 },
+  prodigy: { label: 'Promessa sensível', icon: '⭐', desc: 'Grande teto técnico, mas oscila com pressão, imprensa e derrotas duras.', pressure: 14, ambition: 84, discipline: 68, conflict: 4 },
+  leader: { label: 'Líder de vestiário', icon: '🧭', desc: 'Eleva moral do elenco e responde bem a conversas francas.', pressure: 0, ambition: 78, discipline: 82, conflict: -2 },
+  mercurial: { label: 'Talento instável', icon: '⚡', desc: 'Pode explodir tecnicamente, mas exige gestão fina de confiança e ego.', pressure: 10, ambition: 90, discipline: 55, conflict: 14 },
+  loyal: { label: 'Leal à academia', icon: '🤝', desc: 'Valoriza relação com treinador, estabilidade e plano de longo prazo.', pressure: -2, ambition: 65, discipline: 80, conflict: -8 }
+};
+const TALK_ACTIONS = {
+  praise: { label: 'Elogiar atuação', morale: 6, confidence: 5, relationship: 4, pressure: -1, risk: 0 },
+  demand: { label: 'Cobrar evolução', morale: -3, confidence: 1, relationship: -2, pressure: 5, risk: 2 },
+  calm: { label: 'Reduzir pressão', morale: 2, confidence: 2, relationship: 3, pressure: -7, risk: -2 },
+  promise: { label: 'Prometer calendário forte', morale: 4, confidence: 2, relationship: 5, pressure: 4, risk: 3 },
+  rest: { label: 'Proteger descanso', morale: 3, confidence: 1, relationship: 4, pressure: -3, risk: -4 }
+};
+const SEASON_GOALS = {
+  ranking: 'Subir no ranking',
+  title: 'Buscar título',
+  development: 'Desenvolvimento técnico',
+  recovery: 'Saúde e recuperação',
+  consistency: 'Consistência competitiva'
+};
+
 const TOURNAMENT_LOGOS = [
   ['brisbane', 'assets/branding/logos/atp250_brisbane.png'],
   ['auckland', 'assets/branding/logos/atp250_auckland.png'],
@@ -291,9 +349,98 @@ function scoreSnapshot(match) {
   const games = `${match.gamesPlayer || 0}-${match.gamesOpponent || 0}`;
   return `Sets ${sets} • Games ${games} • ${match.pointText || '0-0'}`;
 }
+
+function getTacticalPlan() {
+  state.tacticalIntelligence ||= { plan: { ...TACTICAL_DEFAULT_PLAN }, history: [], lastAppliedWeek: 0, analyst: 'Plano equilibrado ativo.' };
+  state.tacticalIntelligence.plan ||= { ...TACTICAL_DEFAULT_PLAN };
+  return { ...TACTICAL_DEFAULT_PLAN, ...state.tacticalIntelligence.plan };
+}
+function tacticalOption(group, key) { return TACTICAL_OPTIONS[group]?.[key] || TACTICAL_OPTIONS[group]?.[TACTICAL_DEFAULT_PLAN[group]] || {}; }
+function tacticalProfile(plan = getTacticalPlan()) {
+  const serve = tacticalOption('serveTarget', plan.serveTarget);
+  const rally = tacticalOption('rallyPlan', plan.rallyPlan);
+  const attack = tacticalOption('attackPattern', plan.attackPattern);
+  const ret = tacticalOption('returnPlan', plan.returnPlan);
+  const risk = tacticalOption('riskMode', plan.riskMode);
+  return {
+    firstServe: (serve.firstServe || 0) + (risk.firstServe || 0),
+    ace: serve.ace || 0,
+    serveError: serve.error || 0,
+    rally: rally.rally || 0,
+    offense: (rally.offense || 0) + (attack.offense || 0) + (risk.offense || 0),
+    defense: (rally.defense || 0) + (attack.defense || 0) + (risk.defense || 0),
+    return: ret.return || 0,
+    secondServePressure: ret.second || 0,
+    error: (serve.error || 0) + (rally.error || 0) + (attack.error || 0) + (ret.error || 0) + (risk.error || 0),
+    stamina: rally.stamina || 0,
+    pressure: attack.pressure || 0,
+    serveDirection: serve.direction || 'misto'
+  };
+}
+function opponentWeakness(opponent) {
+  const fh = attrValue(opponent, 'forehand');
+  const bh = attrValue(opponent, 'backhand');
+  const ret = attrValue(opponent, 'return', bh);
+  const volley = attrValue(opponent, 'volley', 58);
+  const list = [ ['forehand', fh, 'forehand'], ['backhand', bh, 'backhand'], ['return', ret, 'devolução'], ['volley', volley, 'rede'] ];
+  return list.sort((a,b)=>a[1]-b[1])[0];
+}
+function tacticalPressureAgainst(opponent, plan = getTacticalPlan()) {
+  const attack = plan.attackPattern;
+  const weak = opponentWeakness(opponent);
+  if (attack === 'weakness') return clamp((72 - weak[1]) * 0.14 + 2.2, -2, 6.5);
+  if (attack === 'backhand') return clamp((72 - attrValue(opponent,'backhand')) * 0.16 + 1.6, -2.5, 7);
+  if (attack === 'forehand') return clamp((attrValue(opponent,'forehand') - attrValue(opponent,'backhand')) * 0.10 + 1.2, -1, 5);
+  if (attack === 'openCourt') return clamp((attrValue(opponent,'speed') < 68 ? 2.7 : 0.8) + (attrValue(opponent,'agility') < 68 ? 1.4 : 0), -1, 5.5);
+  if (attack === 'middle') return 1.1;
+  return 0;
+}
+function tacticalSummaryText(plan = getTacticalPlan()) {
+  return `${tacticalOption('serveTarget',plan.serveTarget).label || 'Saque'} • ${tacticalOption('returnPlan',plan.returnPlan).label || 'Devolução'} • ${tacticalOption('attackPattern',plan.attackPattern).label || 'Ataque'} • ${tacticalOption('rallyPlan',plan.rallyPlan).label || 'Rally'} • ${tacticalOption('riskMode',plan.riskMode).label || 'Risco'}`;
+}
+function tacticalAnalystRead(match = state.match) {
+  const plan = getTacticalPlan();
+  const player = match ? getMatchPlayer(state.roster.find(p => p.id === match.playerId) || {}) : getMatchPlayer(chooseBestPlayer() || {});
+  const opponent = match ? getMatchPlayer(match.opponent || {}) : null;
+  if (!opponent) return `Plano pré-jogo: ${tacticalSummaryText(plan)}. O analista ajustará a leitura quando o adversário for definido.`;
+  const weak = opponentWeakness(opponent);
+  const surface = surfaceKey(match?.event?.surface || 'hard');
+  const risk = tacticalOption('riskMode', plan.riskMode).label;
+  const rally = tacticalOption('rallyPlan', plan.rallyPlan).label;
+  const serve = tacticalOption('serveTarget', plan.serveTarget).label;
+  const edge = tacticalPressureAgainst(opponent, plan);
+  const surfaceHint = surface === 'clay' ? 'No saibro, paciência e profundidade valem mais que pressa.' : surface === 'grass' ? 'Na grama, primeiro saque e pontos curtos ganham peso.' : surface === 'indoor' ? 'Indoor favorece saque pesado e devolução profunda.' : 'No piso duro, equilíbrio entre saque, devolução e primeira bola.';
+  return `${serve}; atacar ${weak[2]} adversário; ${rally}; risco ${risk}. Bônus tático estimado ${edge.toFixed(1)}. ${surfaceHint}`;
+}
+function recommendTacticalPlan(match = state.match) {
+  const player = match ? getMatchPlayer(state.roster.find(p => p.id === match.playerId) || {}) : getMatchPlayer(chooseBestPlayer() || {});
+  const opponent = match ? getMatchPlayer(match.opponent || {}) : null;
+  const surface = surfaceKey(match?.event?.surface || state.activeTournament?.event?.surface || 'hard');
+  const plan = { ...TACTICAL_DEFAULT_PLAN };
+  if (surface === 'clay') plan.rallyPlan = attrValue(player,'stamina') >= 68 ? 'long' : 'balanced';
+  if (surface === 'grass') { plan.rallyPlan = 'short'; plan.serveTarget = 'wide'; }
+  if (surface === 'indoor') { plan.serveTarget = 't'; plan.returnPlan = 'deep'; }
+  if (player?.pressure > 68 || player?.fatigue > 70) plan.riskMode = 'safe';
+  if (opponent) {
+    const weak = opponentWeakness(opponent)[0];
+    plan.attackPattern = weak === 'backhand' ? 'backhand' : weak === 'forehand' ? 'forehand' : 'weakness';
+    if (attrValue(opponent,'serve') < 68 || attrValue(opponent,'composure',60) < 66) plan.returnPlan = 'secondServePressure';
+    if (attrValue(opponent,'speed') < 64 && surface !== 'clay') plan.attackPattern = 'openCourt';
+    if (attrValue(opponent,'forehand') > attrValue(opponent,'backhand') + 10) plan.attackPattern = 'forehand';
+  }
+  return plan;
+}
 function serveDirectionFor(match, serverSide) {
+  const plan = getTacticalPlan();
   const strategy = currentStrategy;
-  const options = strategy === 'serve' ? ['aberto', 'corpo', 'T', 'aberto'] : strategy === 'control' ? ['corpo', 'T', 'corpo'] : ['aberto', 'T', 'corpo'];
+  let options = strategy === 'serve' ? ['aberto', 'corpo', 'T', 'aberto'] : strategy === 'control' ? ['corpo', 'T', 'corpo'] : ['aberto', 'T', 'corpo'];
+  if (serverSide === 'player') {
+    const preferred = tacticalOption('serveTarget', plan.serveTarget).direction || 'misto';
+    if (preferred === 'aberto') options = ['aberto','aberto','T','corpo'];
+    else if (preferred === 'corpo') options = ['corpo','corpo','T','aberto'];
+    else if (preferred === 'T') options = ['T','T','corpo','aberto'];
+    else options = ['aberto','corpo','T','corpo','aberto'];
+  }
   const idx = (hashNumber(`${match?.event?.name || ''}-${match?.set || 1}-${match?.playerScore || 0}-${match?.opponentScore || 0}-${serverSide}-${Date.now()}`) + Math.floor(Math.random()*99)) % options.length;
   return options[idx];
 }
@@ -305,12 +452,13 @@ function serveSpeedFor(server, surface, firstIn) {
   return Math.round(clamp(base + serve * 0.45 + power * 0.18 + surfaceBoost + (Math.random()*14 - 7), firstIn ? 160 : 122, firstIn ? 226 : 178));
 }
 function pointTacticalRead(point, match) {
-  if (!point) return 'Aguardando leitura do analista.';
-  if (point.type === 'Ace') return `Saque ${point.direction || 'aberto'} com ${point.speed || 190} km/h criou ponto grátis.`;
-  if (point.type === 'Dupla falta') return 'Pressão no segundo saque gerou falha mental.';
-  if (point.rally >= 12) return `Rally longo de ${point.rally} bolas testou resistência e consistência.`;
-  if (point.type === 'Winner') return `Execução agressiva encaixou após ${point.rally} bolas.`;
-  return `Erro apareceu após ${point.rally || 0} bolas; ajuste risco e paciência.`;
+  if (!point) return tacticalAnalystRead(match);
+  if (point.planRead) return point.planRead;
+  if (point.type === 'Ace') return `Saque ${point.direction || 'aberto'} com ${point.speed || 190} km/h criou ponto grátis dentro do plano ${tacticalSummaryText()}.`;
+  if (point.type === 'Dupla falta') return 'Pressão no segundo saque gerou falha mental; avalie risco baixo se a sequência continuar.';
+  if (point.rally >= 12) return `Rally longo de ${point.rally} bolas testou resistência e consistência dentro do plano de troca.`;
+  if (point.type === 'Winner') return `Execução agressiva encaixou após ${point.rally} bolas; padrão tático favoreceu a finalização.`;
+  return `Erro apareceu após ${point.rally || 0} bolas; ajuste risco, alvo de ataque ou duração dos rallies.`;
 }
 function broadcastRecommendation(match, player, opponent) {
   if (!match) return 'Inicie uma rodada para receber leitura do analista.';
@@ -325,7 +473,7 @@ function broadcastRecommendation(match, player, opponent) {
   if (surface === 'clay' && attrValue(player,'consistency') >= attrValue(opponent,'consistency')) return 'Recomendação: alongar rallies no saibro e atacar só a bola curta.';
   if (attrValue(opponent,'backhand') < attrValue(opponent,'forehand') - 6) return 'Recomendação: insistir no backhand do adversário nas devoluções.';
   if ((match.momentum || 0) < -4) return 'Recomendação: pausa tática, saque no corpo e foco no primeiro ponto do game.';
-  return 'Recomendação: manter padrão atual e pressionar o segundo saque adversário.';
+  return `Recomendação: ${tacticalAnalystRead(match)}`;
 }
 function renderBroadcastIntro(match) {
   const host = $('#matchBroadcastIntro');
@@ -921,6 +1069,7 @@ function migrateState() {
     p.lastResult ??= 'Sem jogos';
     p.salary ??= 1800 + Math.round(p.overall * 25);
   });
+  ensurePlayerCareerSystem();
 }
 
 
@@ -1023,6 +1172,8 @@ function bindUI() {
   $('#auto2xBtn')?.addEventListener('click', () => setAutoPlay(2));
   $('#auto4xBtn')?.addEventListener('click', () => setAutoPlay(4));
   $('#pauseAutoBtn')?.addEventListener('click', stopAutoPlay);
+  $('#tacticalIntelligencePanel')?.addEventListener('change', handleTacticalPlanChange);
+  $('#tacticalIntelligencePanel')?.addEventListener('click', handleTacticalPlanClick);
   $$('.action-btn').forEach(btn => btn.addEventListener('click', () => {
     $$('.action-btn').forEach(x => x.classList.remove('active'));
     btn.classList.add('active');
@@ -1261,6 +1412,183 @@ function processWeeklyTraining(){
   }catch(error){ state.roster=snapshot; state.flags.safeMode=true; report.splice(0,report.length,'Falha no ciclo: atletas restaurados pelo sistema anti-quebra.'); state.trainingLab.lastReport=report; showSystemError('O treino semanal falhou e o elenco foi restaurado automaticamente.'); }
 }
 
+
+function personalityKeyFor(player={}) {
+  const keys = Object.keys(PLAYER_PERSONALITIES);
+  const seed = stableNumber(`${player.id || player.name || 'player'}-${player.country || ''}-${player.style || ''}`);
+  return keys[seed % keys.length];
+}
+function ensurePlayerCareerSystem() {
+  state.playerCareer ||= { weeklyEvents: [], conversations: [], promises: [], lastProcessedToken: null };
+  state.playerCareer.weeklyEvents ||= [];
+  state.playerCareer.conversations ||= [];
+  state.playerCareer.promises ||= [];
+  state.roster ||= [];
+  state.roster.forEach(player => ensurePlayerPsychology(player));
+}
+function ensurePlayerPsychology(player) {
+  if (!player) return player;
+  const key = player.personalityKey || personalityKeyFor(player);
+  const profile = PLAYER_PERSONALITIES[key] || PLAYER_PERSONALITIES.disciplined;
+  const seed = stableNumber(`${player.id || player.name}-${key}-career`);
+  player.personalityKey ||= key;
+  player.personalityProfile ||= { key, label: profile.label, icon: profile.icon, desc: profile.desc };
+  player.ambition ??= clamp(profile.ambition + (seed % 13) - 6, 35, 99);
+  player.discipline ??= clamp(profile.discipline + ((seed >> 3) % 15) - 7, 35, 99);
+  player.pressure ??= clamp(42 + profile.pressure + ((seed >> 6) % 20) - 10, 10, 95);
+  player.relationship ??= clamp(66 + ((seed >> 9) % 18) - 9, 20, 100);
+  player.confidence ??= clamp(player.morale ?? 70, 15, 100);
+  player.happiness ??= clamp(62 + ((seed >> 12) % 24) - 12, 15, 100);
+  player.careerEvents ||= [];
+  player.conversationHistory ||= [];
+  player.seasonGoal ??= 'ranking';
+  player.contractMood ??= player.salary > 4200 ? 'exigente' : 'estável';
+  return player;
+}
+function careerScore(player) {
+  ensurePlayerPsychology(player);
+  return Math.round(clamp((player.morale || 70)*0.24 + (player.confidence || 70)*0.24 + (player.relationship || 65)*0.18 + (player.discipline || 70)*0.16 + (player.happiness || 65)*0.12 - (player.pressure || 40)*0.14, 0, 100));
+}
+function careerRiskLabel(player) {
+  ensurePlayerPsychology(player);
+  if ((player.pressure || 0) >= 78 && (player.confidence || 0) <= 45) return { label: 'Crise emocional', cls: 'danger' };
+  if ((player.relationship || 0) <= 38) return { label: 'Relação frágil', cls: 'danger' };
+  if ((player.happiness || 0) <= 42 || (player.morale || 0) <= 42) return { label: 'Insatisfeito', cls: 'warn' };
+  if (careerScore(player) >= 74) return { label: 'Engajado', cls: 'ok' };
+  return { label: 'Atenção', cls: 'warn' };
+}
+function playerCareerSnapshot(player) {
+  ensurePlayerPsychology(player);
+  const profile = PLAYER_PERSONALITIES[player.personalityKey] || PLAYER_PERSONALITIES.disciplined;
+  const risk = careerRiskLabel(player);
+  return { profile, risk, score: careerScore(player), goal: SEASON_GOALS[player.seasonGoal] || 'Plano aberto' };
+}
+function recordCareerEvent(player, title, body, type='career') {
+  ensurePlayerCareerSystem();
+  const event = { playerId: player.id, playerName: player.name, title, body, type, week: state.academy.week, season: state.academy.season, build: BUILD_INFO.build, at: new Date().toISOString() };
+  player.careerEvents ||= [];
+  player.careerEvents.unshift(event);
+  player.careerEvents = player.careerEvents.slice(0, 12);
+  state.playerCareer.weeklyEvents.unshift(event);
+  state.playerCareer.weeklyEvents = state.playerCareer.weeklyEvents.slice(0, 30);
+  return event;
+}
+function processPlayerCareersWeekly() {
+  ensurePlayerCareerSystem();
+  const token = `${state.academy.season}-${state.academy.week}`;
+  if (state.playerCareer.lastProcessedToken === token) return;
+  const snapshot = JSON.parse(JSON.stringify(state.roster));
+  try {
+    state.roster.forEach(player => {
+      ensurePlayerPsychology(player);
+      const rank = getPlayerRank(player.id);
+      const result = String(player.lastResult || '');
+      const won = /venceu|campeão/i.test(result);
+      const lost = /perdeu|parou|caiu/i.test(result);
+      const profile = PLAYER_PERSONALITIES[player.personalityKey] || PLAYER_PERSONALITIES.disciplined;
+      const plan = state.trainingLab?.plans?.[player.id] || { focus: 'balanced', intensity: 'moderate' };
+      const extremeLoad = plan.intensity === 'extreme';
+      if (won) { player.confidence = clamp((player.confidence || 65) + 5, 10, 100); player.pressure = clamp((player.pressure || 40) + (rank <= 100 ? 2 : -1), 5, 100); }
+      if (lost) { player.confidence = clamp((player.confidence || 65) - 3 - Math.max(0, profile.pressure/12), 10, 100); player.relationship = clamp((player.relationship || 65) - (profile.conflict > 8 ? 2 : 0), 5, 100); }
+      if (extremeLoad && (player.discipline || 70) < 68) { player.happiness = clamp((player.happiness || 65) - 5, 5, 100); player.pressure = clamp((player.pressure || 40) + 4, 5, 100); }
+      if (plan.focus === 'recovery' || player.injuredWeeks > 0) { player.relationship = clamp((player.relationship || 65) + 2, 5, 100); player.pressure = clamp((player.pressure || 40) - 3, 5, 100); }
+      if (rank <= 80 && player.ambition > 80) player.morale = clamp((player.morale || 70) + 1, 10, 100);
+      if (rank > 180 && player.ambition > 82) player.pressure = clamp((player.pressure || 40) + 3, 5, 100);
+      const chanceSeed = stableNumber(`${token}-${player.id}-${player.lastResult}-${player.pressure}-${player.relationship}`) % 100;
+      if (chanceSeed < 18 || (player.pressure > 82 && chanceSeed < 42) || (player.relationship < 35 && chanceSeed < 55)) {
+        const event = createCareerEventFor(player, chanceSeed);
+        state.inbox.unshift({ title: event.title, body: event.body, week: state.academy.week });
+      }
+    });
+    state.playerCareer.lastProcessedToken = token;
+    state.inbox = state.inbox.slice(0, 24);
+  } catch (error) {
+    state.roster = snapshot;
+    state.flags.safeMode = true;
+    showSystemError('Falha no processamento humano dos atletas. Elenco restaurado pelo anti-quebra.', error);
+  }
+}
+function createCareerEventFor(player, seed=0) {
+  const rank = getPlayerRank(player.id);
+  const profile = PLAYER_PERSONALITIES[player.personalityKey] || PLAYER_PERSONALITIES.disciplined;
+  let title = `${player.name}: reunião solicitada`;
+  let body = `${player.name} quer entender melhor o plano da temporada.`;
+  if (player.pressure >= 80) { title = `${profile.icon} Pressão sobre ${player.name}`; body = `A pressão subiu para ${Math.round(player.pressure)}. O atleta precisa de gestão emocional antes do próximo torneio.`; }
+  else if (player.relationship <= 38) { title = `Relação em alerta: ${player.name}`; body = `A confiança no treinador caiu. Uma conversa direta pode evitar queda de moral.`; }
+  else if (player.injuredWeeks > 0) { title = `Recuperação monitorada: ${player.name}`; body = `O atleta está lesionado e valoriza proteção no calendário.`; }
+  else if (rank > 160 && player.ambition >= 82) { title = `Ambição cobrando resultado`; body = `${player.name} quer torneios que gerem ranking, não apenas semanas de treino.`; }
+  else if (seed % 3 === 0) { title = `Clima positivo no vestiário`; body = `${player.name} respondeu bem ao ciclo e fortaleceu vínculo com a academia.`; player.relationship = clamp(player.relationship + 3, 5, 100); player.morale = clamp((player.morale || 70) + 2, 10, 100); }
+  return recordCareerEvent(player, title, body, 'weekly');
+}
+function renderCareerHub() {
+  const host = $('#careerHub');
+  if (!host) return;
+  ensurePlayerCareerSystem();
+  const avg = (key) => state.roster.length ? Math.round(state.roster.reduce((s,p)=>s+(Number(p[key])||0),0)/state.roster.length) : 0;
+  const events = (state.playerCareer.weeklyEvents || []).slice(0,6);
+  const players = state.roster.map(player => {
+    const snap = playerCareerSnapshot(player);
+    const profile = snap.profile;
+    return `<article class="career-player-card panel-card">
+      <div class="career-card-head">${avatarImg(avatarForPlayer(player.name),'avatar-img',player.name)}<div><p class="eyebrow">${profile.icon} ${profile.label}</p><h4>${player.name}</h4><div class="small">${profile.desc}</div></div><strong class="career-score ${snap.risk.cls}">${snap.score}</strong></div>
+      <div class="career-bars">
+        ${careerBar('Moral', player.morale || 70)}${careerBar('Confiança', player.confidence || 70)}${careerBar('Relação', player.relationship || 65)}${careerBar('Pressão', player.pressure || 40, true)}${careerBar('Felicidade', player.happiness || 65)}
+      </div>
+      <div class="metric-row"><span class="metric ${snap.risk.cls}">${snap.risk.label}</span><span class="metric">Meta: ${snap.goal}</span><span class="metric">Disciplina ${Math.round(player.discipline || 70)}</span><span class="metric">Ambição ${Math.round(player.ambition || 70)}</span></div>
+      <div class="tag-row"><button class="btn-primary" onclick="window.talkToPlayer('${player.id}','praise')">Elogiar</button><button class="btn-secondary" onclick="window.talkToPlayer('${player.id}','calm')">Acalmar</button><button class="btn-secondary" onclick="window.talkToPlayer('${player.id}','demand')">Cobrar</button><button class="btn-ghost" onclick="window.talkToPlayer('${player.id}','rest')">Proteger</button></div>
+      <div class="goal-row"><label>Meta da temporada <select onchange="window.setPlayerGoal('${player.id}', this.value)">${Object.entries(SEASON_GOALS).map(([k,v])=>`<option value="${k}" ${player.seasonGoal===k?'selected':''}>${v}</option>`).join('')}</select></label></div>
+    </article>`;
+  }).join('');
+  host.innerHTML = `<div class="career-summary-grid full-width">
+    <article class="stat-card"><span>Moral média</span><strong>${avg('morale')}</strong></article>
+    <article class="stat-card"><span>Confiança média</span><strong>${avg('confidence')}</strong></article>
+    <article class="stat-card"><span>Relação média</span><strong>${avg('relationship')}</strong></article>
+    <article class="stat-card"><span>Pressão média</span><strong>${avg('pressure')}</strong></article>
+  </div>
+  <article class="panel-card career-feed full-width"><div class="panel-title-row"><h4>Eventos humanos da carreira</h4><span class="mini-badge">${BUILD_LABEL}</span></div>${events.length ? events.map(e=>`<div class="report-line"><strong>${escapeHtml(e.title)}</strong><br><span>${escapeHtml(e.body)} • S${e.week}/${e.season}</span></div>`).join('') : '<p class="muted">Os primeiros eventos aparecem ao avançar a semana.</p>'}</article>
+  ${players}`;
+  hydrateAssetImages();
+}
+function careerBar(label, value, inverse=false) {
+  const v = Math.round(clamp(value || 0, 0, 100));
+  const mood = inverse ? (v >= 78 ? 'danger' : v >= 58 ? 'warn' : 'ok') : (v >= 72 ? 'ok' : v >= 48 ? 'warn' : 'danger');
+  return `<div class="career-bar ${mood}"><span>${label}</span><b>${v}</b><i style="width:${v}%"></i></div>`;
+}
+window.talkToPlayer = (playerId, action='praise') => {
+  ensurePlayerCareerSystem();
+  const player = state.roster.find(p => p.id === playerId);
+  if (!player) return;
+  const cfg = TALK_ACTIONS[action] || TALK_ACTIONS.praise;
+  const profile = PLAYER_PERSONALITIES[player.personalityKey] || PLAYER_PERSONALITIES.disciplined;
+  const snapshot = JSON.parse(JSON.stringify(player));
+  try {
+    const personalityMultiplier = profile.conflict > 10 && action === 'demand' ? 1.35 : profile.key === 'disciplined' && action === 'demand' ? 0.75 : 1;
+    player.morale = clamp((player.morale || 70) + cfg.morale * personalityMultiplier, 5, 100);
+    player.confidence = clamp((player.confidence || 65) + cfg.confidence, 5, 100);
+    player.relationship = clamp((player.relationship || 65) + cfg.relationship * personalityMultiplier, 5, 100);
+    player.pressure = clamp((player.pressure || 40) + cfg.pressure, 5, 100);
+    player.happiness = clamp((player.happiness || 65) + (action === 'rest' ? 3 : action === 'demand' ? -2 : 1), 5, 100);
+    const event = recordCareerEvent(player, `${cfg.label}: ${player.name}`, `Conversa realizada. Moral ${Math.round(player.morale)}, relação ${Math.round(player.relationship)}, pressão ${Math.round(player.pressure)}.`, 'conversation');
+    player.conversationHistory.unshift(event);
+    player.conversationHistory = player.conversationHistory.slice(0, 10);
+    state.playerCareer.conversations.unshift(event);
+    state.playerCareer.conversations = state.playerCareer.conversations.slice(0, 20);
+    addLog(`${cfg.label} com ${player.name}: efeito humano aplicado.`);
+    saveState(state);
+    render();
+  } catch (error) { Object.assign(player, snapshot); showSystemError('Conversa falhou e o atleta foi restaurado.', error); }
+};
+window.setPlayerGoal = (playerId, goal='ranking') => {
+  const player = state.roster.find(p => p.id === playerId);
+  if (!player || !SEASON_GOALS[goal]) return;
+  ensurePlayerPsychology(player);
+  player.seasonGoal = goal;
+  player.relationship = clamp((player.relationship || 65) + 2, 5, 100);
+  addLog(`Meta definida para ${player.name}: ${SEASON_GOALS[goal]}.`);
+  saveState(state);
+  renderCareerHub();
+};
+
 function renderRoster() {
   $('#rosterList').innerHTML = state.roster.map(rawPlayer => {
     const player = enrichPlayer(rawPlayer);
@@ -1289,11 +1617,13 @@ function renderRoster() {
         <span class="metric ${player.injuredWeeks > 0 ? 'danger' : ''}">${player.injuredWeeks > 0 ? `Lesão ${player.injuredWeeks} sem.` : 'Disponível'}</span>
         <span class="metric">Último resultado: ${player.lastResult}</span>
       </div>
+      ${(() => { const snap = playerCareerSnapshot(player); return `<div class="player-human-strip"><span>${snap.profile.icon} ${snap.profile.label}</span><b class="${snap.risk.cls}">${snap.risk.label} • score ${snap.score}</b></div><div class="metric-row compact"><span class="metric">Moral ${round(player.morale || 70)}</span><span class="metric">Confiança ${round(player.confidence || 70)}</span><span class="metric">Relação ${round(player.relationship || 65)}</span><span class="metric">Pressão ${round(player.pressure || 40)}</span></div>`; })()}
       <div class="tag-row" style="margin-top:12px">
         <button class="btn-primary" onclick="window.openPlayerProfile('${player.id}','roster')">Ver perfil</button>
         <button class="btn-secondary" onclick="window.trainPlayer('${player.id}','technique')">Treino técnico</button>
         <button class="btn-secondary" onclick="window.trainPlayer('${player.id}','fitness')">Treino físico</button>
         <button class="btn-ghost" onclick="window.restPlayer('${player.id}')">Recuperar</button>
+        <button class="btn-ghost" onclick="window.talkToPlayer('${player.id}','calm')">Conversa</button>
       </div>
     </article>`;
   }).join('');
@@ -1314,6 +1644,10 @@ window.trainPlayer = (playerId, type) => {
     player.overall = Math.min(player.potential, player.overall + 0.28);
   }
   maybeInjure(player, type === 'fitness' ? 6 : 3);
+  ensurePlayerPsychology(player);
+  player.confidence = clamp((player.confidence || 70) + (type === 'technique' ? 1.5 : 0.5), 5, 100);
+  player.pressure = clamp((player.pressure || 40) + (type === 'fitness' ? 1.5 : 0.5), 5, 100);
+  player.happiness = clamp((player.happiness || 65) - (type === 'fitness' && (player.discipline || 70) < 65 ? 2 : 0), 5, 100);
   player.morale = Math.min(100, (player.morale || 70) + 1);
   addLog(`${player.name} realizou treino ${type === 'fitness' ? 'físico' : 'técnico'}.`);
   render();
@@ -1323,6 +1657,9 @@ window.restPlayer = (playerId) => {
   if (!player) return;
   player.fatigue = Math.max(0, player.fatigue - 14);
   player.health = Math.min(100, player.health + 8);
+  ensurePlayerPsychology(player);
+  player.relationship = clamp((player.relationship || 65) + 2, 5, 100);
+  player.pressure = clamp((player.pressure || 40) - 3, 5, 100);
   addLog(`${player.name} recebeu semana de recuperação.`);
   render();
 };
@@ -1607,7 +1944,8 @@ function createBroadcastReport(match) {
     `Placar em sets: ${matchSetScore(match)}`,
     `${match.playerName}: ${statLine(p)} • 1º saque ${statsPct(p.firstServeIn, p.firstServeTotal)}`,
     `${match.opponentName}: ${statLine(o)} • 1º saque ${statsPct(o.firstServeIn, o.firstServeTotal)}`,
-    `Rally médio ${rallyAvg} bolas • maior rally ${Math.max(p.maxRally, o.maxRally)}`
+    `Rally médio ${rallyAvg} bolas • maior rally ${Math.max(p.maxRally, o.maxRally)}`,
+    `Plano tático final: ${tacticalSummaryText(match.tacticalPlan || getTacticalPlan())}`
   ];
 }
 
@@ -1628,11 +1966,11 @@ function startScheduledMatch() {
   const logo = logoForTournament(event.name);
   const firstServer = (state.academy.week + (run.roundIndex || 0)) % 2 === 0 ? 'player' : 'opponent';
   state.match = {
-    engineVersion: 'v3.9-real-draws-engine', presentation: 'broadcast-pro', event, round, drawType: run.entryType, tournamentRunId: run.createdAt,
+    engineVersion: 'v3.11-tactical-intelligence', presentation: 'broadcast-pro', event, round, drawType: run.entryType, tournamentRunId: run.createdAt,
     playerId: player.id, playerName: player.name, opponentName: opponent.name, opponent,
     sets: [], set: 1, setsPlayer: 0, setsOpponent: 0,
     gamesPlayer: 0, gamesOpponent: 0, playerScore: 0, opponentScore: 0,
-    tiebreak: false, server: firstServer, pointText: '0-0', strategy: currentStrategy,
+    tiebreak: false, server: firstServer, pointText: '0-0', strategy: currentStrategy, tacticalPlan: getTacticalPlan(),
     inProgress: true, finished: false, lastWinner: null, lastPointAt: performance.now(), momentum: 0,
     stats: { player: emptyMatchStats(), opponent: emptyMatchStats() },
     lastPoint: null, lastServeSpeed: 0, replayTape: [], report: [], logo,
@@ -1664,9 +2002,14 @@ function simulateTennisPoint(match, player, opponent) {
   const serverStats = match.stats[serverSide];
   const receiverStats = match.stats[receiverSide];
   const effects = STRATEGY_EFFECTS[currentStrategy] || STRATEGY_EFFECTS.balanced;
+  const plan = getTacticalPlan();
+  match.tacticalPlan = { ...plan };
+  const tactical = tacticalProfile(plan);
   const surface = match.event?.surface || 'hard';
   const coachBonus = getStaffBonus('Tecnico', 'match') + getStaffBonus('Analista','match') + getStaffBonus('Analista','tactical') * 0.45;
   const psychBonus = getStaffBonus('Psicologo', 'mental') + getStaffBonus('Psicologo','morale') * 0.35;
+  const humanServer = serverSide === 'player' ? careerScore(player) * 0.05 - (player.pressure || 40) * 0.035 : 0;
+  const humanReceiver = receiverSide === 'player' ? careerScore(player) * 0.04 - (player.pressure || 40) * 0.025 : 0;
   const serverServe = attrValue(server, 'serve');
   const receiverReturn = attrValue(receiver, 'return', attrValue(receiver, 'backhand'));
   const serverComposure = attrValue(server, 'composure', attrValue(server, 'mental')) + (serverSide === 'player' ? psychBonus * 0.35 : 0);
@@ -1675,7 +2018,7 @@ function simulateTennisPoint(match, player, opponent) {
   const receiverSurface = surfaceRating(receiver, surface);
   const fatiguePenalty = (serverSide === 'player' ? player.fatigue || 0 : 18) * 0.18;
   const pressure = pressureScore(match, serverSide);
-  let firstServeChance = clamp(52 + serverServe * 0.28 + serverComposure * 0.08 + serverSurface * 0.04 - fatiguePenalty - pressure * 1.2 + (serverSide === 'player' ? effects.serve : 0), 46, 82);
+  let firstServeChance = clamp(52 + serverServe * 0.28 + serverComposure * 0.08 + serverSurface * 0.04 - fatiguePenalty - pressure * 1.2 + (serverSide === 'player' ? effects.serve + humanServer + tactical.firstServe : 0), 42, 86);
   if (currentStrategy === 'aggressive' && serverSide === 'player') firstServeChance -= 4;
   if (currentStrategy === 'control' && serverSide === 'player') firstServeChance += 3;
   serverStats.firstServeTotal += 1;
@@ -1686,7 +2029,7 @@ function simulateTennisPoint(match, player, opponent) {
   match.lastServeSpeed = serveSpeed;
   if (firstIn) serverStats.firstServeIn += 1;
 
-  const aceChance = firstIn ? clamp(1.5 + (serverServe - receiverReturn) * 0.10 + (surfaceKey(surface) === 'grass' ? 2.2 : 0) + (serverSide === 'player' ? effects.serve * 0.34 : 0), 0.6, 16) : 0;
+  const aceChance = firstIn ? clamp(1.5 + (serverServe - receiverReturn) * 0.10 + (surfaceKey(surface) === 'grass' ? 2.2 : 0) + (serverSide === 'player' ? effects.serve * 0.34 + tactical.ace : 0), 0.4, 18) : 0;
   if (firstIn && Math.random() * 100 < aceChance) {
     serverStats.aces += 1;
     serverStats.points += 1;
@@ -1695,7 +2038,7 @@ function simulateTennisPoint(match, player, opponent) {
   }
 
   if (!firstIn) {
-    const doubleFaultChance = clamp(3.8 + (62 - serverServe) * 0.07 + pressure * 0.75 + (serverSide === 'player' ? effects.error * 0.45 : 0), 2, 18);
+    const doubleFaultChance = clamp(3.8 + (62 - serverServe) * 0.07 + pressure * 0.75 + (serverSide === 'player' ? effects.error * 0.45 + tactical.serveError : 0), 1.4, 20);
     if (Math.random() * 100 < doubleFaultChance) {
       serverStats.doubleFaults += 1;
       receiverStats.points += 1;
@@ -1706,13 +2049,19 @@ function simulateTennisPoint(match, player, opponent) {
 
   const rallyBase = 3 + Math.floor(Math.random() * 8);
   const consistency = (attrValue(server, 'consistency') + attrValue(receiver, 'consistency')) / 2;
-  const rally = clamp(Math.round(rallyBase + (consistency - 60) / 12 + (surfaceKey(surface) === 'clay' ? 3 : surfaceKey(surface) === 'grass' ? -1 : 0)), 2, 22);
+  const rally = clamp(Math.round(rallyBase + (consistency - 60) / 12 + (surfaceKey(surface) === 'clay' ? 3 : surfaceKey(surface) === 'grass' ? -1 : 0) + (receiverSide === 'player' || serverSide === 'player' ? tactical.rally : 0)), 1, 26);
   serverStats.rallyTotal += rally; serverStats.rallyCount += 1; serverStats.maxRally = Math.max(serverStats.maxRally, rally);
   receiverStats.rallyTotal += rally; receiverStats.rallyCount += 1; receiverStats.maxRally = Math.max(receiverStats.maxRally, rally);
 
   const serverAttack = attrValue(server, 'forehand') * 0.34 + attrValue(server, 'backhand') * 0.22 + serverServe * (firstIn ? 0.22 : 0.10) + serverSurface * 0.10 + serverComposure * 0.08;
   const receiverDefense = receiverReturn * 0.28 + attrValue(receiver, 'agility') * 0.18 + attrValue(receiver, 'speed') * 0.12 + attrValue(receiver, 'consistency') * 0.24 + receiverSurface * 0.10 + receiverComposure * 0.08;
-  const userTactical = serverSide === 'player' ? effects.offense + effects.pressure - effects.error * 0.55 : receiverSide === 'player' ? effects.defense - effects.error * 0.45 : 0;
+  const tacticalEdge = tacticalPressureAgainst(opponent, plan);
+  const returnEdge = !firstIn && receiverSide === 'player' ? tactical.secondServePressure : receiverSide === 'player' ? tactical.return : 0;
+  const userTactical = serverSide === 'player'
+    ? effects.offense + effects.pressure - effects.error * 0.55 + humanServer + tactical.offense + tacticalEdge
+    : receiverSide === 'player'
+      ? effects.defense - effects.error * 0.45 + humanReceiver + tactical.defense + returnEdge + tacticalEdge * 0.55
+      : 0;
   const momentum = match.momentum * (serverSide === 'player' ? 1 : -1);
   const winChance = clamp(50 + (serverAttack - receiverDefense) * 0.42 + userTactical + momentum, 24, 76);
   const serverWins = Math.random() * 100 < winChance;
@@ -1720,15 +2069,19 @@ function simulateTennisPoint(match, player, opponent) {
   const loser = serverWins ? receiverSide : serverSide;
   const winnerStats = match.stats[winner];
   const loserStats = match.stats[loser];
-  const attackingError = clamp(8 + (currentStrategy === 'aggressive' && loser === 'player' ? 5 : 0) + (rally - 6) * 0.55 - attrValue(loser === 'player' ? player : opponent, 'consistency') * 0.06, 4, 24);
+  const attackingError = clamp(8 + (currentStrategy === 'aggressive' && loser === 'player' ? 5 : 0) + (loser === 'player' ? tactical.error : 0) + (rally - 6) * 0.55 - attrValue(loser === 'player' ? player : opponent, 'consistency') * 0.06, 3, 28);
   const isError = Math.random() * 100 < attackingError;
   if (isError) loserStats.unforcedErrors += 1; else winnerStats.winners += 1;
   winnerStats.points += 1;
   if (winner === receiverSide) receiverStats.returnPointsWon += 1;
   if (firstIn && winner === serverSide) serverStats.firstServeWon += 1;
   if (!firstIn && winner === serverSide) serverStats.secondServeWon += 1;
-  const shot = rally > 10 ? 'rally longo' : firstIn ? 'devolução pressionada' : 'segundo saque atacado';
-  return { winner, type: isError ? 'Erro não forçado' : 'Winner', serve: firstIn ? '1º saque' : '2º saque', rally, speed: serveSpeed, direction: serveDirection, tactical: shot, text: isError ? `${loser === 'player' ? player.name : opponent.name} erra após ${rally} bolas depois de saque ${serveDirection}.` : `${winner === 'player' ? player.name : opponent.name} fecha com ${shot} após saque ${serveDirection}.` };
+  const attackLabel = tacticalOption('attackPattern', plan.attackPattern).label || 'padrão tático';
+  const shot = plan.rallyPlan === 'net' ? 'subida à rede' : plan.rallyPlan === 'short' ? 'ponto encurtado' : rally > 10 ? 'rally longo' : firstIn ? 'devolução pressionada' : 'segundo saque atacado';
+  const planRead = winner === 'player'
+    ? `Plano ${attackLabel}: ${shot} funcionou. ${tacticalAnalystRead(match)}`
+    : `Plano ${attackLabel}: adversário resistiu; ajuste risco se erros ou winners sofridos crescerem.`;
+  return { winner, type: isError ? 'Erro não forçado' : 'Winner', serve: firstIn ? '1º saque' : '2º saque', rally, speed: serveSpeed, direction: serveDirection, tactical: shot, plan: { ...plan }, planRead, text: isError ? `${loser === 'player' ? player.name : opponent.name} erra após ${rally} bolas depois de saque ${serveDirection}.` : `${winner === 'player' ? player.name : opponent.name} fecha com ${shot} após saque ${serveDirection}.` };
 }
 
 function playPoint() {
@@ -1747,7 +2100,7 @@ function playPoint() {
     const won = point.winner === 'player';
     const effects = STRATEGY_EFFECTS[currentStrategy] || STRATEGY_EFFECTS.balanced;
     state.match.momentum = clamp((state.match.momentum || 0) * 0.72 + (won ? 1 : -1) * (point.type === 'Ace' || point.type === 'Winner' ? 1.4 : 0.9), -8, 8);
-    player.fatigue = Math.min(100, (player.fatigue || 0) + 0.55 + Math.max(0, effects.stamina) * 0.28 + (point.rally || 0) * 0.035);
+    player.fatigue = Math.min(100, (player.fatigue || 0) + 0.55 + Math.max(0, effects.stamina + tacticalProfile().stamina) * 0.28 + (point.rally || 0) * 0.035);
     player.health = Math.max(42, (player.health || 100) - 0.08 - Math.max(0, effects.stamina) * 0.05 - (point.rally || 0) * 0.012);
     maybeInjure(player, point.rally > 14 ? 1.4 : 0.8);
     updateTennisScore(point.winner);
@@ -1819,7 +2172,7 @@ function tacticalPause() {
   stopAutoPlay();
   const player = getMatchPlayer(state.roster.find(p => p.id === state.match.playerId) || {});
   const opponent = getMatchPlayer(state.match.opponent || {});
-  const msg = broadcastRecommendation(state.match, player, opponent);
+  const msg = tacticalAnalystRead(state.match);
   addMatchLog(`Pausa tática: ${msg}`);
   state.match.replayTape ||= [];
   state.match.replayTape.push({ text: 'Pausa tática', detail: msg, at: new Date().toISOString() });
@@ -1898,11 +2251,16 @@ function finishMatch(playerWon) {
   const pointsGain = Math.round(event.prize * roundFactor / 180 * rankFactor * (playerWon ? 1 : 0.45));
   const cashGain = Math.round(event.prize * roundFactor * (playerWon ? 1 : 0.35));
   player.rankingPoints += pointsGain;
+  const score = matchSetScore(state.match);
   player.morale = clamp((player.morale || 70) + (playerWon ? 8 : -4), 35, 100);
+  ensurePlayerPsychology(player);
+  player.confidence = clamp((player.confidence || 65) + (playerWon ? 7 : -6), 5, 100);
+  player.pressure = clamp((player.pressure || 40) + (playerWon ? -2 : 5), 5, 100);
+  player.relationship = clamp((player.relationship || 65) + (playerWon ? 2 : -1), 5, 100);
+  recordCareerEvent(player, `${playerWon ? 'Vitória fortaleceu' : 'Derrota cobrou'} ${player.name}`, `${event.name} ${round}: placar ${score}. Confiança ${Math.round(player.confidence)}, pressão ${Math.round(player.pressure)}.`, 'match');
   player.fatigue = Math.min(100, player.fatigue + 5 + ((state.match.stats.player.rallyTotal || 0) / 180));
   state.academy.money += cashGain;
   state.academy.reputation += playerWon ? 4 : 1;
-  const score = matchSetScore(state.match);
   player.lastResult = `${event.name} ${playerWon ? 'venceu ' + round : 'parou em ' + round} • ${score}`;
   state.match.report = createBroadcastReport(state.match);
   state.summary.unshift(`${player.name} ${playerWon ? 'venceu' : 'caiu em'} ${round} de ${event.name}. Placar ${score}. +${pointsGain} pts / ${money(cashGain)}.`);
@@ -1943,6 +2301,86 @@ function finishMatch(playerWon) {
   render();
 }
 
+
+function renderTacticalIntelligencePanel(match = state.match) {
+  const host = $('#tacticalIntelligencePanel');
+  if (!host) return;
+  const plan = getTacticalPlan();
+  const makeSelect = (field, label) => {
+    const opts = TACTICAL_OPTIONS[field] || {};
+    return `<label class="tactical-select"><span>${label}</span><select data-tactical-field="${field}">${Object.entries(opts).map(([key,opt])=>`<option value="${key}" ${plan[field]===key?'selected':''}>${opt.label}</option>`).join('')}</select><small>${escapeHtml(opts[plan[field]]?.desc || '')}</small></label>`;
+  };
+  const profile = tacticalProfile(plan);
+  host.innerHTML = `
+    <div class="tactical-grid">
+      ${makeSelect('serveTarget','Saque')}
+      ${makeSelect('returnPlan','Devolução')}
+      ${makeSelect('attackPattern','Alvo de ataque')}
+      ${makeSelect('rallyPlan','Duração do ponto')}
+      ${makeSelect('riskMode','Risco')}
+    </div>
+    <div class="tactical-impact-grid">
+      <article><span>Ofensiva</span><strong>${profile.offense>=0?'+':''}${profile.offense.toFixed(1)}</strong></article>
+      <article><span>Defesa</span><strong>${profile.defense>=0?'+':''}${profile.defense.toFixed(1)}</strong></article>
+      <article><span>1º saque</span><strong>${profile.firstServe>=0?'+':''}${profile.firstServe.toFixed(1)}</strong></article>
+      <article><span>Risco erro</span><strong>${profile.error>=0?'+':''}${profile.error.toFixed(1)}</strong></article>
+    </div>
+    <div class="tactical-analyst-box"><strong>Analista:</strong><span>${tacticalAnalystRead(match)}</span></div>
+    <div class="tactical-button-row">
+      <button class="mini-btn" type="button" data-tactical-action="recommend">Auto plano</button>
+      <button class="mini-btn" type="button" data-tactical-action="reset">Equilibrar</button>
+      <button class="btn-secondary" type="button" data-tactical-action="apply">Aplicar na partida</button>
+    </div>`;
+}
+function handleTacticalPlanChange(event) {
+  const field = event.target?.dataset?.tacticalField;
+  if (!field) return;
+  const previous = structuredClone(state.tacticalIntelligence || {});
+  try {
+    const value = event.target.value;
+    state.tacticalIntelligence ||= { plan: { ...TACTICAL_DEFAULT_PLAN }, history: [] };
+    state.tacticalIntelligence.plan ||= { ...TACTICAL_DEFAULT_PLAN };
+    if (!TACTICAL_OPTIONS[field]?.[value]) throw new Error(`Plano tático inválido: ${field}/${value}`);
+    state.tacticalIntelligence.plan[field] = value;
+    state.tacticalIntelligence.analyst = tacticalAnalystRead(state.match);
+    if (state.match) state.match.tacticalPlan = getTacticalPlan();
+    renderMatch();
+    saveState(state);
+  } catch (error) {
+    state.tacticalIntelligence = previous;
+    showSystemError('Plano tático cancelado com segurança. O estado anterior foi restaurado.', error);
+    renderMatch();
+  }
+}
+function handleTacticalPlanClick(event) {
+  const action = event.target?.dataset?.tacticalAction;
+  if (!action) return;
+  const previous = structuredClone(state.tacticalIntelligence || {});
+  try {
+    state.tacticalIntelligence ||= { plan: { ...TACTICAL_DEFAULT_PLAN }, history: [] };
+    if (action === 'recommend') state.tacticalIntelligence.plan = recommendTacticalPlan(state.match);
+    if (action === 'reset') state.tacticalIntelligence.plan = { ...TACTICAL_DEFAULT_PLAN };
+    if (action === 'apply') {
+      state.tacticalIntelligence.history ||= [];
+      state.tacticalIntelligence.lastAppliedWeek = state.academy.week;
+      state.tacticalIntelligence.history.unshift({ week: state.academy.week, season: state.academy.season, plan: getTacticalPlan(), read: tacticalAnalystRead(state.match), build: BUILD_INFO.build, at: new Date().toISOString() });
+      state.tacticalIntelligence.history = state.tacticalIntelligence.history.slice(0, 40);
+      if (state.match) {
+        state.match.tacticalPlan = getTacticalPlan();
+        state.match.log ||= [];
+        state.match.log.push(`Plano tático aplicado: ${tacticalSummaryText()}.`);
+        state.match.log = state.match.log.slice(-80);
+      } else addLog(`Plano tático aplicado: ${tacticalSummaryText()}.`);
+    }
+    state.tacticalIntelligence.analyst = tacticalAnalystRead(state.match);
+    renderMatch();
+    saveState(state);
+  } catch (error) {
+    state.tacticalIntelligence = previous;
+    showSystemError('Ajuste tático cancelado com segurança. O estado anterior foi restaurado.', error);
+    renderMatch();
+  }
+}
 function renderMatch() {
   const match = state.match;
   renderBroadcastIntro(match);
@@ -1955,6 +2393,7 @@ function renderMatch() {
   const statsHost = $('#matchStatsPanel');
   const reportHost = $('#matchReportPanel');
   const scoutHost = $('#matchScoutPanel');
+  renderTacticalIntelligencePanel(match);
   if (!match) {
     const badge = document.querySelector('.score-card .tour-badge'); if (badge) badge.remove();
     $('#scorePlayer').textContent = '0'; $('#scoreOpponent').textContent = '0'; $('#setLabel').textContent = 'Set 1'; $('#pointLabel').textContent = '0-0';
@@ -1993,15 +2432,17 @@ function renderMatch() {
     <article class="match-stat-card"><span>Break points</span><strong>${p.breakPointsWon}/${p.breakPoints} - ${o.breakPointsWon}/${o.breakPoints}</strong></article>
     <article class="match-stat-card"><span>Velocidade último saque</span><strong>${match.lastServeSpeed || 0} km/h</strong></article>
     <article class="match-stat-card"><span>Rally médio</span><strong>${rallyAvg} bolas</strong></article>
-    <article class="match-stat-card wide"><span>Momentum</span><strong>${momentumLabel} • ${Math.round((match.momentum || 0) * 10) / 10}</strong><div class="momentum-bar"><i style="width:${clamp(50 + (match.momentum || 0) * 5, 5, 95)}%"></i></div></article>`;
+    <article class="match-stat-card wide"><span>Momentum</span><strong>${momentumLabel} • ${Math.round((match.momentum || 0) * 10) / 10}</strong><div class="momentum-bar"><i style="width:${clamp(50 + (match.momentum || 0) * 5, 5, 95)}%"></i></div></article>
+    <article class="match-stat-card wide"><span>Plano tático</span><strong>${tacticalSummaryText(match.tacticalPlan || getTacticalPlan())}</strong></article>`;
   const last = match.lastPoint;
   const replay = (match.replayTape || []).slice(-4).reverse();
   if (scoutHost) scoutHost.innerHTML = `
     <div class="scout-row"><strong>${player.name}</strong><span>SAQ ${Math.round(attrValue(player,'serve'))} • DEV ${Math.round(attrValue(player,'return'))} • MENT ${Math.round(attrValue(player,'composure',attrValue(player,'mental')))}</span></div>
     <div class="scout-row"><strong>${opp.name}</strong><span>SAQ ${Math.round(attrValue(opp,'serve'))} • DEV ${Math.round(attrValue(opp,'return'))} • MENT ${Math.round(attrValue(opp,'composure',attrValue(opp,'mental')))}</span></div>
     <div class="last-point-card"><span>Último ponto</span><strong>${last ? `${last.type} • ${last.speed || '—'} km/h • ${last.rally} bolas` : 'Aguardando'}</strong><p>${last?.text || 'Use simular ponto/game/set/partida para iniciar o rally.'}</p><small>${pointTacticalRead(last, match)}</small></div>
+    <div class="last-point-card tactical"><span>Leitura do analista</span><strong>${tacticalSummaryText(match.tacticalPlan || getTacticalPlan())}</strong><p>${tacticalAnalystRead(match)}</p></div>
     <div class="replay-tape">${replay.length ? replay.map(item=>`<div class="replay-line"><strong>${item.text}</strong><span>${item.detail}</span></div>`).join('') : '<div class="replay-line muted">Mini replay aparecerá conforme os pontos forem jogados.</div>'}</div>`;
-  if (reportHost) reportHost.innerHTML = match.finished ? createBroadcastReport(match).map(line=>`<div class="report-line">${line}</div>`).join('') : `<div class="report-line">Motor v3.9 ativo: chaves reais, qualifying, wild cards, byes, zebras, desistências e histórico do torneio.</div><div class="report-line">${broadcastRecommendation(match, player, opp)}</div><div class="report-line">Placar: ${scoreSnapshot(match)} • Estratégia: ${currentStrategy}</div>`;
+  if (reportHost) reportHost.innerHTML = match.finished ? createBroadcastReport(match).map(line=>`<div class="report-line">${line}</div>`).join('') : `<div class="report-line">Motor v3.11 ativo: inteligência tática, plano de jogo e leitura do analista conectados à partida.</div><div class="report-line">${broadcastRecommendation(match, player, opp)}</div><div class="report-line">Placar: ${scoreSnapshot(match)} • Estratégia: ${currentStrategy}</div>`;
   const autoBtn = $('#autoMatchBtn');
   if (autoBtn) autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : 'Auto 1x';
   refreshAutoButtons();
@@ -2035,6 +2476,7 @@ function advanceWeek() {
   });
   state.academy.week += 1;
   simulateWorldTourWeek();
+  processPlayerCareersWeekly();
   maybeCreateWeeklyNews();
   maybeCreateSponsorOffer();
   evaluateObjectives();
@@ -2256,7 +2698,7 @@ function drawCourt(lastWinner = null) {
   ctx.fillStyle = '#9fb6cf';
   ctx.font = '500 14px Inter, system-ui, sans-serif';
   const autoLabel = autoPlayTimer ? `Auto ${autoPlaySpeed}x` : 'Manual';
-  ctx.fillText(`Estratégia ${currentStrategy.toUpperCase()} • ${autoLabel}`, 30, 61);
+  ctx.fillText(`Estratégia ${currentStrategy.toUpperCase()} • ${tacticalOption('attackPattern', getTacticalPlan().attackPattern).label || 'Tática'} • ${autoLabel}`, 30, 61);
   if (match?.lastPoint) {
     ctx.fillStyle = 'rgba(5,10,18,0.70)';
     ctx.fillRect(w - 340, 16, 318, 72);

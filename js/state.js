@@ -5,7 +5,7 @@ const STORAGE_KEY = 'vale_tennis_manager_save';
 const LEGACY_KEYS = ['ace_academy_save_v040', 'ace-manager-save'];
 const BACKUP_KEY = 'vale_tennis_manager_save_backup';
 const CORRUPT_KEY = 'vale_tennis_manager_corrupt_save';
-const CURRENT_SCHEMA = 12;
+const CURRENT_SCHEMA = 14;
 
 const clone = (value) => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 
@@ -39,7 +39,7 @@ export function buildInitialState(content) {
     sponsorOffers: [], objectives: { current: 'Entrar no Top 120' },
     worldTour: { weeklyResults: [], rankingHistory: [], lastSimulatedWeek: 0, lastSimulatedSeason: academy.season },
     trainingLab: { cycle: 'balanced', autoApply: true, lastProcessedWeek: 0, lastReport: [], plans: Object.fromEntries(roster.map(p => [p.id, { focus: 'balanced', intensity: 'moderate' }])) },
-    tournamentDraws: {}, tournamentLife: { championHistory: [], drawAudit: [], lastViewedDraw: null }, flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
+    tournamentDraws: {}, tournamentLife: { championHistory: [], drawAudit: [], lastViewedDraw: null }, flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, playerCareer: { weeklyEvents: [], conversations: [], promises: [], lastProcessedToken: null }, tacticalIntelligence: { plan: { serveTarget: 'body', rallyPlan: 'balanced', attackPattern: 'weakness', returnPlan: 'secondServePressure', riskMode: 'balanced' }, history: [], lastAppliedWeek: 0, analyst: 'Plano equilibrado ativo.' }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
   };
 }
 
@@ -90,6 +90,21 @@ export function migrateSave(data) {
   state.broadcast ||= { presentationMode: 'pro', replayArchive: [], lastAudit: null };
   state.broadcast.replayArchive ||= [];
   state.broadcast.presentationMode ||= 'pro';
+  state.playerCareer ||= { weeklyEvents: [], conversations: [], promises: [], lastProcessedToken: null };
+  state.playerCareer.weeklyEvents ||= [];
+  state.playerCareer.conversations ||= [];
+  state.playerCareer.promises ||= [];
+  state.playerCareer.lastProcessedToken ??= null;
+  state.tacticalIntelligence ||= { plan: { serveTarget: 'body', rallyPlan: 'balanced', attackPattern: 'weakness', returnPlan: 'secondServePressure', riskMode: 'balanced' }, history: [], lastAppliedWeek: 0, analyst: 'Plano equilibrado ativo.' };
+  state.tacticalIntelligence.plan ||= { serveTarget: 'body', rallyPlan: 'balanced', attackPattern: 'weakness', returnPlan: 'secondServePressure', riskMode: 'balanced' };
+  state.tacticalIntelligence.plan.serveTarget ||= 'body';
+  state.tacticalIntelligence.plan.rallyPlan ||= 'balanced';
+  state.tacticalIntelligence.plan.attackPattern ||= 'weakness';
+  state.tacticalIntelligence.plan.returnPlan ||= 'secondServePressure';
+  state.tacticalIntelligence.plan.riskMode ||= 'balanced';
+  state.tacticalIntelligence.history ||= [];
+  state.tacticalIntelligence.lastAppliedWeek ??= 0;
+  state.tacticalIntelligence.analyst ||= 'Plano equilibrado ativo.';
   state.trainingLab.plans ||= {}; state.trainingLab.lastReport ||= []; state.trainingLab.autoApply ??= true; state.trainingLab.cycle ||= 'balanced';
   state.staff ||= {};
   ['Tecnico','Preparador Fisico','Fisioterapeuta','Psicologo','Nutricionista','Analista','Scouting','Financeiro'].forEach(role => { state.staff[role] ??= null; });
@@ -100,6 +115,7 @@ export function migrateSave(data) {
     p.salary ??= 1800 + Math.round((p.overall || 50) * 25);
     state.trainingLab.plans[p.id] ||= { focus: 'balanced', intensity: 'moderate' };
     p.trainingProgress ||= {}; p.trainingHistory ||= [];
+    p.relationship ??= 68; p.pressure ??= 40; p.confidence ??= p.morale ?? 70; p.happiness ??= 66; p.careerEvents ||= []; p.conversationHistory ||= []; p.seasonGoal ??= 'consolidar ranking';
     Object.assign(p, enrichPlayers([p])[0]);
   });
   state.ranking = enrichPlayers(state.ranking || []);
