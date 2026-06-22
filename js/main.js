@@ -80,6 +80,16 @@ const STAFF_AVATARS = {
   'Analista': 'assets/branding/staff/finance.png'
 };
 
+const VISUAL_ACADEMY_SCENES = {
+  office: { label: 'Escritório do treinador', tab: 'dashboard', asset: 'assets/branding/backgrounds/lobby-premium.png', badge: 'Gestão central', desc: 'Hub executivo com caixa, agenda, risco, patrocínios e decisões da semana.', kpi: 'Controle total da carreira' },
+  training: { label: 'Centro de treinamento', tab: 'training', asset: 'assets/branding/backgrounds/home-hero.png', badge: 'Performance', desc: 'Planejamento semanal, carga, evolução técnica, recuperação e risco físico.', kpi: 'Rotina de alta performance' },
+  medical: { label: 'Sala médica e recuperação', tab: 'training', asset: 'assets/branding/staff/doctor.png', badge: 'Saúde', desc: 'Leitura visual de atletas cansados, lesionados e próximos de sobrecarga.', kpi: 'Prevenção de lesões' },
+  analysis: { label: 'Sala de análise tática', tab: 'match', asset: 'assets/branding/backgrounds/match-night.png', badge: 'Tactical Intelligence', desc: 'Plano de saque, devolução, rally, risco e análise do adversário antes do ponto.', kpi: 'Decisão dentro da partida' },
+  market: { label: 'Rede de scouting', tab: 'market', asset: 'assets/branding/players/player_latino.png', badge: 'Mercado global', desc: 'Talentos, perfis, potencial e leitura de contratação com visual mais humano.', kpi: 'Futuro da academia' },
+  calendar: { label: 'Circuito mundial', tab: 'calendar', asset: 'assets/branding/logos/grandslam_wimbledon.png', badge: 'World Tour', desc: 'Torneios com identidade, logos, prestígio, chave e história da temporada.', kpi: 'Calendário vivo' },
+  broadcast: { label: 'Arena de transmissão', tab: 'match', asset: 'assets/branding/backgrounds/match-night.png', badge: 'Match Day', desc: 'Partida com placar, quadra, replay, estatísticas e relatório premium.', kpi: 'Evento esportivo real' }
+};
+
 const PLAYER_PERSONALITIES = {
   fighter: { label: 'Competidor feroz', icon: '🔥', desc: 'Cresce em jogos grandes, mas cobra resultados e torneios fortes.', pressure: 8, ambition: 88, discipline: 74, conflict: 10 },
   disciplined: { label: 'Profissional disciplinado', icon: '📋', desc: 'Aceita rotina pesada, evolui com constância e raramente cria ruído.', pressure: -4, ambition: 72, discipline: 92, conflict: -6 },
@@ -1189,8 +1199,93 @@ function switchTab(tab) {
   $$('#mainTabs .tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
   $$('.dock-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
   $$('.tab-panel').forEach(panel => panel.classList.toggle('active', panel.id === `tab-${tab}`));
+  updateSceneForTab(tab);
   if (tab === 'match') drawCourt();
 }
+
+
+function visualSceneForTab(tab='dashboard') {
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  return map[tab] || 'office';
+}
+function updateSceneForTab(tab='dashboard') {
+  const scene = visualSceneForTab(tab);
+  document.body.dataset.scene = scene;
+  document.documentElement.dataset.scene = scene;
+}
+function visualRiskLabel() {
+  const tired = state.roster.filter(p => (p.fatigue || 0) > 55 || (p.health || 100) < 72 || (p.injuredWeeks || 0) > 0).length;
+  if (tired >= 2) return 'Alerta médico';
+  if (tired === 1) return 'Atenção individual';
+  return 'Elenco estável';
+}
+function visualPerformancePulse() {
+  const avgMorale = Math.round(state.roster.reduce((sum,p)=>sum+(p.morale || 70),0) / Math.max(1,state.roster.length));
+  const avgPressure = Math.round(state.roster.reduce((sum,p)=>sum+(p.pressure || 40),0) / Math.max(1,state.roster.length));
+  if (avgPressure > 70) return `Pressão alta • moral ${avgMorale}`;
+  if (avgMorale > 78) return `Ambiente positivo • moral ${avgMorale}`;
+  return `Moral ${avgMorale} • pressão ${avgPressure}`;
+}
+function renderVisualAcademy() {
+  const host = $('#visualAcademyHub');
+  if (!host) return;
+  state.visualAcademy ||= { activeScene: 'office', lastViewedScene: 'office', environmentAudit: [], premiumMode: true };
+  const activeKey = state.visualAcademy.activeScene || 'office';
+  const active = VISUAL_ACADEMY_SCENES[activeKey] || VISUAL_ACADEMY_SCENES.office;
+  const nextEvent = state.calendar.find(e => e.week >= state.academy.week) || state.calendar[0];
+  const moneyMood = state.academy.money < 0 ? 'Caixa crítico' : state.academy.money < 50000 ? 'Controle de gastos' : 'Expansão possível';
+  const sceneCards = Object.entries(VISUAL_ACADEMY_SCENES).map(([key, scene]) => `
+    <article class="visual-scene-card ${key === activeKey ? 'active' : ''}" data-scene-card="${key}">
+      <div class="visual-scene-media">${assetVisualMarkup(scene.asset, scene.label)}</div>
+      <div class="visual-scene-copy"><span>${escapeHtml(scene.badge)}</span><strong>${escapeHtml(scene.label)}</strong><p>${escapeHtml(scene.desc)}</p><small>${escapeHtml(scene.kpi)}</small></div>
+      <div class="visual-scene-actions"><button class="mini-btn" onclick="window.setVisualScene('${key}')">Focar</button><button class="mini-btn" onclick="window.openVisualScene('${key}')">Abrir</button></div>
+    </article>`).join('');
+  host.innerHTML = `
+    <section class="visual-hero-card scene-${activeKey}">
+      <div class="visual-hero-backdrop">${assetVisualMarkup(active.asset, active.label)}</div>
+      <div class="visual-hero-content">
+        <p class="eyebrow">${escapeHtml(active.badge)} • ${BUILD_LABEL}</p>
+        <h2>${escapeHtml(active.label)}</h2>
+        <p>${escapeHtml(active.desc)}</p>
+        <div class="visual-kpi-row"><span>${escapeHtml(visualRiskLabel())}</span><span>${escapeHtml(visualPerformancePulse())}</span><span>${escapeHtml(moneyMood)}</span><span>Próximo: ${escapeHtml(nextEvent?.name || 'Circuito')}</span></div>
+        <div class="visual-action-row"><button class="btn-primary" onclick="window.openVisualScene('${activeKey}')">Entrar no ambiente</button><button class="btn-secondary" onclick="window.setVisualScene('broadcast')">Preparar match day</button></div>
+      </div>
+    </section>
+    <div class="visual-scene-grid">${sceneCards}</div>
+    <section class="visual-director-board">
+      <article class="panel-card"><h4>Direção visual da build</h4><p>O jogo agora usa ambientes como linguagem central: escritório, treino, medicina, análise, mercado, calendário e arena.</p><p class="muted">Nenhum asset foi removido; os fundos, logos e avatares existentes foram reaproveitados com fallback.</p></article>
+      <article class="panel-card"><h4>Mobile-first</h4><p>Cards horizontais, botões de toque e cenas compactas para 320 px.</p><p class="muted">O fundo muda conforme a aba sem travar a rolagem do celular.</p></article>
+      <article class="panel-card"><h4>Próxima camada AAA</h4><p>Depois desta base visual, a próxima fase pode trazer imprensa, notícias e narrativa global.</p><p class="muted">Visual Academy é a fundação para telas menos administrativas.</p></article>
+    </section>`;
+  hydrateAssetImages();
+}
+function assetVisualMarkup(src='', alt='asset') {
+  return src ? `<img class="visual-asset" data-asset-src="${src}" alt="${escapeAttr(alt)}">` : `<div class="visual-asset-fallback">${escapeHtml(String(alt).slice(0,2).toUpperCase())}</div>`;
+}
+window.setVisualScene = (sceneKey='office') => {
+  if (!VISUAL_ACADEMY_SCENES[sceneKey]) return;
+  const before = { ...(state.visualAcademy || {}) };
+  try {
+    state.visualAcademy ||= { activeScene: 'office', lastViewedScene: 'office', environmentAudit: [], premiumMode: true };
+    state.visualAcademy.activeScene = sceneKey;
+    state.visualAcademy.lastViewedScene = sceneKey;
+    state.visualAcademy.environmentAudit ||= [];
+    state.visualAcademy.environmentAudit.unshift({ scene: sceneKey, week: state.academy.week, season: state.academy.season, build: BUILD_INFO.build, at: new Date().toISOString() });
+    state.visualAcademy.environmentAudit = state.visualAcademy.environmentAudit.slice(0, 30);
+    saveState(state);
+    updateSceneForTab(state.ui?.currentTab || 'visual');
+    renderVisualAcademy();
+  } catch (error) {
+    state.visualAcademy = before;
+    showSystemError('Ambiente visual restaurado sem perda de dados.');
+  }
+};
+window.openVisualScene = (sceneKey='office') => {
+  const scene = VISUAL_ACADEMY_SCENES[sceneKey] || VISUAL_ACADEMY_SCENES.office;
+  window.setVisualScene(sceneKey);
+  switchTab(scene.tab || 'dashboard');
+  render();
+};
 
 
 function render() {
@@ -1199,6 +1294,8 @@ function render() {
   $('#moneyLabel').textContent = money(state.academy.money);
   $('#goalLabel').textContent = state.objectives.current;
   renderOwnerHub();
+  renderVisualAcademy();
+  updateSceneForTab(state.ui?.currentTab || 'dashboard');
   $('#reputationLabel').textContent = state.academy.reputation;
   $('#sponsorLabel').textContent = money(calculateSponsor());
   $('#costsLabel').textContent = money(calculateWeeklyCosts());
@@ -1966,7 +2063,7 @@ function startScheduledMatch() {
   const logo = logoForTournament(event.name);
   const firstServer = (state.academy.week + (run.roundIndex || 0)) % 2 === 0 ? 'player' : 'opponent';
   state.match = {
-    engineVersion: 'v3.11-tactical-intelligence', presentation: 'broadcast-pro', event, round, drawType: run.entryType, tournamentRunId: run.createdAt,
+    engineVersion: 'v3.12-premium-visual-academy', presentation: 'broadcast-pro', event, round, drawType: run.entryType, tournamentRunId: run.createdAt,
     playerId: player.id, playerName: player.name, opponentName: opponent.name, opponent,
     sets: [], set: 1, setsPlayer: 0, setsOpponent: 0,
     gamesPlayer: 0, gamesOpponent: 0, playerScore: 0, opponentScore: 0,
@@ -2442,7 +2539,7 @@ function renderMatch() {
     <div class="last-point-card"><span>Último ponto</span><strong>${last ? `${last.type} • ${last.speed || '—'} km/h • ${last.rally} bolas` : 'Aguardando'}</strong><p>${last?.text || 'Use simular ponto/game/set/partida para iniciar o rally.'}</p><small>${pointTacticalRead(last, match)}</small></div>
     <div class="last-point-card tactical"><span>Leitura do analista</span><strong>${tacticalSummaryText(match.tacticalPlan || getTacticalPlan())}</strong><p>${tacticalAnalystRead(match)}</p></div>
     <div class="replay-tape">${replay.length ? replay.map(item=>`<div class="replay-line"><strong>${item.text}</strong><span>${item.detail}</span></div>`).join('') : '<div class="replay-line muted">Mini replay aparecerá conforme os pontos forem jogados.</div>'}</div>`;
-  if (reportHost) reportHost.innerHTML = match.finished ? createBroadcastReport(match).map(line=>`<div class="report-line">${line}</div>`).join('') : `<div class="report-line">Motor v3.11 ativo: inteligência tática, plano de jogo e leitura do analista conectados à partida.</div><div class="report-line">${broadcastRecommendation(match, player, opp)}</div><div class="report-line">Placar: ${scoreSnapshot(match)} • Estratégia: ${currentStrategy}</div>`;
+  if (reportHost) reportHost.innerHTML = match.finished ? createBroadcastReport(match).map(line=>`<div class="report-line">${line}</div>`).join('') : `<div class="report-line">Motor v3.12 ativo: inteligência tática, identidade visual premium e ambientes da academia conectados à carreira.</div><div class="report-line">${broadcastRecommendation(match, player, opp)}</div><div class="report-line">Placar: ${scoreSnapshot(match)} • Estratégia: ${currentStrategy}</div>`;
   const autoBtn = $('#autoMatchBtn');
   if (autoBtn) autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : 'Auto 1x';
   refreshAutoButtons();

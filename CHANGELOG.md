@@ -1,3 +1,11 @@
+## v3.12.0 — Premium Visual Academy — build 20260622-122215
+- Cria a nova aba `Academia Pro` com hub visual de ambientes premium.
+- Reaproveita fundos, logos e avatares existentes para reduzir a aparência de dashboard.
+- Adiciona cenas persistentes: escritório, centro de treino, sala médica, análise, scouting, circuito e arena.
+- Muda o fundo visual da aplicação conforme aba/ambiente ativo sem quebrar a navegação mobile.
+- Adiciona estado `visualAcademy` com auditoria de ambiente e migração para schema 15.
+- Mantém build, versão, data e hora visíveis e cache PWA isolado da v3.11.0.
+
 
 
 ## v3.11.0 — Tactical Intelligence — build 20260622-110507

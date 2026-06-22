@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <div id="buildOverlay" class="build-overlay">v3.11.0 • 22/06/2026 • 11:05:07</div>
+  <div id="buildOverlay" class="build-overlay">v3.12.0 • 22/06/2026 • 12:22:15</div>
   <div class="app-shell">
     <header class="topbar glass">
       <div>
@@ -21,7 +21,7 @@
         <h1>Vale Games Tennis Manager</h1>
       </div>
       <div class="hud-row hud-scroll">
-        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v3.11.0 • 22/06/2026 • 11:05:07</strong></div>
+        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v3.12.0 • 22/06/2026 • 12:22:15</strong></div>
         <div class="pill"><span>Temporada</span><strong id="seasonLabel">2026</strong></div>
         <div class="pill"><span>Semana</span><strong id="weekLabel">1</strong></div>
         <div class="pill"><span>Caixa</span><strong id="moneyLabel">$0</strong></div>
@@ -47,6 +47,7 @@
 
         <nav class="nav-tabs" id="mainTabs" aria-label="Abas principais">
           <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+          <button class="tab-btn" data-tab="visual">Academia Pro</button>
           <button class="tab-btn" data-tab="roster">Atletas</button>
           <button class="tab-btn" data-tab="career">Carreira</button>
           <button class="tab-btn" data-tab="training">Treino</button>
@@ -58,7 +59,7 @@
           <button class="tab-btn" data-tab="adminhint">Admin</button>
         </nav>
 
-        <div id="mobileBuildBadge" class="mobile-build-badge glass">v3.11.0 • 22/06/2026 • 11:05:07</div>
+        <div id="mobileBuildBadge" class="mobile-build-badge glass">v3.12.0 • 22/06/2026 • 12:22:15</div>
         <section class="sidebar-actions">
           <button id="advanceWeekBtn" class="btn-primary">Avançar Semana</button>
           <button id="saveBtn" class="btn-secondary">Salvar</button>
@@ -122,6 +123,14 @@
           </div>
         </section>
 
+        <section class="tab-panel glass premium-visual-panel" id="tab-visual">
+          <div class="section-head visual-head">
+            <div><p class="eyebrow">Premium Visual Academy</p><h3>Ambientes da Academia</h3></div>
+            <div class="training-build">Visual AAA • schema 15</div>
+          </div>
+          <div id="visualAcademyHub" class="visual-academy-hub"></div>
+        </section>
+
         <section class="tab-panel glass" id="tab-roster">
           <div class="section-head"><div><p class="eyebrow">Gestão esportiva</p><h3>Seus atletas</h3></div></div>
           <div id="rosterList" class="roster-grid"></div>
@@ -130,7 +139,7 @@
         <section class="tab-panel glass" id="tab-career">
           <div class="section-head">
             <div><p class="eyebrow">Carreira humana</p><h3>Player Personality & Real Careers</h3></div>
-            <div class="training-build">Relação, pressão e moral • schema 14</div>
+            <div class="training-build">Relação, pressão e moral • schema 15</div>
           </div>
           <div id="careerHub" class="career-hub-grid"></div>
         </section>
@@ -138,7 +147,7 @@
 
 
         <section class="tab-panel glass" id="tab-training">
-          <div class="section-head"><div><p class="eyebrow">Performance semanal</p><h3>Training Lab</h3></div><div class="training-build">Plano protegido • schema 14</div></div>
+          <div class="section-head"><div><p class="eyebrow">Performance semanal</p><h3>Training Lab</h3></div><div class="training-build">Plano protegido • schema 15</div></div>
           <div class="training-summary-grid">
             <article class="stat-card"><span>Ciclo da academia</span><strong id="trainingCycleLabel">Equilibrado</strong></article>
             <article class="stat-card"><span>Carga média</span><strong id="trainingLoadLabel">Moderada</strong></article>
@@ -168,7 +177,7 @@
               <div class="score-card mobile-priority">
                 <div class="score-row"><span id="matchPlayerName">Seu atleta</span><strong id="scorePlayer">0</strong></div>
                 <div class="score-row"><span id="matchOpponentName">Adversário</span><strong id="scoreOpponent">0</strong></div>
-                <div class="score-meta"><span id="matchBuildInline" class="metric-build">v3.11.0 • 22/06/2026 • 11:05:07</span><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
+                <div class="score-meta"><span id="matchBuildInline" class="metric-build">v3.12.0 • 22/06/2026 • 12:22:15</span><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
                 <div class="score-meta secondary-meta"><span id="roundLabel">Rodada -</span><span id="tournamentLabel">Nenhum torneio</span></div>
               </div>
               <canvas id="matchCanvas" width="960" height="540"></canvas>
@@ -183,7 +192,7 @@
                 <button class="action-btn" data-strategy="control">Controlar</button>
               </div>
               <article class="panel-card tactical-intelligence-card">
-                <div class="panel-title-row"><div><p class="eyebrow">Tactical Intelligence</p><h4>Plano de jogo v3.11</h4></div><span class="metric-build">schema 14</span></div>
+                <div class="panel-title-row"><div><p class="eyebrow">Tactical Intelligence</p><h4>Plano de jogo v3.12</h4></div><span class="metric-build">schema 15</span></div>
                 <div id="tacticalIntelligencePanel" class="tactical-intelligence-panel"></div>
               </article>
               <div class="match-actions touch-actions">
@@ -247,7 +256,7 @@
     <div id="ownerSetupModal" class="setup-modal hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="careerSetupTitle">
       <div class="setup-backdrop"></div>
       <div class="setup-card glass">
-        <div class="setup-progress"><span>1</span><div><strong>Criação de carreira</strong><small>Perfil, academia e estratégia inicial</small></div><b>v3.11.0</b></div>
+        <div class="setup-progress"><span>1</span><div><strong>Criação de carreira</strong><small>Perfil, academia e estratégia inicial</small></div><b>v3.12.0</b></div>
         <div class="section-head"><div><p class="eyebrow">Career Genesis</p><h3 id="careerSetupTitle">Construa sua identidade no circuito</h3></div></div>
         <div id="setupValidation" class="setup-validation hidden" role="alert"></div>
         <div class="form-grid setup-grid">
@@ -280,10 +289,11 @@
   <strong>Falha recuperável</strong><span id="systemErrorText">O jogo encontrou um problema.</span>
   <button id="dismissErrorBtn" type="button">Fechar</button>
 </div>
-<div class="runtime-build-stamp" id="runtimeBuildStamp" title="Identificação técnica da versão">v3.11.0 • 22/06/2026 • 11:05:07</div>
+<div class="runtime-build-stamp" id="runtimeBuildStamp" title="Identificação técnica da versão">v3.12.0 • 22/06/2026 • 12:22:15</div>
 
 <nav class="mobile-dock glass" aria-label="Ações rápidas mobile">
       <button class="dock-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="dock-btn" data-tab="visual">Academia</button>
       <button class="dock-btn" data-tab="roster">Atletas</button>
       <button class="dock-btn" data-tab="career">Carreira</button>
       <button class="dock-btn" data-tab="training">Treino</button>
@@ -293,6 +303,6 @@
     </nav>
   </div>
 
-  <script type="module" src="js/main.js?v=3.11.0-20260622-110507"></script>
+  <script type="module" src="js/main.js?v=3.12.0-20260622-122215"></script>
 </body>
 </html>
