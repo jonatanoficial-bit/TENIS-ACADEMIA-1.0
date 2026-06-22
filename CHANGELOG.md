@@ -1,3 +1,12 @@
+
+## v4.0.4 — Final QA Automation & Public Test Tools (20260622-190941)
+- Nova aba QA Final.
+- Smoke test interno para boot, HUD, save, PWA/cache e viewport mobile.
+- Varredura de telas, hosts de renderização e dock mobile.
+- Exportação local de relatório QA em JSON.
+- Modo teste público com safe mode sem alterar ranking, atletas, torneios ou economia.
+- Save migrado para schema 24.
+
 # Vale Games Tennis Manager v4.0.2
 
 Build `20260622-190812` — Release Hardening & Diagnostics.

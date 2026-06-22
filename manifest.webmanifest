@@ -12,5 +12,21 @@
       "type": "image/svg+xml",
       "purpose": "any"
     }
+  ],
+  "id": "vale-games-tennis-manager",
+  "description": "Simulador mobile-first de gestão de tênis com carreira, torneios, economia, QA interno e modo offline.",
+  "shortcuts": [
+    {
+      "name": "Abrir Partida",
+      "short_name": "Partida",
+      "url": "./index.html#match",
+      "description": "Ir para o Match Center"
+    },
+    {
+      "name": "Abrir QA",
+      "short_name": "QA",
+      "url": "./index.html#qa",
+      "description": "Ir para a central de testes da build"
+    }
   ]
 }

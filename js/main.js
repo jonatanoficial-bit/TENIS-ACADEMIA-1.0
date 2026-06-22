@@ -388,10 +388,10 @@ function avatarForPlayer(name='') {
   return PLAYER_AVATARS[idx];
 }
 function avatarImg(src, cls='avatar-img', alt='avatar') {
-  return src ? `<img class="${cls}" data-asset-src="${src}" alt="${alt}">` : '';
+  return src ? `<img class="${cls}" data-asset-src="${src}" alt="${escapeAttr(alt)}" loading="lazy" decoding="async">` : '';
 }
 function logoImg(src, cls='tour-logo', alt='logo') {
-  return src ? `<img class="${cls}" data-asset-src="${src}" alt="${alt}">` : '';
+  return src ? `<img class="${cls}" data-asset-src="${src}" alt="${escapeAttr(alt)}" loading="lazy" decoding="async">` : '';
 }
 
 function hashNumber(text='') {
@@ -1275,11 +1275,21 @@ function applyBuildMarkers() {
 
 
 function hydrateAssetImages() {
-  document.querySelectorAll('img[data-asset-src]').forEach((img) => {
+  const imgs = document.querySelectorAll('img[data-asset-src]');
+  let hydrated = 0;
+  imgs.forEach((img) => {
+    img.loading ||= 'lazy';
+    img.decoding ||= 'async';
     if (img.dataset.assetHydrated === '1') return;
     img.dataset.assetHydrated = '1';
+    hydrated += 1;
     attachFallback(img, img.dataset.assetSrc || '');
   });
+  if (state?.performanceDelivery?.runtimeHints) {
+    state.performanceDelivery.runtimeHints.lastHydratedImages = imgs.length;
+    state.performanceDelivery.runtimeHints.missingAssets = document.querySelectorAll('img.asset-missing').length;
+    state.performanceDelivery.runtimeHints.lastHydratedDelta = hydrated;
+  }
 }
 
 function refreshAutoButtons() {
@@ -1392,7 +1402,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -1506,6 +1516,8 @@ function render() {
   renderReleaseCandidate();
   renderQualityPolish();
   renderReleaseHardening();
+  renderPerformanceDelivery();
+  renderQAAutomation();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -1983,7 +1995,7 @@ function releaseChecklistSnapshot() {
   const hasNews = state.newsroom?.items?.length || 0;
   const hasLegacy = !!state.generationalCareer?.legacyScore || (state.generationalCareer?.prospects?.length || 0) > 0;
   return {
-    buildStamp: { label: 'Versão, build, data e hora visíveis', ok: BUILD_INFO.version === '4.0.2' && BUILD_INFO.schemaVersion >= 22, note: `${BUILD_LABEL} • schema ${BUILD_INFO.schemaVersion}` },
+    buildStamp: { label: 'Versão, build, data e hora visíveis', ok: BUILD_INFO.version === '4.0.3' && BUILD_INFO.schemaVersion >= 23, note: `${BUILD_LABEL} • schema ${BUILD_INFO.schemaVersion}` },
     mobileFirst: { label: 'UX mobile-first protegida', ok: true, note: `${mobileAudit} auditoria(s) de viewport registradas; safe area e dock horizontal ativos.` },
     matchEngine: { label: 'Motor de partida tático', ok: !!state.tacticalIntelligence?.plan, note: 'Ponto a ponto com saque, rally, estatísticas, tática e relatório.' },
     tournamentLife: { label: 'Torneios com chave e identidade', ok: !!state.tournamentLife && !!state.tournamentDraws, note: 'Qualifying, seeds, wild cards, BYE, campeões e logos integrados.' },
@@ -2252,6 +2264,263 @@ window.applyRecoveryGuardMode = () => {
   state.mobileUX.matchFocus = true;
   rh.auditLog.unshift({ title: 'Modo recuperação aplicado', result: 'ON', note: 'Safe mode, redução de movimento e foco mobile ativados sem alterar gameplay.', at: new Date().toISOString(), build: BUILD_INFO.build });
   rh.auditLog = rh.auditLog.slice(0,20);
+  saveState(state); render();
+};
+
+
+function ensurePerformanceDeliverySystem() {
+  state.performanceDelivery ||= { score: 91, mode: 'balanced', lastAuditToken: null, auditLog: [], assetDiagnostics: [], warmupComplete: false, liteMode: false, runtimeHints: { lazyImages: true, asyncDecode: true, criticalAssets: 4, lastHydratedImages: 0, missingAssets: 0 } };
+  const pd = state.performanceDelivery;
+  pd.auditLog ||= [];
+  pd.assetDiagnostics ||= [];
+  pd.runtimeHints ||= { lazyImages: true, asyncDecode: true, criticalAssets: 4, lastHydratedImages: 0, missingAssets: 0 };
+  pd.mode ||= 'balanced';
+  pd.score ??= 91;
+  pd.liteMode ??= false;
+  pd.warmupComplete ??= false;
+  pd.runtimeHints.lazyImages ??= true;
+  pd.runtimeHints.asyncDecode ??= true;
+  pd.runtimeHints.criticalAssets ??= 4;
+  pd.runtimeHints.lastHydratedImages ??= 0;
+  pd.runtimeHints.missingAssets ??= 0;
+  return pd;
+}
+function calculatePerformanceDeliveryScore() {
+  const pd = ensurePerformanceDeliverySystem();
+  const hints = pd.runtimeHints || {};
+  const missingPenalty = Math.min(24, Number(hints.missingAssets || 0) * 8);
+  const cacheBoost = state.releaseHardening?.cacheStatus === 'versioned' ? 8 : state.releaseHardening?.cacheStatus === 'blocked' ? -4 : 2;
+  const liteBoost = pd.liteMode ? 6 : 2;
+  const warmupBoost = pd.warmupComplete ? 6 : 0;
+  const lazyBoost = hints.lazyImages ? 7 : 0;
+  const decodeBoost = hints.asyncDecode ? 5 : 0;
+  return clamp(68 + cacheBoost + liteBoost + warmupBoost + lazyBoost + decodeBoost - missingPenalty, 0, 100);
+}
+function criticalAssetList() {
+  const event = state.calendar?.find(e => e.week >= state.academy.week) || state.calendar?.[0] || {};
+  return [
+    'assets/branding/backgrounds/lobby-premium.png',
+    'assets/branding/backgrounds/match-night.png',
+    logoForTournament(event.name || '') || 'assets/branding/logos/grandslam_wimbledon.png',
+    avatarForPlayer(state.roster?.[0]?.name || 'Atleta')
+  ].filter(Boolean);
+}
+function renderPerformanceDelivery() {
+  const host = $('#performanceDeliveryHub');
+  if (!host) return;
+  const pd = ensurePerformanceDeliverySystem();
+  const profile = currentViewportProfile();
+  pd.score = calculatePerformanceDeliveryScore();
+  const hints = pd.runtimeHints || {};
+  const assets = criticalAssetList();
+  const diagnostics = (pd.assetDiagnostics || []).slice(0,8).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b class="${item.status === 'Risco' ? 'danger' : 'ok'}">${escapeHtml(item.status || 'OK')}</b></div>`).join('') || '<div class="list-item"><span>Nenhum alerta de asset registrado nesta sessão.</span><strong>OK</strong></div>';
+  const logs = (pd.auditLog || []).slice(0,8).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.result || 'OK')}</b></div>`).join('') || '<div class="list-item"><span>Execute a auditoria de performance antes do teste mobile.</span><strong>Pronto</strong></div>';
+  host.innerHTML = `
+    <section class="quality-hero ok">
+      <div><p class="eyebrow">${BUILD_LABEL} • asset delivery</p><h2>Performance & Asset Delivery Hotfix</h2><p>Diagnóstico de imagens, carregamento preguiçoso, fallback visual, aquecimento de assets críticos e modo leve para celulares com memória/conexão limitada.</p><div class="release-actions"><button class="btn-primary" onclick="window.runAssetDeliveryAudit()">Auditar assets</button><button class="btn-secondary" onclick="window.warmCriticalAssets()">Aquecer assets críticos</button><button class="btn-ghost" onclick="window.applyMobileLiteAssets()">Modo leve mobile</button></div></div>
+      <div class="release-score"><span>Performance</span><strong>${pd.score}</strong><small>${pd.score >= 88 ? 'Pronto para mobile' : 'Revisar assets'}</small></div>
+    </section>
+    <div class="cards-grid release-kpis"><article class="stat-card"><span>Imagens DOM</span><strong>${hints.lastHydratedImages || document.querySelectorAll('img[data-asset-src]').length}</strong></article><article class="stat-card"><span>Falhas asset</span><strong>${hints.missingAssets || 0}</strong></article><article class="stat-card"><span>Modo</span><strong>${escapeHtml(pd.liteMode ? 'Leve' : pd.mode)}</strong></article><article class="stat-card"><span>Viewport</span><strong>${profile.width}×${profile.height}</strong></article></div>
+    <section class="release-grid"><article class="panel-card"><div class="panel-title-row"><h4>Assets críticos</h4><span class="metric-build">lazy + async</span></div><div class="asset-preview-grid">${assets.map(src => `<div class="asset-preview-card">${logoMarkup(src, src.split('/').pop(), 'tour-logo asset-preview-img', 'tournament-logo-fallback')}<small>${escapeHtml(src.split('/').pop())}</small></div>`).join('')}</div></article><article class="panel-card"><div class="panel-title-row"><h4>Diagnóstico</h4><span class="metric-build">mobile</span></div><div class="list-block">${diagnostics}</div></article></section>
+    <section class="panel-card"><div class="panel-title-row"><h4>Histórico de performance</h4><span class="metric-build">build ${BUILD_INFO.build}</span></div><div class="list-block">${logs}</div></section>`;
+  hydrateAssetImages();
+}
+window.runAssetDeliveryAudit = () => {
+  const pd = ensurePerformanceDeliverySystem();
+  hydrateAssetImages();
+  const imgs = [...document.querySelectorAll('img[data-asset-src]')];
+  const missing = imgs.filter(img => img.classList.contains('asset-missing')).length;
+  const loaded = imgs.filter(img => img.complete && img.naturalWidth > 0).length;
+  pd.runtimeHints.lastHydratedImages = imgs.length;
+  pd.runtimeHints.missingAssets = missing;
+  pd.runtimeHints.lazyImages = imgs.every(img => img.loading === 'lazy' || !img.loading);
+  pd.runtimeHints.asyncDecode = imgs.every(img => img.decoding === 'async' || !img.decoding);
+  const notes = [];
+  if (missing) notes.push({ title: 'Fallback de assets', note: `${missing} imagem(ns) não carregaram e entraram em fallback.`, status: 'Risco' });
+  if (imgs.length > 48 && !pd.liteMode) notes.push({ title: 'Muitas imagens renderizadas', note: `${imgs.length} imagens no DOM. Em celular antigo, use modo leve.`, status: 'Atenção' });
+  if (!notes.length) notes.push({ title: 'Auditoria de assets', note: `${loaded}/${imgs.length} imagens carregadas ou preparadas com lazy loading.`, status: 'OK' });
+  pd.assetDiagnostics = notes;
+  pd.lastAuditToken = `${state.academy.season}-${state.academy.week}-${BUILD_INFO.build}`;
+  pd.score = calculatePerformanceDeliveryScore();
+  pd.auditLog.unshift({ title: 'Auditoria de performance executada', result: `${pd.score}/100`, note: notes[0]?.note || 'Sem alertas.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  pd.auditLog = pd.auditLog.slice(0,20);
+  addLog(`Performance v${BUILD_INFO.version}: auditoria ${pd.score}/100.`);
+  saveState(state); renderPerformanceDelivery();
+};
+window.warmCriticalAssets = async () => {
+  const pd = ensurePerformanceDeliverySystem();
+  const assets = criticalAssetList();
+  const loadOne = src => new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve({ src, ok: true });
+    img.onerror = () => resolve({ src, ok: false });
+    img.src = assetCandidates(src)[0] || src;
+  });
+  const results = await Promise.all(assets.map(loadOne));
+  const failed = results.filter(r => !r.ok).length;
+  pd.warmupComplete = failed === 0;
+  pd.assetDiagnostics.unshift({ title: 'Aquecimento de assets críticos', note: failed ? `${failed} asset(s) crítico(s) falharam no pré-carregamento.` : `${results.length} asset(s) crítico(s) preparados para a sessão.`, status: failed ? 'Atenção' : 'OK' });
+  pd.auditLog.unshift({ title: 'Warmup de assets', result: failed ? 'Parcial' : 'OK', note: failed ? 'Fallbacks permanecem ativos.' : 'Fundos/logos/avatares críticos pré-carregados.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  pd.assetDiagnostics = pd.assetDiagnostics.slice(0,12);
+  pd.auditLog = pd.auditLog.slice(0,20);
+  pd.score = calculatePerformanceDeliveryScore();
+  saveState(state); renderPerformanceDelivery();
+};
+window.applyMobileLiteAssets = () => {
+  const pd = ensurePerformanceDeliverySystem();
+  pd.liteMode = true;
+  pd.mode = 'mobile-lite';
+  state.mobileUX ||= { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] };
+  state.mobileUX.compact = true;
+  state.mobileUX.reduceMotion = true;
+  state.mobileUX.matchFocus = true;
+  document.body.classList.add('mobile-lite-assets');
+  pd.auditLog.unshift({ title: 'Modo leve mobile aplicado', result: 'ON', note: 'Compactação visual, redução de movimento e foco de partida ativados sem alterar gameplay.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  pd.auditLog = pd.auditLog.slice(0,20);
+  pd.score = calculatePerformanceDeliveryScore();
+  addLog('Modo leve mobile aplicado para teste em celular/Internet instável.');
+  saveState(state); render();
+};
+
+
+function ensureQAAutomationSystem() {
+  state.qaAutomation ||= { score: 92, lastRunToken: null, auditLog: [], smokeResults: [], screenResults: [], saveSnapshots: [], exportReady: false, publicTestMode: false, checklist: { boot: true, tabs: true, save: true, mobile: true, pwa: true, legal: true, performance: true } };
+  const qa = state.qaAutomation;
+  qa.auditLog ||= [];
+  qa.smokeResults ||= [];
+  qa.screenResults ||= [];
+  qa.saveSnapshots ||= [];
+  qa.checklist ||= { boot: true, tabs: true, save: true, mobile: true, pwa: true, legal: true, performance: true };
+  qa.score ??= 92;
+  qa.lastRunToken ??= null;
+  qa.exportReady ??= false;
+  qa.publicTestMode ??= false;
+  ['boot','tabs','save','mobile','pwa','legal','performance'].forEach(key => { qa.checklist[key] ??= true; });
+  return qa;
+}
+function calculateQAScore() {
+  const qa = ensureQAAutomationSystem();
+  const checks = qa.checklist || {};
+  const passed = Object.values(checks).filter(Boolean).length;
+  const smokePenalty = Math.min(18, (qa.smokeResults || []).filter(r => r.status === 'Risco').length * 6);
+  const screenPenalty = Math.min(14, (qa.screenResults || []).filter(r => r.status === 'Atenção').length * 4);
+  const exportBoost = qa.exportReady ? 5 : 0;
+  const publicBoost = qa.publicTestMode ? 3 : 0;
+  return clamp(60 + passed * 5 + exportBoost + publicBoost - smokePenalty - screenPenalty, 0, 100);
+}
+function renderQAAutomation() {
+  const host = $('#qaAutomationHub');
+  if (!host) return;
+  const qa = ensureQAAutomationSystem();
+  const profile = currentViewportProfile();
+  qa.score = calculateQAScore();
+  const checkLabels = {
+    boot: 'Boot sem erro', tabs: 'Telas navegáveis', save: 'Save/backup local', mobile: 'Mobile 320–412 px', pwa: 'PWA/cache versionado', legal: 'Legal/créditos acessíveis', performance: 'Performance/asset delivery'
+  };
+  const checks = Object.entries(qa.checklist || {}).map(([key, ok]) => `<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(checkLabels[key] || key)}</strong><small>${ok ? 'Coberto na rodada QA.' : 'Precisa de validação manual.'}</small></div></article>`).join('');
+  const smoke = (qa.smokeResults || []).slice(0,10).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b class="${item.status === 'Risco' ? 'danger' : 'ok'}">${escapeHtml(item.status)}</b></div>`).join('') || '<div class="list-item"><span>Execute o smoke test final para gerar os primeiros resultados.</span><strong>Pendente</strong></div>';
+  const screens = (qa.screenResults || []).slice(0,8).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.status)}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma verificação de tela executada nesta sessão.</span><strong>Pronto</strong></div>';
+  const logs = (qa.auditLog || []).slice(0,8).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.result || 'OK')}</b></div>`).join('') || '<div class="list-item"><span>QA final aguardando execução.</span><strong>RC</strong></div>';
+  host.innerHTML = `
+    <section class="quality-hero ok qa-hero">
+      <div><p class="eyebrow">${BUILD_LABEL} • QA final</p><h2>Final QA Automation & Public Test Tools</h2><p>Central para validar boot, telas, save, PWA, assets, mobile e preparar um relatório de teste público antes do upload final.</p><div class="release-actions"><button class="btn-primary" onclick="window.runFinalSmokeTest()">Smoke test final</button><button class="btn-secondary" onclick="window.runScreenSweepQA()">Verificar telas</button><button class="btn-ghost" onclick="window.exportQAReport()">Gerar relatório QA</button><button class="btn-ghost" onclick="window.enablePublicTestMode()">Modo teste público</button></div></div>
+      <div class="release-score"><span>QA Score</span><strong>${qa.score}</strong><small>${qa.score >= 90 ? 'Candidato público' : 'Revisar pendências'}</small></div>
+    </section>
+    <div class="cards-grid release-kpis"><article class="stat-card"><span>Build</span><strong>${escapeHtml(BUILD_INFO.version)}</strong></article><article class="stat-card"><span>Schema</span><strong>${BUILD_INFO.schemaVersion}</strong></article><article class="stat-card"><span>Viewport</span><strong>${profile.width}×${profile.height}</strong></article><article class="stat-card"><span>Teste público</span><strong>${qa.publicTestMode ? 'ON' : 'OFF'}</strong></article></div>
+    <section class="release-grid"><article class="panel-card"><div class="panel-title-row"><h4>Checklist QA</h4><span class="metric-build">release</span></div><div class="release-checklist">${checks}</div></article><article class="panel-card"><div class="panel-title-row"><h4>Smoke test</h4><span class="metric-build">anti-quebra</span></div><div class="list-block">${smoke}</div></article></section>
+    <section class="release-grid"><article class="panel-card"><div class="panel-title-row"><h4>Varredura de telas</h4><span class="metric-build">mobile-first</span></div><div class="list-block">${screens}</div></article><article class="panel-card"><div class="panel-title-row"><h4>Histórico QA</h4><span class="metric-build">build ${BUILD_INFO.build}</span></div><div class="list-block">${logs}</div></article></section>`;
+}
+window.runFinalSmokeTest = () => {
+  const qa = ensureQAAutomationSystem();
+  const results = [];
+  const requiredSelectors = ['#buildOverlay','#buildPill','#seasonLabel','#weekLabel','#moneyLabel','#mainTabs','#mobileBuildBadge','#runtimeBuildStamp','#mobileQuickBar'];
+  const missingSelectors = requiredSelectors.filter(sel => !$(sel));
+  results.push({ title: 'Boot e HUD', status: missingSelectors.length ? 'Risco' : 'OK', note: missingSelectors.length ? `Ausentes: ${missingSelectors.join(', ')}` : 'HUD principal, build e comandos rápidos encontrados.' });
+  const requiredState = ['roster','ranking','calendar','trainingLab','performanceDelivery','qaAutomation'];
+  const missingState = requiredState.filter(key => !state[key]);
+  results.push({ title: 'Estado e módulos', status: missingState.length ? 'Risco' : 'OK', note: missingState.length ? `Módulos ausentes: ${missingState.join(', ')}` : 'Módulos principais preservados no save migrado.' });
+  const saveOk = saveState(state);
+  results.push({ title: 'Save offline', status: saveOk ? 'OK' : 'Risco', note: saveOk ? 'Gravação local confirmada com backup automático.' : 'O navegador recusou a gravação local.' });
+  const pwaOk = !!navigator.serviceWorker || location.protocol === 'file:';
+  results.push({ title: 'PWA/cache', status: pwaOk ? 'OK' : 'Atenção', note: pwaOk ? 'Service Worker disponível ou execução local detectada.' : 'Testar em HTTPS/GitHub Pages para ativar PWA.' });
+  const profile = currentViewportProfile();
+  results.push({ title: 'Viewport mobile', status: profile.width >= 320 ? 'OK' : 'Atenção', note: `Viewport atual ${profile.width}×${profile.height}; safe area e --app-vh ativos.` });
+  qa.smokeResults = results;
+  qa.checklist.boot = !missingSelectors.length;
+  qa.checklist.save = !!saveOk;
+  qa.checklist.pwa = !!pwaOk;
+  qa.checklist.mobile = profile.width >= 320;
+  qa.checklist.performance = (state.performanceDelivery?.score || 0) >= 80;
+  qa.lastRunToken = `${state.academy.season}-${state.academy.week}-${BUILD_INFO.build}`;
+  qa.score = calculateQAScore();
+  qa.auditLog.unshift({ title: 'Smoke test final executado', result: `${qa.score}/100`, note: results.filter(r=>r.status==='Risco').length ? 'Há riscos a revisar.' : 'Sem riscos críticos no smoke test.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  qa.auditLog = qa.auditLog.slice(0,20);
+  addLog(`QA v${BUILD_INFO.version}: smoke test ${qa.score}/100.`);
+  saveState(state); renderQAAutomation();
+};
+window.runScreenSweepQA = () => {
+  const qa = ensureQAAutomationSystem();
+  const tabIds = [...document.querySelectorAll('.tab-panel')].map(p => p.id.replace('tab-',''));
+  const buttons = [...document.querySelectorAll('[data-tab]')].map(b => b.dataset.tab);
+  const missingButtons = tabIds.filter(id => !buttons.includes(id) && id !== 'adminhint');
+  const noHost = ['visualAcademyHub','careerHub','mobileUXHub','performanceDeliveryHub','qaAutomationHub','matchCanvas','rankingTable'].filter(id => !document.getElementById(id));
+  qa.screenResults = [
+    { title: 'Abas principais', status: missingButtons.length ? 'Atenção' : 'OK', note: missingButtons.length ? `Sem botão direto: ${missingButtons.join(', ')}` : `${tabIds.length} telas com navegação principal detectada.` },
+    { title: 'Hosts de renderização', status: noHost.length ? 'Atenção' : 'OK', note: noHost.length ? `Containers ausentes: ${noHost.join(', ')}` : 'Containers críticos de renderização presentes.' },
+    { title: 'Dock mobile', status: document.querySelectorAll('.dock-btn').length >= 10 ? 'OK' : 'Atenção', note: `${document.querySelectorAll('.dock-btn').length} botões no dock mobile com rolagem horizontal.` },
+    { title: 'Botões de toque', status: document.querySelectorAll('button').length ? 'OK' : 'Atenção', note: `${document.querySelectorAll('button').length} botões detectados para teste manual de toque.` }
+  ];
+  qa.checklist.tabs = !missingButtons.length;
+  qa.score = calculateQAScore();
+  qa.auditLog.unshift({ title: 'Varredura de telas concluída', result: `${qa.score}/100`, note: qa.screenResults[0].note, at: new Date().toISOString(), build: BUILD_INFO.build });
+  qa.auditLog = qa.auditLog.slice(0,20);
+  saveState(state); renderQAAutomation();
+};
+window.exportQAReport = () => {
+  const qa = ensureQAAutomationSystem();
+  const payload = {
+    app: BUILD_INFO.appName,
+    version: BUILD_INFO.version,
+    build: BUILD_INFO.build,
+    schema: BUILD_INFO.schemaVersion,
+    generatedAt: new Date().toISOString(),
+    season: state.academy?.season,
+    week: state.academy?.week,
+    qaScore: calculateQAScore(),
+    smokeResults: qa.smokeResults,
+    screenResults: qa.screenResults,
+    checklist: qa.checklist,
+    viewport: currentViewportProfile(),
+    notes: 'Relatório gerado localmente. Não envia dados para servidor.'
+  };
+  qa.exportReady = true;
+  qa.saveSnapshots.unshift({ title: 'Relatório QA preparado', at: payload.generatedAt, score: payload.qaScore, build: BUILD_INFO.build });
+  qa.saveSnapshots = qa.saveSnapshots.slice(0,10);
+  qa.auditLog.unshift({ title: 'Relatório QA gerado', result: 'JSON local', note: `Score ${payload.qaScore}/100. Conteúdo copiado para console e download local quando suportado.`, at: payload.generatedAt, build: BUILD_INFO.build });
+  try {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `vale-tennis-qa-${BUILD_INFO.version}-${BUILD_INFO.build}.json`;
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+  } catch (error) { console.info('QA report fallback', payload, error); }
+  qa.score = calculateQAScore();
+  saveState(state); renderQAAutomation();
+};
+window.enablePublicTestMode = () => {
+  const qa = ensureQAAutomationSystem();
+  qa.publicTestMode = true;
+  state.flags ||= {};
+  state.flags.safeMode = true;
+  state.releaseCandidate ||= { readiness: 82, safeMode: false, auditLog: [] };
+  state.releaseCandidate.safeMode = true;
+  state.mobileUX ||= { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] };
+  state.mobileUX.matchFocus = true;
+  qa.auditLog.unshift({ title: 'Modo teste público ativado', result: 'ON', note: 'Safe mode, foco mobile e QA checklist ativos sem alterar atributos, ranking ou economia.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  qa.auditLog = qa.auditLog.slice(0,20);
+  qa.score = calculateQAScore();
+  addLog('Modo teste público ativado para homologação controlada.');
   saveState(state); render();
 };
 

@@ -5,7 +5,7 @@ const STORAGE_KEY = 'vale_tennis_manager_save';
 const LEGACY_KEYS = ['ace_academy_save_v040', 'ace-manager-save'];
 const BACKUP_KEY = 'vale_tennis_manager_save_backup';
 const CORRUPT_KEY = 'vale_tennis_manager_corrupt_save';
-const CURRENT_SCHEMA = 22;
+const CURRENT_SCHEMA = 24;
 
 const clone = (value) => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 
@@ -39,7 +39,7 @@ export function buildInitialState(content) {
     sponsorOffers: [], objectives: { current: 'Entrar no Top 120' },
     worldTour: { weeklyResults: [], rankingHistory: [], lastSimulatedWeek: 0, lastSimulatedSeason: academy.season },
     trainingLab: { cycle: 'balanced', autoApply: true, lastProcessedWeek: 0, lastReport: [], plans: Object.fromEntries(roster.map(p => [p.id, { focus: 'balanced', intensity: 'moderate' }])) },
-    tournamentDraws: {}, tournamentLife: { championHistory: [], drawAudit: [], lastViewedDraw: null }, flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, playerCareer: { weeklyEvents: [], conversations: [], promises: [], lastProcessedToken: null }, tacticalIntelligence: { plan: { serveTarget: 'body', rallyPlan: 'balanced', attackPattern: 'weakness', returnPlan: 'secondServePressure', riskMode: 'balanced' }, history: [], lastAppliedWeek: 0, analyst: 'Plano equilibrado ativo.' }, visualAcademy: { activeScene: 'office', lastViewedScene: 'office', environmentAudit: [], premiumMode: true }, newsroom: { items: [], pressQuestions: [], sentiment: 62, reputationPulse: 0, lastProcessedToken: null, lastInterviewWeek: 0 }, mobileUX: { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] }, commercialCareer: { ledger: [], activeSponsors: [], sponsorPipeline: [], investorOffers: [], travelBudgetMode: 'balanced', riskScore: 24, cashflowTrend: 0, lastProcessedToken: null, boardConfidence: 64 }, generationalCareer: { seasonHistory: [], retirementLog: [], hallOfFame: [], prospects: [], records: {}, legacyScore: 0, lastProcessedSeason: null, simulationAudit: [] }, releaseCandidate: { readiness: 82, safeMode: false, lastAuditToken: null, auditLog: [], checklist: {}, storeChecklist: {}, legal: { privacyOffline: true, creditsReady: true, dataSale: false }, stress: { weeksProjected: 52, status: 'pending', issues: [] } }, qualityPolish: { score: 88, lastAuditToken: null, auditLog: [], issues: [], deviceMatrix: ['320x568','360x640','390x844','412x915','tablet','desktop'], checks: { tapTargets: true, scrollSafety: true, assetFallbacks: true, saveRecovery: true, legalAccess: true }, safeLaunchMode: true }, releaseHardening: { score: 90, lastAuditToken: null, auditLog: [], cacheStatus: 'pending', diagnostics: [], recoveryMode: 'guarded', pwaResetRecommended: false, startupChecks: { buildVisible: true, saveWritable: true, cacheVersioned: true, mobileSafeArea: true, fallbackAssets: true } }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
+    tournamentDraws: {}, tournamentLife: { championHistory: [], drawAudit: [], lastViewedDraw: null }, flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, playerCareer: { weeklyEvents: [], conversations: [], promises: [], lastProcessedToken: null }, tacticalIntelligence: { plan: { serveTarget: 'body', rallyPlan: 'balanced', attackPattern: 'weakness', returnPlan: 'secondServePressure', riskMode: 'balanced' }, history: [], lastAppliedWeek: 0, analyst: 'Plano equilibrado ativo.' }, visualAcademy: { activeScene: 'office', lastViewedScene: 'office', environmentAudit: [], premiumMode: true }, newsroom: { items: [], pressQuestions: [], sentiment: 62, reputationPulse: 0, lastProcessedToken: null, lastInterviewWeek: 0 }, mobileUX: { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] }, commercialCareer: { ledger: [], activeSponsors: [], sponsorPipeline: [], investorOffers: [], travelBudgetMode: 'balanced', riskScore: 24, cashflowTrend: 0, lastProcessedToken: null, boardConfidence: 64 }, generationalCareer: { seasonHistory: [], retirementLog: [], hallOfFame: [], prospects: [], records: {}, legacyScore: 0, lastProcessedSeason: null, simulationAudit: [] }, releaseCandidate: { readiness: 82, safeMode: false, lastAuditToken: null, auditLog: [], checklist: {}, storeChecklist: {}, legal: { privacyOffline: true, creditsReady: true, dataSale: false }, stress: { weeksProjected: 52, status: 'pending', issues: [] } }, qualityPolish: { score: 88, lastAuditToken: null, auditLog: [], issues: [], deviceMatrix: ['320x568','360x640','390x844','412x915','tablet','desktop'], checks: { tapTargets: true, scrollSafety: true, assetFallbacks: true, saveRecovery: true, legalAccess: true }, safeLaunchMode: true }, releaseHardening: { score: 90, lastAuditToken: null, auditLog: [], cacheStatus: 'pending', diagnostics: [], recoveryMode: 'guarded', pwaResetRecommended: false, startupChecks: { buildVisible: true, saveWritable: true, cacheVersioned: true, mobileSafeArea: true, fallbackAssets: true } }, performanceDelivery: { score: 91, mode: 'balanced', lastAuditToken: null, auditLog: [], assetDiagnostics: [], warmupComplete: false, liteMode: false, runtimeHints: { lazyImages: true, asyncDecode: true, criticalAssets: 4, lastHydratedImages: 0, missingAssets: 0 } }, qaAutomation: { score: 92, lastRunToken: null, auditLog: [], smokeResults: [], screenResults: [], saveSnapshots: [], exportReady: false, publicTestMode: false, checklist: { boot: true, tabs: true, save: true, mobile: true, pwa: true, legal: true, performance: true } }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
   };
 }
 
@@ -186,6 +186,38 @@ export function migrateSave(data) {
   state.releaseHardening.startupChecks.cacheVersioned ??= true;
   state.releaseHardening.startupChecks.mobileSafeArea ??= true;
   state.releaseHardening.startupChecks.fallbackAssets ??= true;
+  state.performanceDelivery ||= { score: 91, mode: 'balanced', lastAuditToken: null, auditLog: [], assetDiagnostics: [], warmupComplete: false, liteMode: false, runtimeHints: { lazyImages: true, asyncDecode: true, criticalAssets: 4, lastHydratedImages: 0, missingAssets: 0 } };
+  state.performanceDelivery.score ??= 91;
+  state.performanceDelivery.mode ||= 'balanced';
+  state.performanceDelivery.lastAuditToken ??= null;
+  state.performanceDelivery.auditLog ||= [];
+  state.performanceDelivery.assetDiagnostics ||= [];
+  state.performanceDelivery.warmupComplete ??= false;
+  state.performanceDelivery.liteMode ??= false;
+  state.performanceDelivery.runtimeHints ||= { lazyImages: true, asyncDecode: true, criticalAssets: 4, lastHydratedImages: 0, missingAssets: 0 };
+  state.performanceDelivery.runtimeHints.lazyImages ??= true;
+  state.performanceDelivery.runtimeHints.asyncDecode ??= true;
+  state.performanceDelivery.runtimeHints.criticalAssets ??= 4;
+  state.performanceDelivery.runtimeHints.lastHydratedImages ??= 0;
+  state.performanceDelivery.runtimeHints.missingAssets ??= 0;
+
+  state.qaAutomation ||= { score: 92, lastRunToken: null, auditLog: [], smokeResults: [], screenResults: [], saveSnapshots: [], exportReady: false, publicTestMode: false, checklist: { boot: true, tabs: true, save: true, mobile: true, pwa: true, legal: true, performance: true } };
+  state.qaAutomation.score ??= 92;
+  state.qaAutomation.lastRunToken ??= null;
+  state.qaAutomation.auditLog ||= [];
+  state.qaAutomation.smokeResults ||= [];
+  state.qaAutomation.screenResults ||= [];
+  state.qaAutomation.saveSnapshots ||= [];
+  state.qaAutomation.exportReady ??= false;
+  state.qaAutomation.publicTestMode ??= false;
+  state.qaAutomation.checklist ||= { boot: true, tabs: true, save: true, mobile: true, pwa: true, legal: true, performance: true };
+  state.qaAutomation.checklist.boot ??= true;
+  state.qaAutomation.checklist.tabs ??= true;
+  state.qaAutomation.checklist.save ??= true;
+  state.qaAutomation.checklist.mobile ??= true;
+  state.qaAutomation.checklist.pwa ??= true;
+  state.qaAutomation.checklist.legal ??= true;
+  state.qaAutomation.checklist.performance ??= true;
 
   state.trainingLab.plans ||= {}; state.trainingLab.lastReport ||= []; state.trainingLab.autoApply ??= true; state.trainingLab.cycle ||= 'balanced';
   state.staff ||= {};

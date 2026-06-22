@@ -1099,3 +1099,69 @@ body[data-current-tab="polish"] .hero-card { background-image: linear-gradient(1
 @media (max-width: 360px) {
   .quality-hero h2 { font-size: 1.34rem; }
 }
+
+/* v4.0.3 Performance & Asset Delivery Hotfix */
+.performance-delivery-hub .asset-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: .75rem;
+}
+.performance-delivery-hub .asset-preview-card {
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  background: rgba(255,255,255,.055);
+  padding: .75rem;
+  overflow: hidden;
+}
+.performance-delivery-hub .asset-preview-img {
+  max-width: 88px;
+  max-height: 54px;
+  object-fit: contain;
+}
+.performance-delivery-hub .asset-preview-card small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: .75;
+}
+.mobile-lite-assets .hero-visual,
+.mobile-lite-assets .premium-visual-panel,
+.mobile-lite-assets .broadcast-intro-panel {
+  background-image: none !important;
+}
+.mobile-lite-assets img[data-asset-src] {
+  content-visibility: auto;
+}
+@media (max-width: 420px) {
+  .performance-delivery-hub .release-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .performance-delivery-hub .asset-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+/* v4.0.4 Final QA Automation & Public Test Tools */
+.qa-automation-panel { position: relative; overflow: hidden; }
+.qa-automation-hub { display: grid; gap: 1rem; }
+.qa-hero { background: linear-gradient(135deg, rgba(91,214,255,.18), rgba(112,246,201,.12), rgba(255,207,117,.08)), rgba(8,15,31,.86); }
+body[data-current-tab="qa"] .hero-card { background-image: linear-gradient(135deg, rgba(91,214,255,.18), rgba(31,41,75,.86)); }
+.qa-automation-hub .release-actions { flex-wrap: wrap; }
+.qa-automation-hub .release-checklist { max-height: 380px; overflow: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 780px) {
+  .qa-automation-hub .release-actions { display: grid; grid-template-columns: 1fr; }
+  .qa-automation-hub .quality-hero { grid-template-columns: 1fr; }
+}
+@media (max-width: 360px) {
+  .qa-automation-hub .quality-hero h2 { font-size: 1.3rem; }
+  .qa-automation-hub .release-kpis { grid-template-columns: 1fr 1fr; }
+}
