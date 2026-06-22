@@ -129,6 +129,14 @@ const PRESS_ANSWERS = {
   direct: { label: 'Cobrança pública', sentiment: -3, reputation: 2, morale: -2, pressure: 6, body: 'tom direto, cobrando evolução diante da imprensa.' }
 };
 
+
+const MOBILE_UX_MODES = {
+  auto: { label: 'Automático', desc: 'Detecta largura, altura, orientação e aplica ajustes de espaço.' },
+  compact: { label: 'Compacto', desc: 'Reduz cartões e prioriza informações essenciais em 320–390 px.' },
+  comfort: { label: 'Conforto', desc: 'Aumenta área de toque e espaçamento para celulares grandes/tablets.' }
+};
+const MOBILE_UX_BREAKPOINTS = [320, 360, 390, 412, 760, 1100];
+
 const TOURNAMENT_LOGOS = [
   ['brisbane', 'assets/branding/logos/atp250_brisbane.png'],
   ['auckland', 'assets/branding/logos/atp250_auckland.png'],
@@ -1062,6 +1070,7 @@ async function boot() {
   migrateState();
   bindUI();
   applyBuildMarkers();
+  installMobileUXRuntime();
   startCourtAnimation();
   drawCourt();
   render();
@@ -1097,8 +1106,123 @@ function migrateState() {
   });
   ensurePlayerCareerSystem();
   ensureNewsroomSystem();
+  ensureMobileUXSystem();
+  applyMobileUXRuntime();
 }
 
+
+function ensureMobileUXSystem() {
+  state.mobileUX ||= { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] };
+  state.mobileUX.mode ||= 'auto';
+  state.mobileUX.compact ??= false;
+  state.mobileUX.oneHand ??= false;
+  state.mobileUX.matchFocus ??= true;
+  state.mobileUX.reduceMotion ??= false;
+  state.mobileUX.auditLog ||= [];
+  state.mobileUX.lastViewport ??= null;
+}
+function currentViewportProfile() {
+  const w = Math.round(window.innerWidth || document.documentElement.clientWidth || 390);
+  const h = Math.round(window.innerHeight || document.documentElement.clientHeight || 720);
+  const orientation = w > h ? 'landscape' : 'portrait';
+  const widthClass = w <= 360 ? 'small' : w <= 430 ? 'phone' : w <= 760 ? 'large-phone' : w <= 1099 ? 'tablet' : 'desktop';
+  const cramped = w <= 390 || h <= 640;
+  const safeBottom = getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom') || 'env(safe-area-inset-bottom)';
+  return { width: w, height: h, orientation, widthClass, cramped, safeBottom, build: BUILD_INFO.build, at: new Date().toISOString() };
+}
+function applyMobileUXRuntime() {
+  if (typeof window === 'undefined' || !document?.documentElement) return;
+  ensureMobileUXSystem();
+  const profile = currentViewportProfile();
+  const root = document.documentElement;
+  const body = document.body;
+  root.style.setProperty('--app-vh', `${Math.max(1, profile.height * 0.01)}px`);
+  root.dataset.viewport = profile.widthClass;
+  root.dataset.orientation = profile.orientation;
+  body.classList.toggle('compact-ui', !!state.mobileUX.compact || state.mobileUX.mode === 'compact' || (state.mobileUX.mode === 'auto' && profile.cramped));
+  body.classList.toggle('comfort-ui', state.mobileUX.mode === 'comfort');
+  body.classList.toggle('one-hand-ui', !!state.mobileUX.oneHand);
+  body.classList.toggle('match-focus-ui', !!state.mobileUX.matchFocus && state.ui?.currentTab === 'match' && profile.width < 760);
+  body.classList.toggle('reduce-motion-ui', !!state.mobileUX.reduceMotion);
+  state.mobileUX.lastViewport = profile;
+}
+function installMobileUXRuntime() {
+  const run = () => { try { applyMobileUXRuntime(); renderMobileUX(); } catch (error) { console.warn('Mobile UX runtime fallback', error); } };
+  window.addEventListener('resize', run, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(run, 120), { passive: true });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) run(); });
+  run();
+}
+function scrollToAppTop(soft=false) {
+  const behavior = soft || state?.mobileUX?.reduceMotion ? 'auto' : 'smooth';
+  const target = document.querySelector('.content-stack') || document.body;
+  target.scrollIntoView?.({ block: 'start', behavior });
+  window.scrollTo?.({ top: 0, behavior });
+}
+function renderMobileUX() {
+  const host = $('#mobileUXHub');
+  if (!host || !state) return;
+  ensureMobileUXSystem();
+  const profile = state.mobileUX.lastViewport || currentViewportProfile();
+  const isMobile = profile.width < 760;
+  const touchScore = Math.max(72, Math.min(100, Math.round((profile.width >= 390 ? 92 : 82) + (state.mobileUX.oneHand ? 4 : 0) - (profile.cramped ? 5 : 0))));
+  const density = document.body.classList.contains('compact-ui') ? 'Compacta' : state.mobileUX.mode === 'comfort' ? 'Confortável' : 'Automática';
+  const auditRows = [
+    { label: 'Viewport', value: `${profile.width}×${profile.height}` },
+    { label: 'Orientação', value: profile.orientation === 'landscape' ? 'Horizontal' : 'Vertical' },
+    { label: 'Classe', value: profile.widthClass },
+    { label: 'Área de toque', value: `${touchScore}%` }
+  ];
+  host.innerHTML = `
+    <section class="mobile-ux-hero">
+      <div><p class="eyebrow">${BUILD_LABEL}</p><h2>UX premium para celular</h2><p>Central para controlar densidade, navegação inferior, área de toque, foco de partida e rolagem segura em telas pequenas.</p></div>
+      <div class="mobile-ux-device ${isMobile ? 'phone' : 'desktop'}"><span>${profile.width}</span><b>${profile.height}</b><small>${density}</small></div>
+    </section>
+    <div class="mobile-ux-kpis">${auditRows.map(row=>`<article class="stat-card"><span>${row.label}</span><strong>${row.value}</strong></article>`).join('')}</div>
+    <section class="panel-card mobile-ux-controls">
+      <div class="panel-title-row"><div><h4>Perfil de interface</h4><p class="muted">As opções são salvas na carreira e aplicadas sem reiniciar.</p></div><button class="mini-btn" onclick="window.mobileUXAutoAudit()">Auditar</button></div>
+      <div class="mobile-ux-toggle-grid">
+        ${Object.entries(MOBILE_UX_MODES).map(([key,opt])=>`<button class="mobile-ux-option ${state.mobileUX.mode===key?'active':''}" onclick="window.setMobileUXMode('${key}')"><strong>${opt.label}</strong><span>${opt.desc}</span></button>`).join('')}
+      </div>
+      <div class="mobile-ux-switches">
+        <button class="mobile-ux-switch ${state.mobileUX.compact?'active':''}" onclick="window.toggleMobileUX('compact')"><b>Compactar cards</b><span>Menos altura em telas pequenas</span></button>
+        <button class="mobile-ux-switch ${state.mobileUX.oneHand?'active':''}" onclick="window.toggleMobileUX('oneHand')"><b>Modo uma mão</b><span>Comandos mais perto do rodapé</span></button>
+        <button class="mobile-ux-switch ${state.mobileUX.matchFocus?'active':''}" onclick="window.toggleMobileUX('matchFocus')"><b>Foco na partida</b><span>Placar e botões priorizados no match</span></button>
+        <button class="mobile-ux-switch ${state.mobileUX.reduceMotion?'active':''}" onclick="window.toggleMobileUX('reduceMotion')"><b>Reduzir movimento</b><span>Transições mais discretas</span></button>
+      </div>
+    </section>
+    <section class="mobile-ux-grid">
+      <article class="panel-card"><h4>Navegação inferior</h4><p>Dock virou trilho horizontal com scroll-snap e botão ativo centralizado, evitando aperto quando há muitas abas.</p><p class="muted">Ideal para Dashboard, Academia, Atletas, Carreira, Treino, Partida, Ranking, Agenda, News e UX.</p></article>
+      <article class="panel-card"><h4>Rolagem segura</h4><p>Altura real do navegador é recalculada em resize/orientação, reduzindo cortes por barra do navegador e notch.</p><p class="muted">Compatível com 320×568, 360×640, 390×844 e 412×915.</p></article>
+      <article class="panel-card"><h4>Comandos rápidos</h4><p>A barra flutuante mobile agora oferece Semana, Salvar, Match e Topo sem abrir menu lateral.</p><p class="muted">No desktop ela permanece oculta.</p></article>
+    </section>
+    <section class="panel-card mobile-ux-audit"><div class="panel-title-row"><h4>Auditoria recente</h4><span class="metric-build">schema ${BUILD_INFO.schemaVersion}</span></div><div class="list-block">${(state.mobileUX.auditLog||[]).slice(0,5).map(item=>`<div class="list-item"><span>${item.width}×${item.height} • ${item.orientation}</span><strong>${item.result}</strong></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria registrada ainda.</span><strong>OK</strong></div>'}</div></section>
+  `;
+}
+window.setMobileUXMode = (mode='auto') => {
+  ensureMobileUXSystem();
+  if (!MOBILE_UX_MODES[mode]) return;
+  state.mobileUX.mode = mode;
+  state.mobileUX.auditLog.unshift({ ...currentViewportProfile(), result: `Modo ${MOBILE_UX_MODES[mode].label}` });
+  state.mobileUX.auditLog = state.mobileUX.auditLog.slice(0, 20);
+  applyMobileUXRuntime(); saveState(state); renderMobileUX();
+};
+window.toggleMobileUX = (key) => {
+  ensureMobileUXSystem();
+  if (!['compact','oneHand','matchFocus','reduceMotion'].includes(key)) return;
+  state.mobileUX[key] = !state.mobileUX[key];
+  state.mobileUX.auditLog.unshift({ ...currentViewportProfile(), result: `${key}: ${state.mobileUX[key] ? 'ON' : 'OFF'}` });
+  state.mobileUX.auditLog = state.mobileUX.auditLog.slice(0, 20);
+  applyMobileUXRuntime(); saveState(state); renderMobileUX();
+};
+window.mobileUXAutoAudit = () => {
+  ensureMobileUXSystem();
+  const p = currentViewportProfile();
+  const result = p.width < 360 ? 'modo 320px protegido' : p.width < 760 ? 'mobile validado' : p.width < 1100 ? 'tablet validado' : 'desktop validado';
+  state.mobileUX.auditLog.unshift({ ...p, result });
+  state.mobileUX.auditLog = state.mobileUX.auditLog.slice(0, 20);
+  applyMobileUXRuntime(); saveState(state); renderMobileUX();
+};
 
 function applyBuildMarkers() {
   const pill = $('#buildPill');
@@ -1113,7 +1237,9 @@ function applyBuildMarkers() {
   if (stamp) stamp.textContent = `${BUILD_LABEL} • ${BUILD_INFO.phase}`;
   document.documentElement.dataset.version = BUILD_INFO.version;
   document.documentElement.dataset.build = BUILD_INFO.build;
+  document.body.dataset.currentTab = state?.ui?.currentTab || 'dashboard';
 }
+
 
 function hydrateAssetImages() {
   document.querySelectorAll('img[data-asset-src]').forEach((img) => {
@@ -1178,6 +1304,10 @@ function bindUI() {
   $('#openCalendarBtn')?.addEventListener('click', () => switchTab('calendar'));
   $('#advanceWeekBtn').addEventListener('click', advanceWeek);
   $('#saveBtn').addEventListener('click', () => { saveState(state); addLog('Save realizado manualmente.'); render(); });
+  $('#mobileQuickWeek')?.addEventListener('click', advanceWeek);
+  $('#mobileQuickSave')?.addEventListener('click', () => { saveState(state); addLog('Save rápido mobile realizado.'); render(); });
+  $('#mobileQuickMatch')?.addEventListener('click', () => switchTab('match'));
+  $('#mobileQuickTop')?.addEventListener('click', () => scrollToAppTop());
   $('#resetBtn').addEventListener('click', () => {
     clearState();
     state = buildInitialState(content);
@@ -1212,17 +1342,24 @@ function bindUI() {
 }
 
 function switchTab(tab) {
-  state.ui ||= {}; state.ui.currentTab = tab;
+  state.ui ||= {}; state.ui.currentTab = tab; state.ui.lastStableTab = tab;
+  document.body.dataset.currentTab = tab;
   $$('#mainTabs .tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
-  $$('.dock-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+  $$('.dock-btn').forEach(btn => {
+    const active = btn.dataset.tab === tab;
+    btn.classList.toggle('active', active);
+    if (active && btn.scrollIntoView) btn.scrollIntoView({ inline: 'center', block: 'nearest', behavior: state.mobileUX?.reduceMotion ? 'auto' : 'smooth' });
+  });
   $$('.tab-panel').forEach(panel => panel.classList.toggle('active', panel.id === `tab-${tab}`));
   updateSceneForTab(tab);
+  applyMobileUXRuntime();
   if (tab === 'match') drawCourt();
+  if (window.innerWidth < 1100) scrollToAppTop(true);
 }
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -1330,6 +1467,7 @@ function render() {
   renderCalendar();
   renderTournamentIdentityHub();
   renderNewsroom();
+  renderMobileUX();
   renderMarket();
   renderStaff();
   updateRanking();

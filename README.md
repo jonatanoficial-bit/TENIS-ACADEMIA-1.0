@@ -1,13 +1,18 @@
-# Vale Games Tennis Manager — v3.13.0 — Global Tennis Newsroom — build 20260622-132440
+# Vale Games Tennis Manager — v3.14.0 — Mobile Premium UX — build 20260622-154315
 
-Build `20260622-132440` • Global Tennis Newsroom • 22/06/2026 13:24:40 BRT.
+**Build:** 20260622-154315  
+**Data:** 22/06/2026  
+**Hora:** 15:43:15 — São Paulo  
+**Schema:** 17
 
-Esta build adiciona a camada de imprensa e narrativa global do circuito. O jogo passa a gerar manchetes semanais, resultados editoriais, rumores, coletivas, impacto de mídia, sentimento público e repercussão sobre atletas, reputação e pressão.
+## v3.14.0 — Mobile Premium UX
 
-**Versão atual:** v3.13.0 — Global Tennis Newsroom  
-**Build:** 20260622-132440  
-**Data/hora:** 22/06/2026 13:24:40 (America/Sao_Paulo)  
-**Schema:** 16
+- Central Mobile Premium UX com modos automático, compacto e conforto.
+- Dock inferior transformado em trilho horizontal com scroll-snap para muitas abas.
+- Barra rápida mobile com Semana, Salvar, Match e Topo.
+- Cálculo runtime de altura real do navegador via `--app-vh`, melhorando notch, barra do navegador e orientação.
+- Modo uma mão, foco de partida e redução de movimento.
+- Auditoria persistente de viewport no save e migração para schema 17.
 
 ## v3.13.0 — Global Tennis Newsroom
 

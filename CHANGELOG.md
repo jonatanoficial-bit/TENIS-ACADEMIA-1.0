@@ -1,3 +1,12 @@
+## v3.14.0 — Mobile Premium UX — build 20260622-154315
+
+- Adiciona Central Mobile Premium UX com modos automático, compacto e conforto.
+- Reestrutura dock mobile como trilho horizontal com scroll-snap e centralização da aba ativa.
+- Adiciona barra rápida mobile para Semana, Salvar, Match e Topo.
+- Aplica runtime `--app-vh` para altura real do navegador, orientação e safe areas.
+- Inclui modo uma mão, foco de partida, redução de movimento e auditoria de viewport.
+- Mantém build, versão, data e hora visíveis e migração para schema 17.
+
 ## v3.13.0 — Global Tennis Newsroom — build 20260622-132440
 - Adiciona nova aba `Newsroom` com feed global de imprensa, manchetes, rumores, resultados e coletivas.
 - Cria estado persistente `newsroom` com notícias, perguntas de imprensa, sentimento público e reputação editorial.

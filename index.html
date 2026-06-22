@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <div id="buildOverlay" class="build-overlay">v3.13.0 • 22/06/2026 • 13:24:40</div>
+  <div id="buildOverlay" class="build-overlay">v3.14.0 • 22/06/2026 • 15:43:15</div>
   <div class="app-shell">
     <header class="topbar glass">
       <div>
@@ -21,7 +21,7 @@
         <h1>Vale Games Tennis Manager</h1>
       </div>
       <div class="hud-row hud-scroll">
-        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v3.13.0 • 22/06/2026 • 13:24:40</strong></div>
+        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v3.14.0 • 22/06/2026 • 15:43:15</strong></div>
         <div class="pill"><span>Temporada</span><strong id="seasonLabel">2026</strong></div>
         <div class="pill"><span>Semana</span><strong id="weekLabel">1</strong></div>
         <div class="pill"><span>Caixa</span><strong id="moneyLabel">$0</strong></div>
@@ -53,6 +53,7 @@
           <button class="tab-btn" data-tab="training">Treino</button>
           <button class="tab-btn" data-tab="calendar">Calendário</button>
           <button class="tab-btn" data-tab="newsroom">Newsroom</button>
+          <button class="tab-btn" data-tab="mobileux">Mobile UX</button>
           <button class="tab-btn" data-tab="match">Partida</button>
           <button class="tab-btn" data-tab="market">Mercado</button>
           <button class="tab-btn" data-tab="staff">Staff</button>
@@ -60,7 +61,7 @@
           <button class="tab-btn" data-tab="adminhint">Admin</button>
         </nav>
 
-        <div id="mobileBuildBadge" class="mobile-build-badge glass">v3.13.0 • 22/06/2026 • 13:24:40</div>
+        <div id="mobileBuildBadge" class="mobile-build-badge glass">v3.14.0 • 22/06/2026 • 15:43:15</div>
         <section class="sidebar-actions">
           <button id="advanceWeekBtn" class="btn-primary">Avançar Semana</button>
           <button id="saveBtn" class="btn-secondary">Salvar</button>
@@ -127,7 +128,7 @@
         <section class="tab-panel glass premium-visual-panel" id="tab-visual">
           <div class="section-head visual-head">
             <div><p class="eyebrow">Premium Visual Academy</p><h3>Ambientes da Academia</h3></div>
-            <div class="training-build">Visual AAA • schema 16</div>
+            <div class="training-build">Visual AAA • schema 17</div>
           </div>
           <div id="visualAcademyHub" class="visual-academy-hub"></div>
         </section>
@@ -140,7 +141,7 @@
         <section class="tab-panel glass" id="tab-career">
           <div class="section-head">
             <div><p class="eyebrow">Carreira humana</p><h3>Player Personality & Real Careers</h3></div>
-            <div class="training-build">Relação, pressão e moral • schema 16</div>
+            <div class="training-build">Relação, pressão e moral • schema 17</div>
           </div>
           <div id="careerHub" class="career-hub-grid"></div>
         </section>
@@ -148,7 +149,7 @@
 
 
         <section class="tab-panel glass" id="tab-training">
-          <div class="section-head"><div><p class="eyebrow">Performance semanal</p><h3>Training Lab</h3></div><div class="training-build">Plano protegido • schema 16</div></div>
+          <div class="section-head"><div><p class="eyebrow">Performance semanal</p><h3>Training Lab</h3></div><div class="training-build">Plano protegido • schema 17</div></div>
           <div class="training-summary-grid">
             <article class="stat-card"><span>Ciclo da academia</span><strong id="trainingCycleLabel">Equilibrado</strong></article>
             <article class="stat-card"><span>Carga média</span><strong id="trainingLoadLabel">Moderada</strong></article>
@@ -173,9 +174,19 @@
         <section class="tab-panel glass newsroom-panel" id="tab-newsroom">
           <div class="section-head newsroom-head">
             <div><p class="eyebrow">Global Tennis Newsroom</p><h3>Imprensa, notícias e narrativa do circuito</h3></div>
-            <div class="training-build">Newsroom vivo • schema 16</div>
+            <div class="training-build">Newsroom vivo • schema 17</div>
           </div>
           <div id="newsroomHub" class="newsroom-hub"></div>
+        </section>
+
+
+
+        <section class="tab-panel glass mobile-ux-panel" id="tab-mobileux">
+          <div class="section-head mobile-ux-head">
+            <div><p class="eyebrow">Mobile Premium UX</p><h3>Central de Experiência Mobile</h3></div>
+            <div class="training-build">Navegação, rolagem e toque • schema 17</div>
+          </div>
+          <div id="mobileUXHub" class="mobile-ux-hub"></div>
         </section>
 
         <section class="tab-panel glass" id="tab-match">
@@ -186,7 +197,7 @@
               <div class="score-card mobile-priority">
                 <div class="score-row"><span id="matchPlayerName">Seu atleta</span><strong id="scorePlayer">0</strong></div>
                 <div class="score-row"><span id="matchOpponentName">Adversário</span><strong id="scoreOpponent">0</strong></div>
-                <div class="score-meta"><span id="matchBuildInline" class="metric-build">v3.13.0 • 22/06/2026 • 13:24:40</span><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
+                <div class="score-meta"><span id="matchBuildInline" class="metric-build">v3.14.0 • 22/06/2026 • 15:43:15</span><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
                 <div class="score-meta secondary-meta"><span id="roundLabel">Rodada -</span><span id="tournamentLabel">Nenhum torneio</span></div>
               </div>
               <canvas id="matchCanvas" width="960" height="540"></canvas>
@@ -201,7 +212,7 @@
                 <button class="action-btn" data-strategy="control">Controlar</button>
               </div>
               <article class="panel-card tactical-intelligence-card">
-                <div class="panel-title-row"><div><p class="eyebrow">Tactical Intelligence</p><h4>Plano de jogo v3.12</h4></div><span class="metric-build">schema 16</span></div>
+                <div class="panel-title-row"><div><p class="eyebrow">Tactical Intelligence</p><h4>Plano de jogo v3.14</h4></div><span class="metric-build">schema 17</span></div>
                 <div id="tacticalIntelligencePanel" class="tactical-intelligence-panel"></div>
               </article>
               <div class="match-actions touch-actions">
@@ -265,7 +276,7 @@
     <div id="ownerSetupModal" class="setup-modal hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="careerSetupTitle">
       <div class="setup-backdrop"></div>
       <div class="setup-card glass">
-        <div class="setup-progress"><span>1</span><div><strong>Criação de carreira</strong><small>Perfil, academia e estratégia inicial</small></div><b>v3.13.0</b></div>
+        <div class="setup-progress"><span>1</span><div><strong>Criação de carreira</strong><small>Perfil, academia e estratégia inicial</small></div><b>v3.14.0</b></div>
         <div class="section-head"><div><p class="eyebrow">Career Genesis</p><h3 id="careerSetupTitle">Construa sua identidade no circuito</h3></div></div>
         <div id="setupValidation" class="setup-validation hidden" role="alert"></div>
         <div class="form-grid setup-grid">
@@ -298,7 +309,15 @@
   <strong>Falha recuperável</strong><span id="systemErrorText">O jogo encontrou um problema.</span>
   <button id="dismissErrorBtn" type="button">Fechar</button>
 </div>
-<div class="runtime-build-stamp" id="runtimeBuildStamp" title="Identificação técnica da versão">v3.13.0 • 22/06/2026 • 13:24:40</div>
+<div class="runtime-build-stamp" id="runtimeBuildStamp" title="Identificação técnica da versão">v3.14.0 • 22/06/2026 • 15:43:15</div>
+
+
+<div class="mobile-quick-bar glass" id="mobileQuickBar" aria-label="Comandos rápidos mobile">
+  <button id="mobileQuickWeek" class="mobile-quick-btn">Semana</button>
+  <button id="mobileQuickSave" class="mobile-quick-btn">Salvar</button>
+  <button id="mobileQuickMatch" class="mobile-quick-btn">Match</button>
+  <button id="mobileQuickTop" class="mobile-quick-btn">Topo</button>
+</div>
 
 <nav class="mobile-dock glass" aria-label="Ações rápidas mobile">
       <button class="dock-btn active" data-tab="dashboard">Dashboard</button>
@@ -310,9 +329,10 @@
       <button class="dock-btn" data-tab="ranking">Ranking</button>
       <button class="dock-btn" data-tab="calendar">Agenda</button>
       <button class="dock-btn" data-tab="newsroom">News</button>
+      <button class="dock-btn" data-tab="mobileux">UX</button>
     </nav>
   </div>
 
-  <script type="module" src="js/main.js?v=3.13.0-20260622-132440"></script>
+  <script type="module" src="js/main.js?v=3.14.0-20260622-154315"></script>
 </body>
 </html>
