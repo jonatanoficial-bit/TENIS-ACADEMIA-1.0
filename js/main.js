@@ -113,6 +113,22 @@ const SEASON_GOALS = {
   consistency: 'Consistência competitiva'
 };
 
+const NEWSROOM_CATEGORIES = {
+  headline: { label: 'Manchete', icon: '🗞️', tone: 'headline' },
+  result: { label: 'Resultado', icon: '🏆', tone: 'sport' },
+  academy: { label: 'Academia', icon: '🎾', tone: 'academy' },
+  rumor: { label: 'Rumor', icon: '👀', tone: 'rumor' },
+  medical: { label: 'Médico', icon: '🩺', tone: 'risk' },
+  market: { label: 'Mercado', icon: '💼', tone: 'business' },
+  press: { label: 'Coletiva', icon: '🎙️', tone: 'press' }
+};
+const PRESS_ANSWERS = {
+  humble: { label: 'Resposta humilde', sentiment: 5, reputation: 1, morale: 2, pressure: -4, body: 'tom humilde, protegendo o atleta e valorizando o processo.' },
+  confident: { label: 'Resposta confiante', sentiment: 2, reputation: 4, morale: 4, pressure: 3, body: 'tom forte, aumentando ambição e exposição pública.' },
+  protective: { label: 'Proteger atleta', sentiment: 3, reputation: 0, morale: 3, pressure: -7, body: 'tom protetor, tirando pressão do elenco.' },
+  direct: { label: 'Cobrança pública', sentiment: -3, reputation: 2, morale: -2, pressure: 6, body: 'tom direto, cobrando evolução diante da imprensa.' }
+};
+
 const TOURNAMENT_LOGOS = [
   ['brisbane', 'assets/branding/logos/atp250_brisbane.png'],
   ['auckland', 'assets/branding/logos/atp250_auckland.png'],
@@ -1080,6 +1096,7 @@ function migrateState() {
     p.salary ??= 1800 + Math.round(p.overall * 25);
   });
   ensurePlayerCareerSystem();
+  ensureNewsroomSystem();
 }
 
 
@@ -1205,7 +1222,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -1312,6 +1329,7 @@ function render() {
   renderWorldTourFeed();
   renderCalendar();
   renderTournamentIdentityHub();
+  renderNewsroom();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -1804,6 +1822,196 @@ function renderWorldTourFeed() {
   host.innerHTML = `<div class="tour-live-grid branded-grid">${live}</div>${past ? `<div class="tour-results-strip branded-results">${past}</div>` : ''}`;
   hydrateAssetImages();
 }
+
+
+function ensureNewsroomSystem() {
+  state.newsroom ||= { items: [], pressQuestions: [], sentiment: 62, reputationPulse: 0, lastProcessedToken: null, lastInterviewWeek: 0 };
+  state.newsroom.items ||= [];
+  state.newsroom.pressQuestions ||= [];
+  state.newsroom.sentiment ??= 62;
+  state.newsroom.reputationPulse ??= 0;
+  state.newsroom.lastProcessedToken ??= null;
+  state.newsroom.lastInterviewWeek ??= 0;
+}
+function newsroomCategoryMeta(category='headline') { return NEWSROOM_CATEGORIES[category] || NEWSROOM_CATEGORIES.headline; }
+function addNewsroomItem(item={}) {
+  ensureNewsroomSystem();
+  const category = item.category || 'headline';
+  const meta = newsroomCategoryMeta(category);
+  const seed = stableNumber(`${state.academy.season}-${state.academy.week}-${item.title || ''}-${category}`);
+  const news = {
+    id: item.id || `news-${state.academy.season}-${state.academy.week}-${seed}`,
+    category,
+    icon: item.icon || meta.icon,
+    title: item.title || 'Nova manchete do circuito',
+    body: item.body || 'O circuito mundial segue em movimento.',
+    tag: item.tag || meta.label,
+    sentiment: item.sentiment ?? 0,
+    pressure: item.pressure ?? 0,
+    reputation: item.reputation ?? 0,
+    week: item.week ?? state.academy.week,
+    season: item.season ?? state.academy.season,
+    build: BUILD_INFO.build,
+    at: new Date().toISOString()
+  };
+  if (!state.newsroom.items.some(existing => existing.id === news.id)) state.newsroom.items.unshift(news);
+  state.newsroom.items = state.newsroom.items.slice(0, 80);
+  state.newsroom.sentiment = clamp((state.newsroom.sentiment || 62) + (news.sentiment || 0) * .35, 5, 95);
+  state.newsroom.reputationPulse = clamp((state.newsroom.reputationPulse || 0) + (news.reputation || 0), -30, 60);
+  return news;
+}
+function createPressQuestion(topic='weekly') {
+  ensureNewsroomSystem();
+  const player = chooseBestPlayer();
+  const event = state.calendar.find(ev => ev.week >= state.academy.week) || state.calendar[0] || {};
+  const rank = player ? getPlayerRank(player.id) : 999;
+  const pool = {
+    weekly: `A imprensa quer saber se a academia está pronta para competir em ${event.name || 'um torneio importante'}.`,
+    pressure: `${player?.name || 'Seu atleta'} sente pressão com ranking #${rank}. Qual será o tom público do treinador?`,
+    injury: `${player?.name || 'Seu elenco'} tem alertas físicos. Você confirma preocupação médica?`,
+    upset: `Após zebras no circuito, jornalistas perguntam se sua academia pode surpreender nesta temporada.`,
+    sponsor: `Patrocinadores observam sua comunicação pública antes de novas propostas.`
+  };
+  const seed = stableNumber(`${state.academy.season}-${state.academy.week}-${topic}-${player?.id || 'academy'}`);
+  const question = {
+    id: `press-${state.academy.season}-${state.academy.week}-${seed}`,
+    topic,
+    title: 'Pergunta da coletiva',
+    body: pool[topic] || pool.weekly,
+    playerId: player?.id || null,
+    eventName: event.name || 'Circuito mundial',
+    answered: false,
+    week: state.academy.week,
+    season: state.academy.season,
+    build: BUILD_INFO.build
+  };
+  if (!state.newsroom.pressQuestions.some(q => q.id === question.id)) state.newsroom.pressQuestions.unshift(question);
+  state.newsroom.pressQuestions = state.newsroom.pressQuestions.slice(0, 14);
+  return question;
+}
+function generateNewsroomWeeklyItems() {
+  ensureNewsroomSystem();
+  const token = `${state.academy.season}-${state.academy.week}`;
+  if (state.newsroom.lastProcessedToken === token) return [];
+  const created = [];
+  const currentEvents = state.calendar.filter(event => event.week === state.academy.week);
+  const recentResults = (state.worldTour?.weeklyResults || []).filter(r => r.week === state.academy.week && r.season === state.academy.season).slice(0, 3);
+  const best = chooseBestPlayer();
+  const rank = best ? getPlayerRank(best.id) : 999;
+  const nextEvent = currentEvents[0] || state.calendar.find(event => event.week >= state.academy.week) || state.calendar[0];
+  if (currentEvents.length) {
+    const names = currentEvents.slice(0,2).map(e => e.name).join(' e ');
+    created.push(addNewsroomItem({ category:'headline', title:'Semana de torneio movimenta o circuito', body:`${names} colocam pressão sobre ranking, logística e preparação tática das academias.`, sentiment:1, pressure:2, reputation:1 }));
+  } else {
+    created.push(addNewsroomItem({ category:'headline', title:'Semana de bastidores no circuito', body:'Sem grande evento imediato para a academia, os centros de treinamento focam recuperação, scouting e planejamento.', sentiment:1, pressure:-1, reputation:0 }));
+  }
+  recentResults.forEach(result => created.push(addNewsroomItem({ category:'result', title:`${result.champion} conquista ${result.eventName}`, body:`Final contra ${result.finalist}. ${result.upset ? 'A vitória repercutiu como zebra e mexeu no ranking.' : 'Resultado fortalece a lógica da elite nesta semana.'}`, sentiment: result.upset ? 2 : 1, pressure: result.upset ? 3 : 1, reputation: 1 })));
+  if (best) {
+    if (rank <= 120) created.push(addNewsroomItem({ category:'academy', title:`${best.name} vira pauta no circuito`, body:`A entrada na zona #${rank} aumenta atenção sobre calendário, patrocínio e decisões do treinador.`, sentiment:3, pressure:4, reputation:4 }));
+    else if ((best.confidence || 60) < 45) created.push(addNewsroomItem({ category:'academy', title:`Confiança de ${best.name} preocupa bastidores`, body:'Analistas apontam necessidade de proteger o atleta e ajustar a comunicação após semanas de oscilação.', sentiment:-2, pressure:4, reputation:-1 }));
+    else created.push(addNewsroomItem({ category:'academy', title:`Academia mantém plano de desenvolvimento`, body:`${best.name} trabalha para transformar evolução técnica em pontos de ranking. Próximo alvo: ${nextEvent?.name || 'torneio do circuito'}.`, sentiment:2, pressure:1, reputation:1 }));
+    if ((best.injuredWeeks || 0) > 0 || (best.health || 100) < 70) created.push(addNewsroomItem({ category:'medical', title:`Boletim físico chama atenção`, body:`${best.name} aparece sob monitoramento médico. A imprensa espera clareza sobre carga de treino e retorno competitivo.`, sentiment:-3, pressure:3, reputation:-1 }));
+  }
+  const top = (state.ranking || []).filter(r => !r.isUser).slice(0,12);
+  if (top.length >= 2 && state.academy.week % 3 === 0) {
+    const a = top[stableNumber(token) % top.length];
+    const b = top[(stableNumber(`${token}-rival`) + 3) % top.length];
+    created.push(addNewsroomItem({ category:'rumor', title:'Rivalidade internacional ganha manchetes', body:`Rumores indicam tensão esportiva entre ${a.name} e ${b.name}. O circuito fica mais imprevisível para as próximas semanas.`, sentiment:1, pressure:2, reputation:1 }));
+  }
+  if (state.sponsorOffers?.length) created.push(addNewsroomItem({ category:'market', title:'Marcas observam ascensão da academia', body:`${state.sponsorOffers[0].name} e outros parceiros acompanham ranking, postura pública e presença em torneios.`, sentiment:2, pressure:1, reputation:3 }));
+  if (state.academy.week % 2 === 0 || created.some(item => item.pressure >= 4)) createPressQuestion(created.some(item => item.category === 'medical') ? 'injury' : (rank <= 140 ? 'pressure' : 'weekly'));
+  state.newsroom.lastProcessedToken = token;
+  state.inbox.unshift({ title: 'Newsroom atualizado', body: `${created.length} manchete(s) e ${state.newsroom.pressQuestions.filter(q=>!q.answered).length} pergunta(s) de imprensa aguardam resposta.`, week: state.academy.week });
+  state.inbox = state.inbox.slice(0, 18);
+  return created;
+}
+function newsroomImpactLabel() {
+  ensureNewsroomSystem();
+  const sentiment = Math.round(state.newsroom.sentiment || 62);
+  if (sentiment >= 76) return { label:`Imagem positiva • ${sentiment}`, cls:'ok' };
+  if (sentiment <= 42) return { label:`Crise de narrativa • ${sentiment}`, cls:'danger' };
+  return { label:`Narrativa em disputa • ${sentiment}`, cls:'warn' };
+}
+function renderNewsroom() {
+  const host = $('#newsroomHub');
+  if (!host) return;
+  ensureNewsroomSystem();
+  const items = state.newsroom.items || [];
+  const questions = (state.newsroom.pressQuestions || []).filter(q => !q.answered).slice(0, 3);
+  const impact = newsroomImpactLabel();
+  const latest = items[0];
+  const currentEvents = state.calendar.filter(event => event.week === state.academy.week).slice(0,2);
+  const categoryCounts = Object.keys(NEWSROOM_CATEGORIES).map(key => ({ key, count: items.filter(item => item.category === key).length })).filter(x => x.count).slice(0,5);
+  const heroLogo = currentEvents[0] ? logoForTournament(currentEvents[0].name) : logoForTournament(latest?.body || latest?.title || '');
+  host.innerHTML = `
+    <section class="newsroom-hero-card">
+      <div class="newsroom-hero-logo">${logoMarkup(heroLogo, latest?.title || 'Newsroom', 'newsroom-logo', 'tournament-logo-fallback giant')}</div>
+      <div class="newsroom-hero-copy">
+        <p class="eyebrow">${BUILD_LABEL} • imprensa global</p>
+        <h2>${escapeHtml(latest?.title || 'Central de notícias pronta')}</h2>
+        <p>${escapeHtml(latest?.body || 'Avance a semana para gerar manchetes, rumores, coletivas e repercussão do circuito.')}</p>
+        <div class="newsroom-kpi-row"><span class="${impact.cls}">${escapeHtml(impact.label)}</span><span>${items.length} notícias salvas</span><span>${questions.length} coletiva(s) aberta(s)</span><span>Pulse ${Math.round(state.newsroom.reputationPulse || 0)}</span></div>
+      </div>
+    </section>
+    <section class="newsroom-grid">
+      <article class="panel-card newsroom-feed-card"><div class="panel-title-row"><h4>Feed global</h4><button class="mini-btn" onclick="window.forceNewsroomCycle()">Gerar pauta</button></div>${items.length ? items.slice(0,10).map(renderNewsItem).join('') : '<p class="muted">Sem notícias ainda. Avance a semana ou gere uma pauta manual.</p>'}</article>
+      <article class="panel-card newsroom-press-card"><div class="panel-title-row"><h4>Sala de imprensa</h4><span class="mini-badge">impacto real</span></div>${questions.length ? questions.map(renderPressQuestion).join('') : '<p class="muted">Nenhuma pergunta aberta. A imprensa reage a ranking, torneios, lesões e pressão.</p>'}</article>
+      <article class="panel-card newsroom-categories"><h4>Termômetro editorial</h4>${categoryCounts.length ? categoryCounts.map(c=>`<div class="newsroom-meter"><span>${NEWSROOM_CATEGORIES[c.key].icon} ${NEWSROOM_CATEGORIES[c.key].label}</span><strong>${c.count}</strong></div>`).join('') : '<p class="muted">Categorias aparecerão conforme o circuito evoluir.</p>'}<p class="muted">Manchetes positivas ajudam reputação; crises aumentam pressão e exigem respostas.</p></article>
+    </section>`;
+  hydrateAssetImages();
+}
+function renderNewsItem(item) {
+  const meta = newsroomCategoryMeta(item.category);
+  const delta = (item.sentiment || 0) > 0 ? `+${item.sentiment}` : `${item.sentiment || 0}`;
+  return `<div class="news-item ${meta.tone}"><div class="news-icon">${item.icon || meta.icon}</div><div><span>${escapeHtml(item.tag || meta.label)} • S${item.week}/${item.season}</span><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><small>Sentimento ${delta} • pressão ${item.pressure || 0} • reputação ${item.reputation || 0}</small></div></div>`;
+}
+function renderPressQuestion(question) {
+  return `<div class="press-question"><strong>${escapeHtml(question.title)}</strong><p>${escapeHtml(question.body)}</p><div class="press-actions">${Object.entries(PRESS_ANSWERS).map(([key,answer])=>`<button class="mini-btn" onclick="window.answerPressQuestion('${question.id}','${key}')">${answer.label}</button>`).join('')}</div></div>`;
+}
+window.forceNewsroomCycle = () => {
+  ensureNewsroomSystem();
+  const before = JSON.parse(JSON.stringify(state.newsroom));
+  try {
+    state.newsroom.lastProcessedToken = null;
+    generateNewsroomWeeklyItems();
+    saveState(state);
+    renderNewsroom();
+    renderInbox();
+  } catch (error) {
+    state.newsroom = before;
+    showSystemError('Newsroom restaurado sem perda de dados.');
+  }
+};
+window.answerPressQuestion = (questionId, mode='humble') => {
+  ensureNewsroomSystem();
+  const question = state.newsroom.pressQuestions.find(q => q.id === questionId);
+  const answer = PRESS_ANSWERS[mode] || PRESS_ANSWERS.humble;
+  if (!question || question.answered) return;
+  const before = JSON.parse(JSON.stringify({ newsroom: state.newsroom, roster: state.roster, academy: state.academy, inbox: state.inbox }));
+  try {
+    question.answered = true;
+    question.answerMode = mode;
+    question.answerLabel = answer.label;
+    question.answeredAt = new Date().toISOString();
+    state.newsroom.sentiment = clamp((state.newsroom.sentiment || 62) + answer.sentiment, 5, 95);
+    state.newsroom.reputationPulse = clamp((state.newsroom.reputationPulse || 0) + answer.reputation, -30, 60);
+    state.academy.reputation = Math.max(0, Math.round((state.academy.reputation || 0) + answer.reputation));
+    const player = question.playerId ? state.roster.find(p => p.id === question.playerId) : chooseBestPlayer();
+    if (player) {
+      player.morale = clamp((player.morale || 70) + answer.morale, 0, 100);
+      player.confidence = clamp((player.confidence || player.morale || 70) + Math.round(answer.morale * .6), 0, 100);
+      player.pressure = clamp((player.pressure || 40) + answer.pressure, 0, 100);
+      recordCareerEvent(player, `Coletiva: ${answer.label}`, `O treinador respondeu com ${answer.body}`, 'press');
+    }
+    addNewsroomItem({ category:'press', title:`Coletiva respondida: ${answer.label}`, body:`A resposta teve ${answer.body} Impacto aplicado em reputação, moral e pressão.`, sentiment:answer.sentiment, pressure:answer.pressure, reputation:answer.reputation });
+    state.inbox.unshift({ title:'Coletiva respondida', body:`${answer.label}: reputação ${answer.reputation >= 0 ? '+' : ''}${answer.reputation}, sentimento ${answer.sentiment >= 0 ? '+' : ''}${answer.sentiment}.`, week:state.academy.week });
+    saveState(state);
+    render();
+  } catch (error) {
+    state.newsroom = before.newsroom; state.roster = before.roster; state.academy = before.academy; state.inbox = before.inbox;
+    showSystemError('Resposta de imprensa revertida pelo sistema anti-quebra.');
+  }
+};
 
 function renderCalendar() {
   const nearby = state.calendar.filter(event => event.week >= Math.max(1,state.academy.week-1) && event.week <= Math.min(52,state.academy.week+10));
@@ -2575,6 +2783,7 @@ function advanceWeek() {
   simulateWorldTourWeek();
   processPlayerCareersWeekly();
   maybeCreateWeeklyNews();
+  generateNewsroomWeeklyItems();
   maybeCreateSponsorOffer();
   evaluateObjectives();
   if (state.academy.week > 52) {

@@ -1,3 +1,11 @@
+## v3.13.0 — Global Tennis Newsroom — build 20260622-132440
+- Adiciona nova aba `Newsroom` com feed global de imprensa, manchetes, rumores, resultados e coletivas.
+- Cria estado persistente `newsroom` com notícias, perguntas de imprensa, sentimento público e reputação editorial.
+- Gera pautas semanais ligadas ao calendário, ranking, resultados do World Tour, lesões, patrocínio e pressão da academia.
+- Adiciona respostas de coletiva com impacto real em reputação, moral, confiança e pressão dos atletas.
+- Integra Newsroom com inbox e carreira humana, usando snapshot/rollback para evitar quebra.
+- Mantém build, versão, data e hora visíveis e migração para schema 16.
+
 ## v3.12.0 — Premium Visual Academy — build 20260622-122215
 - Cria a nova aba `Academia Pro` com hub visual de ambientes premium.
 - Reaproveita fundos, logos e avatares existentes para reduzir a aparência de dashboard.

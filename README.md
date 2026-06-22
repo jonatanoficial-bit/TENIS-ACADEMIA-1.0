@@ -1,26 +1,34 @@
-# Vale Games Tennis Manager — v3.12.0 — Premium Visual Academy — build 20260622-122215
+# Vale Games Tennis Manager — v3.13.0 — Global Tennis Newsroom — build 20260622-132440
 
-Build `20260622-122215` • Premium Visual Academy • 22/06/2026 12:22:15 BRT.
+Build `20260622-132440` • Global Tennis Newsroom • 22/06/2026 13:24:40 BRT.
 
-Esta build inicia a virada visual AAA do projeto: a experiência deixa de depender apenas de painéis e passa a organizar a academia em ambientes premium reaproveitando todos os assets existentes — escritório do treinador, centro de treinamento, sala médica, análise tática, scouting, circuito mundial e arena de transmissão.
+Esta build adiciona a camada de imprensa e narrativa global do circuito. O jogo passa a gerar manchetes semanais, resultados editoriais, rumores, coletivas, impacto de mídia, sentimento público e repercussão sobre atletas, reputação e pressão.
 
-**Versão atual:** v3.12.0 — Premium Visual Academy  
-**Build:** 20260622-122215  
-**Data/hora:** 22/06/2026 12:22:15 (America/Sao_Paulo)  
-**Schema:** 15
+**Versão atual:** v3.13.0 — Global Tennis Newsroom  
+**Build:** 20260622-132440  
+**Data/hora:** 22/06/2026 13:24:40 (America/Sao_Paulo)  
+**Schema:** 16
 
-## v3.12.0 — Premium Visual Academy
+## v3.13.0 — Global Tennis Newsroom
 
-- Nova aba `Academia Pro` com hub visual de ambientes.
-- Reaproveitamento direto de `lobby-premium.png`, `home-hero.png`, `match-night.png`, logos de torneios, avatares de jogadores e avatares de staff.
-- Fundo da aplicação muda conforme a aba/ambiente ativo: escritório, treino, medicina, análise, mercado, calendário e arena.
-- Cards de ambiente com botões `Focar` e `Abrir`, permitindo navegar para a área correspondente.
-- Estado persistente `visualAcademy` com cena ativa, histórico de auditoria e modo premium.
-- Mobile-first: cards roláveis por toque, área de clique ampliada e layout funcional desde 320 px.
-- Fallback de assets preservado; nenhum asset anterior foi removido.
-- Migração de save para schema 15.
+- Nova aba `Newsroom` com feed global de notícias.
+- Manchetes semanais ligadas ao calendário, resultados, ranking, lesões, mercado, pressão e patrocínio.
+- Nova sala de imprensa com perguntas e respostas do treinador.
+- Respostas públicas afetam reputação, sentimento, moral, confiança e pressão do atleta.
+- Sistema de `newsroom` persistente no save com itens, coletivas, sentimento e reputação editorial.
+- Geração protegida por token semanal para evitar notícias duplicadas.
+- Botão `Gerar pauta` com rollback caso ocorra erro.
+- Integração com inbox, carreira humana e reputação da academia.
+- Mobile-first: cards em uma coluna, ações de coletiva grandes e rolagem por toque.
+- Migração de save para schema 16.
 
 ## Histórico anterior
 
+## v3.12.0 — Premium Visual Academy
+Build 20260622-122215 com hub visual da academia, ambientes premium, fundos dinâmicos, reaproveitamento de assets, cenas persistentes e migração para schema 15.
+
 ## v3.11.0 — Tactical Intelligence
-Build 20260622-110507 (22/06/2026 11:05:07) com plano tático aplicado ao Match Center: saque aberto/corpo/T, pressão no segundo saque, ataque ao backhand/fraqueza, rallies longos/curtos/rede e modos de risco. Todas as mudanças preservam versão/build/data/hora visíveis e migração para schema 14.
+Build 20260622-110507 com plano tático aplicado ao Match Center: saque aberto/corpo/T, pressão no segundo saque, ataque ao backhand/fraqueza, rallies longos/curtos/rede e modos de risco.
+
+## v3.10.0 — Player Personality & Real Careers
+Build 20260622-104227 com personalidade, moral, confiança, pressão, relação com treinador, felicidade, ambição, disciplina, conversas e eventos humanos.
