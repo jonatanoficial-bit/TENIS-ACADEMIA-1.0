@@ -731,3 +731,37 @@ select { width:100%; padding:13px 14px; min-height:48px; border-radius:14px; bor
   .identity-modal-kpis article { padding: 11px; }
   .identity-modal-kpis strong { font-size: 17px; }
 }
+
+/* v3.9.0 Real Draws & Tournament Life */
+.draw-stats { display:grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap:10px; margin: 0 0 12px; }
+.draw-stats article { padding: 12px; border-radius: 16px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.08); }
+.draw-stats span { display:block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing:.08em; }
+.draw-stats strong { display:block; margin-top:6px; font-size: 20px; }
+.draw-qualifying { display:grid; gap:10px; margin-bottom: 14px; }
+.draw-q-grid { display:grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap:10px; overflow:auto; padding-bottom: 2px; }
+.draw-match.upset { box-shadow: inset 0 0 0 1px rgba(255,207,103,.32); background: linear-gradient(180deg, rgba(255,207,103,.10), rgba(255,255,255,.035)); }
+.draw-match.withdrawal { box-shadow: inset 0 0 0 1px rgba(255,143,165,.26); }
+.draw-line.user-line .draw-name { color: var(--accent2); font-weight: 900; }
+.draw-line.bye { opacity:.62; font-style: italic; }
+.draw-entry { display:inline-grid; place-items:center; min-width: 24px; height: 18px; margin-right: 5px; padding: 0 5px; border-radius: 999px; font-size: 9px; font-weight: 900; color: #04121f; background: var(--accent); vertical-align: middle; }
+.draw-entry.seed { background: #ffcf67; }
+.draw-entry.wildcard { background: #b48cff; color:#fff; }
+.draw-entry.qualifier, .draw-entry.qualifying { background: #9aff81; }
+.draw-entry.bye { background: rgba(255,255,255,.18); color: var(--muted); }
+.draw-history { margin-top: 14px; display:grid; gap:8px; }
+.draw-history h4 { margin: 0; }
+.draw-card .draw-columns { scroll-snap-type: x proximity; }
+.draw-col { scroll-snap-align: start; }
+@media (max-width: 720px) {
+  .draw-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .draw-q-grid { grid-auto-flow: column; grid-auto-columns: minmax(240px, 84vw); grid-template-columns: none; overflow-x:auto; }
+  .draw-card { max-height: calc(var(--app-vh,1vh)*100); border-radius: 24px 24px 0 0; padding: 14px 12px calc(22px + env(safe-area-inset-bottom)); }
+  .draw-modal { align-items:flex-end; padding:0; }
+  .draw-columns { grid-auto-columns: 86vw; }
+}
+@media (max-width: 360px) {
+  .draw-stats { grid-template-columns: 1fr 1fr; gap:7px; }
+  .draw-stats article { padding:10px; }
+  .draw-stats strong { font-size:16px; }
+  .draw-name { max-width: 128px; }
+}

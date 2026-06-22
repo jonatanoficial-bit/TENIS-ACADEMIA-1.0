@@ -1,3 +1,15 @@
+## v3.9.0 — Real Draws & Tournament Life — 20260622-101533
+
+- Criado sistema de chaves reais por tamanho de torneio, com bracket de 8/16/32/64/128.
+- Adicionados cabeças de chave, entrada direta, qualifiers, wild cards e byes no modal de chave.
+- Qualifying passou a existir como camada prévia para atletas fora do corte principal.
+- Torneios agora registram zebras, W/O/desistências simuladas e campeão persistente.
+- Histórico de campeões salvo em `tournamentLife.championHistory`.
+- Criadas funções centrais `createTournamentRun` e `pickOpponent` para eliminar fragilidade da vida do torneio.
+- Match Engine atualizado para `v3.9-real-draws-engine`.
+- Migração para schema 12, mantendo saves anteriores compatíveis.
+- Auditoria mobile-first e integridade do ZIP preservadas.
+
 
 ## v3.8.0 — Tournament Identity System — 20260620-133614
 

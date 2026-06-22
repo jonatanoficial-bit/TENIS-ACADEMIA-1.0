@@ -401,107 +401,264 @@ function logoMarkup(src, name='', cls='tour-logo', fallbackCls='tournament-logo-
 function tournamentKey(event) {
   return event?.id || slugifyText(event?.name || 'event');
 }
-function makeEntrantFromRow(row) {
+
+function normalizeDrawSize(event={}) {
+  const raw = Number(event.drawSize || 32);
+  if (raw >= 128) return 128;
+  if (raw >= 96) return 128;
+  if (raw >= 64) return 64;
+  if (raw >= 48) return 64;
+  if (raw >= 32) return 32;
+  if (raw >= 24) return 32;
+  if (raw >= 16) return 16;
+  return 8;
+}
+function actualFieldSize(event={}) {
+  const raw = Number(event.drawSize || 32);
+  return Math.max(8, Math.min(normalizeDrawSize(event), raw || 32));
+}
+function roundLabelsForBracket(size=32) {
+  const map = { 128:['R128','R64','R32','R16','QF','SF','F'], 64:['R64','R32','R16','QF','SF','F'], 32:['R32','R16','QF','SF','F'], 16:['R16','QF','SF','F'], 8:['QF','SF','F'] };
+  return map[normalizeDrawSize({drawSize:size})] || map[32];
+}
+function makeEntrantFromRow(row, meta={}) {
+  const points = Math.round(row.points ?? row.rankingPoints ?? 0);
+  const overall = Math.round(row.overall || 70);
+  const rank = row.rank || (points ? Math.max(1, Math.round(90000 / Math.max(50, points))) : 999);
   return {
-    id: row.playerId || slugifyText(row.name),
-    name: row.name,
-    country: row.country || '---',
-    overall: Math.round(row.overall || 70),
-    points: Math.round(row.points || 0),
-    avatar: avatarForPlayer(row.name),
-    isUser: !!row.isUser
+    id: row.playerId || row.id || slugifyText(row.name),
+    name: row.name || meta.name || 'Jogador ATP',
+    country: row.country || row.countryCode || '---',
+    overall, points, rank,
+    avatar: row.avatar || avatarForPlayer(row.name || meta.name || 'Jogador'),
+    isUser: !!row.isUser,
+    seed: meta.seed || null,
+    entryType: meta.entryType || 'direct',
+    form: meta.form ?? (stableNumber(`${row.name}-${points}-${overall}`) % 34) + 56,
+    status: meta.status || 'active'
   };
 }
-function pickEntrantsForEvent(player, event, roundsLength) {
-  const total = Math.max(8, 2 ** roundsLength);
-  const nonUsers = state.ranking.filter(r => !r.isUser).slice(0, 96);
+function getTournamentGate(event) {
+  const player = chooseBestPlayer();
+  const rank = player ? getPlayerRank(player.id) : 999;
+  const mainCut = event.minRank || 999;
+  const qualCut = Math.min(180, mainCut + (event.tier === 'Grand Slam' ? 80 : 48));
+  if (rank <= mainCut) return { label: 'Chave principal', cls: 'ok', entryType:'direct', rank, mainCut, qualCut };
+  if (rank <= qualCut) return { label: 'Qualifying', cls: 'warn', entryType:'qualifying', rank, mainCut, qualCut };
+  if ((event.inviteSlots || 0) > 0 && state.academy.reputation >= 40) return { label: 'Wild card possível', cls: 'warn', entryType:'wildcard', rank, mainCut, qualCut };
+  return { label: `Precisa rank ${mainCut}`, cls: 'blocked', entryType:'blocked', rank, mainCut, qualCut };
+}
+function pickEntrantsForEvent(player, event, options={}) {
+  const fieldSize = actualFieldSize(event);
+  const includeUser = options.includeUser !== false;
+  const seedCount = Math.min(fieldSize >= 128 ? 32 : fieldSize >= 64 ? 16 : fieldSize >= 32 ? 8 : 4, Math.floor(fieldSize/2));
+  const wildCards = Math.min(event.inviteSlots || 0, Math.max(0, Math.floor(fieldSize * .12)));
+  const qualifiers = Math.max(event.tier === 'Grand Slam' ? 16 : event.tier === 'Masters 1000' ? 8 : 4, Math.floor(fieldSize * .12));
+  const nonUsers = [...(state.ranking || [])].filter(r => !r.isUser).sort((a,b)=>(a.rank||999)-(b.rank||999)).slice(0, 140);
   const entrants = [];
-  if (player) entrants.push(makeEntrantFromRow({ name: player.name, country: player.country, overall: player.overall, points: player.rankingPoints, playerId: player.id, isUser: true }));
+  if (includeUser && player) {
+    const gate = getTournamentGate(event);
+    entrants.push(makeEntrantFromRow({ name: player.name, country: player.country, overall: player.overall, points: player.rankingPoints, playerId: player.id, isUser: true, rank:getPlayerRank(player.id), avatar: player.avatar }, { entryType: gate.entryType === 'qualifying' ? 'qualifier' : gate.entryType }));
+  }
   let cursor = 0;
-  while (entrants.length < total && cursor < nonUsers.length) {
+  while (entrants.length < fieldSize && cursor < nonUsers.length) {
     const row = nonUsers[cursor++];
     if (entrants.some(x => x.name === row.name)) continue;
-    entrants.push(makeEntrantFromRow(row));
+    let entryType = 'direct';
+    if (entrants.length >= fieldSize - qualifiers) entryType = 'qualifier';
+    else if (entrants.length >= fieldSize - qualifiers - wildCards) entryType = 'wildcard';
+    entrants.push(makeEntrantFromRow(row, { entryType }));
   }
-  while (entrants.length < total) {
-    entrants.push(makeEntrantFromRow(nonUsers[entrants.length % nonUsers.length] || { name:`ATP ${entrants.length+1}`, country:'ATP', overall:70, points:100 }));
+  while (entrants.length < fieldSize) {
+    const idx = entrants.length + 1;
+    entrants.push(makeEntrantFromRow({ name:`Qualificador ${idx}`, country:'INT', overall:65 + (idx % 9), points:80 + idx * 13, rank:180 + idx }, { entryType:'qualifier' }));
   }
-  entrants.sort((a,b) => (b.points + b.overall*4) - (a.points + a.overall*4));
-  return entrants.slice(0,total);
+  entrants.sort((a,b) => (a.rank || 999) - (b.rank || 999) || (b.points + b.overall*4) - (a.points + a.overall*4));
+  entrants.forEach((entrant, idx) => { entrant.seed = idx < seedCount ? idx + 1 : null; });
+  return entrants.slice(0, fieldSize);
 }
 function seedingPositions(size) {
-  if (size === 2) return [1,2];
+  if (size <= 2) return [1,2];
   const prev = seedingPositions(size/2);
   const out = [];
   for (const p of prev) { out.push(p); out.push(size + 1 - p); }
   return out;
 }
-function createDrawMatches(entrants) {
-  const positions = seedingPositions(entrants.length);
-  const slots = Array(entrants.length).fill(null);
+function eventSeed(event={}, salt='') { return stableNumber(`${state.academy?.season || 2026}-${event.id || event.name}-${salt}`); }
+function createDrawMatches(entrants, event={}) {
+  const bracketSize = normalizeDrawSize(event);
+  const positions = seedingPositions(bracketSize);
+  const slots = Array(bracketSize).fill(null);
   entrants.forEach((entrant, idx) => {
-    const pos = positions[idx] - 1;
+    const pos = positions[idx] ? positions[idx] - 1 : idx;
     slots[pos] = entrant;
   });
   const matches = [];
   for (let i=0; i<slots.length; i+=2) {
     const a = slots[i]; const b = slots[i+1];
-    matches.push({ id:`m${i/2+1}`, a, b, winner:null, score:'', userMatch: !!(a?.isUser || b?.isUser) });
+    const winner = !a ? b : !b ? a : null;
+    matches.push({ id:`m${i/2+1}`, a, b, winner, score:winner ? 'BYE' : '', userMatch: !!(a?.isUser || b?.isUser), status:winner ? 'bye' : 'scheduled', upset:false, withdrawal:null });
   }
   return matches;
 }
-function createTournamentDraw(player, event, rounds) {
-  const entrants = pickEntrantsForEvent(player, event, rounds.length);
-  const roundDefs = rounds.map((label, idx) => ({ label, matches: idx === 0 ? createDrawMatches(entrants) : [] }));
-  return { key: tournamentKey(event), eventName: event.name, rounds: roundDefs };
+function createQualifyingLayer(player, event) {
+  const pool = (state.ranking || []).filter(r => !r.isUser).slice(100, 132);
+  const seed = eventSeed(event, 'qualifying');
+  const opponentRow = pool[seed % Math.max(1,pool.length)] || (state.ranking || []).find(r=>!r.isUser) || { name:'Especialista do qualifying', country:'INT', overall:68, points:120, rank:160 };
+  const user = makeEntrantFromRow({ name:player.name, country:player.country, overall:player.overall, points:player.rankingPoints, playerId:player.id, isUser:true, rank:getPlayerRank(player.id), avatar:player.avatar }, { entryType:'qualifier' });
+  const opponent = makeEntrantFromRow(opponentRow, { entryType:'qualifier' });
+  const matches = [{ id:'q-user', a:user, b:opponent, winner:null, score:'', userMatch:true, status:'scheduled' }];
+  for (let i=0; i<3; i++) {
+    const a = makeEntrantFromRow(pool[(seed+i*2+1)%Math.max(1,pool.length)] || {name:`Q${i+1}A`, country:'INT', overall:64, points:60}, { entryType:'qualifier' });
+    const b = makeEntrantFromRow(pool[(seed+i*2+2)%Math.max(1,pool.length)] || {name:`Q${i+1}B`, country:'INT', overall:63, points:55}, { entryType:'qualifier' });
+    matches.push({ id:`q${i+2}`, a, b, winner:null, score:'', userMatch:false, status:'scheduled' });
+  }
+  return { label:'Qualifying', description:'Uma vitória garante entrada na chave principal.', matches };
 }
-function ensureTournamentRunDraw(player, event, rounds) {
-  if (!state.tournamentDraws) state.tournamentDraws = {};
+function createTournamentDraw(player, event, options={}) {
+  const gate = getTournamentGate(event);
+  const mainRounds = roundLabelsForBracket(normalizeDrawSize(event));
+  const includeUser = gate.entryType !== 'blocked';
+  const entrants = pickEntrantsForEvent(player, event, { includeUser });
+  const firstRound = createDrawMatches(entrants, event);
+  const roundDefs = mainRounds.map((label, idx) => ({ label, matches: idx === 0 ? firstRound : [] }));
+  const byes = firstRound.filter(m => m.status === 'bye').length;
+  const wildcards = entrants.filter(e => e.entryType === 'wildcard').length;
+  const qualifiers = entrants.filter(e => e.entryType === 'qualifier').length;
+  const draw = {
+    key: tournamentKey(event), eventName: event.name, season:state.academy?.season || 2026,
+    bracketSize: normalizeDrawSize(event), fieldSize: actualFieldSize(event), mainRounds,
+    generatedAt: new Date().toISOString(),
+    rules: { bestOf: event.tier === 'Grand Slam' ? 5 : 3, seededPlayers: entrants.filter(e=>e.seed).length, wildcards, qualifiers, byes },
+    rounds: roundDefs,
+    qualifying: gate.entryType === 'qualifying' ? createQualifyingLayer(player, event) : null,
+    champion: null,
+    history: []
+  };
+  return draw;
+}
+function ensureTournamentRunDraw(player, event, rounds=null) {
+  state.tournamentDraws ||= {};
   const key = tournamentKey(event);
-  if (!state.tournamentDraws[key]) state.tournamentDraws[key] = createTournamentDraw(player, event, rounds);
+  const existing = state.tournamentDraws[key];
+  if (!existing || !existing.rounds || existing.version !== 'v3.9') {
+    state.tournamentDraws[key] = { ...createTournamentDraw(player, event), version:'v3.9' };
+  }
   return state.tournamentDraws[key];
 }
-function pickDrawOpponent(draw, roundIndex) {
-  const round = draw?.rounds?.[roundIndex];
+function createTournamentRun(player, event) {
+  const gate = getTournamentGate(event);
+  if (gate.entryType === 'blocked') {
+    addLog(`${event.name}: inscrição bloqueada. Ranking atual ${gate.rank}; corte principal ${gate.mainCut}.`);
+    state.inbox.unshift({ title:`Inscrição recusada: ${event.name}`, body:`A academia precisa melhorar ranking ou reputação para receber convite. Rank atual ${gate.rank}.`, week: state.academy.week });
+    return null;
+  }
+  const draw = ensureTournamentRunDraw(player, event);
+  const mainRounds = draw.mainRounds || roundLabelsForBracket(normalizeDrawSize(event));
+  const rounds = gate.entryType === 'qualifying' ? ['Q', ...mainRounds] : mainRounds;
+  state.activeTournament = {
+    event, gate, entryType: gate.entryType, draw,
+    rounds, mainRoundOffset: gate.entryType === 'qualifying' ? 1 : 0,
+    roundIndex: 0, wins: 0, complete:false,
+    createdAt: new Date().toISOString(), auditTrail:[`Entrada: ${gate.label}`]
+  };
+  addLog(`${event.name}: ${gate.label} confirmada. Chave real criada com ${draw.fieldSize}/${draw.bracketSize} vagas.`);
+  return state.activeTournament;
+}
+function roundToDrawIndex(run, roundIndex=run?.roundIndex || 0) {
+  return Math.max(0, roundIndex - (run?.mainRoundOffset || 0));
+}
+function pickDrawOpponent(draw, roundIndex, run=null) {
+  if (run?.rounds?.[roundIndex] === 'Q' && draw?.qualifying) {
+    const match = draw.qualifying.matches.find(m => m.userMatch);
+    return { match, opponent: match?.a?.isUser ? match.b : match?.a };
+  }
+  const drawIndex = run ? roundToDrawIndex(run, roundIndex) : roundIndex;
+  const round = draw?.rounds?.[drawIndex];
   if (!round) return null;
   const match = round.matches.find(m => m.a?.isUser || m.b?.isUser);
   if (!match) return null;
   return { match, opponent: match.a?.isUser ? match.b : match.a };
 }
-function decideDrawWinner(a, b) {
+function decideDrawWinner(a, b, event={}, context='') {
   if (!a && !b) return null;
   if (!a) return b;
   if (!b) return a;
-  const aScore = (a.overall || 70) * 5 + (a.points || 0) / 40 + (a.isUser ? 10 : 0) + (Math.random() * 40);
-  const bScore = (b.overall || 70) * 5 + (b.points || 0) / 40 + (b.isUser ? 10 : 0) + (Math.random() * 40);
+  const surface = surfaceKey(event.surface);
+  const random = (stableNumber(`${event.id || event.name}-${context}-${a.name}-${b.name}-${state.academy?.week}`) % 101) - 50;
+  const aSurface = Number(a.surfaceRatings?.[surface] || a.overall || 70);
+  const bSurface = Number(b.surfaceRatings?.[surface] || b.overall || 70);
+  const aScore = (a.overall || 70) * 5 + aSurface * 1.5 + Math.log1p(a.points || 0) * 16 + (a.form || 60) * .6 + (a.seed ? 22 - a.seed : 0) + (a.isUser ? 5 : 0) + random;
+  const bScore = (b.overall || 70) * 5 + bSurface * 1.5 + Math.log1p(b.points || 0) * 16 + (b.form || 60) * .6 + (b.seed ? 22 - b.seed : 0) + (b.isUser ? 5 : 0) - random;
   return aScore >= bScore ? a : b;
 }
-function simulatedScore() {
-  const patterns = ['6-4 6-3', '7-5 6-4', '6-2 3-6 6-3', '6-3 6-4', '7-6 6-4'];
-  return patterns[Math.floor(Math.random()*patterns.length)];
+function simulatedScore(seedText='') {
+  const patterns = ['6-4 6-3', '7-5 6-4', '6-2 3-6 6-3', '6-3 6-4', '7-6 6-4', '4-6 6-3 6-4', '6-1 6-4'];
+  return patterns[stableNumber(seedText || Math.random().toString()) % patterns.length];
+}
+function maybeWithdrawal(match, event={}, context='') {
+  if (!match.a || !match.b) return null;
+  const risk = event.tier === 'Grand Slam' ? 3 : 2;
+  const roll = stableNumber(`${event.id || event.name}-${context}-wo-${match.a.name}-${match.b.name}`) % 100;
+  if (roll >= risk) return null;
+  const loser = roll % 2 === 0 ? match.a : match.b;
+  return loser;
 }
 function advanceDrawRound(run, playerWon) {
   if (!run?.draw) return;
-  const round = run.draw.rounds[run.roundIndex];
+  const isQualifying = run.rounds?.[run.roundIndex] === 'Q';
+  if (isQualifying) {
+    const q = run.draw.qualifying;
+    q.matches = (q.matches || []).map(match => {
+      if (match.userMatch) {
+        const winner = playerWon ? (match.a?.isUser ? match.a : match.b) : (match.a?.isUser ? match.b : match.a);
+        return { ...match, winner, score: simulatedScore(`${run.event.name}-Q-user`), status:'played' };
+      }
+      const winner = match.winner || decideDrawWinner(match.a, match.b, run.event, match.id);
+      return { ...match, winner, score: match.score || simulatedScore(`${run.event.name}-Q-${match.id}`), status:'played' };
+    });
+    run.auditTrail ||= [];
+    run.auditTrail.push(playerWon ? 'Qualifying vencido; atleta entrou na chave principal.' : 'Eliminado no qualifying.');
+    return;
+  }
+  const drawIndex = roundToDrawIndex(run);
+  const round = run.draw.rounds[drawIndex];
   if (!round) return;
-  round.matches = round.matches.map(match => {
+  round.matches = round.matches.map((match, idx) => {
+    if (match.status === 'bye') return match;
     if (match.a?.isUser || match.b?.isUser) {
       const winner = playerWon ? (match.a?.isUser ? match.a : match.b) : (match.a?.isUser ? match.b : match.a);
-      return { ...match, winner, score: simulatedScore() };
+      return { ...match, winner, score: match.score || matchSetScore(state.match) || simulatedScore(`${run.event.name}-${round.label}-user`), status:'played', upset: winner && ((winner.seed || 99) > ((match.a?.seed || 99) === (winner.seed || 99) ? (match.b?.seed || 99) : (match.a?.seed || 99))) };
     }
-    const winner = match.winner || decideDrawWinner(match.a, match.b);
-    return { ...match, winner, score: match.score || simulatedScore() };
+    const withdrawal = maybeWithdrawal(match, run.event, `${round.label}-${idx}`);
+    const winner = withdrawal ? (withdrawal.name === match.a?.name ? match.b : match.a) : (match.winner || decideDrawWinner(match.a, match.b, run.event, `${round.label}-${idx}`));
+    const upset = winner && match.a && match.b && (winner.seed || 99) > ((winner.name === match.a.name ? match.b?.seed : match.a?.seed) || 99);
+    return { ...match, winner, score: match.score || (withdrawal ? 'W/O' : simulatedScore(`${run.event.name}-${round.label}-${idx}`)), status: withdrawal ? 'withdrawal' : 'played', upset, withdrawal: withdrawal?.name || null };
   });
-  const nextRound = run.draw.rounds[run.roundIndex + 1];
+  const nextRound = run.draw.rounds[drawIndex + 1];
   if (nextRound) {
     const winners = round.matches.map(m => m.winner).filter(Boolean);
     const matches = [];
     for (let i=0; i<winners.length; i+=2) {
       const a = winners[i]; const b = winners[i+1];
-      matches.push({ id:`r${run.roundIndex+2}m${i/2+1}`, a, b, winner:null, score:'', userMatch: !!(a?.isUser || b?.isUser) });
+      matches.push({ id:`r${drawIndex+2}m${i/2+1}`, a, b, winner:(!a?b:!b?a:null), score:(!a||!b)?'BYE':'', userMatch: !!(a?.isUser || b?.isUser), status:(!a||!b)?'bye':'scheduled', upset:false, withdrawal:null });
     }
     nextRound.matches = matches;
+  } else {
+    run.draw.champion = round.matches.find(m => m.winner)?.winner || null;
   }
+}
+function drawEntryBadge(entrant) {
+  if (!entrant) return '<span class="draw-entry bye">BYE</span>';
+  if (entrant.seed) return `<span class="draw-entry seed">#${entrant.seed}</span>`;
+  const map = { wildcard:'WC', qualifier:'Q', qualifying:'Q', direct:'DA' };
+  return `<span class="draw-entry ${entrant.entryType || 'direct'}">${map[entrant.entryType] || 'DA'}</span>`;
+}
+function renderDrawLine(entrant, match, side) {
+  if (!entrant) return '<div class="draw-line bye"><span class="draw-name">BYE</span><span class="draw-country">—</span></div>';
+  const winner = match.winner?.name === entrant.name;
+  const cls = `${winner ? 'winner' : ''} ${entrant.isUser ? 'user-line' : ''}`;
+  return `<div class="draw-line ${cls}"><span class="draw-name">${drawEntryBadge(entrant)} ${escapeHtml(entrant.name)}</span><span class="draw-country">${escapeHtml(entrant.country)} ${entrant.rank ? `#${entrant.rank}` : ''}</span></div>`;
 }
 function ensureDrawModal() {
   if (document.querySelector('#drawModal')) return;
@@ -512,13 +669,16 @@ function ensureDrawModal() {
     <div class="draw-card glass">
       <div class="draw-head">
         <div>
-          <p class="eyebrow">Chave do torneio</p>
+          <p class="eyebrow">Real Draws & Tournament Life</p>
           <h3 id="drawTitle">Visão da competição</h3>
           <div id="drawSub" class="small"></div>
         </div>
         <button id="closeDrawBtn" class="mini-btn" type="button">Fechar</button>
       </div>
+      <div id="drawStats" class="draw-stats"></div>
+      <div id="drawQualifying" class="draw-qualifying"></div>
       <div id="drawContent" class="draw-columns"></div>
+      <div id="drawHistory" class="draw-history"></div>
     </div>`;
   document.body.appendChild(node);
   node.querySelectorAll('[data-draw-close="1"]').forEach(el => el.addEventListener('click', closeDrawModal));
@@ -529,28 +689,41 @@ function openDrawModal(eventName='') {
   const event = state.calendar.find(e => e.name === eventName) || state.activeTournament?.event || state.calendar.find(e => e.week === state.academy.week);
   if (!event) return;
   const player = chooseBestPlayer();
-  const rounds = state.activeTournament?.event?.name === event.name ? state.activeTournament.rounds : (event.drawSize >= 64 ? ['R32','R16','QF','SF','F'] : event.drawSize >= 32 ? ['R16','QF','SF','F'] : ['QF','SF','F']);
   const draw = state.activeTournament?.event?.name === event.name && state.activeTournament.draw
     ? state.activeTournament.draw
-    : ensureTournamentRunDraw(player, event, rounds);
+    : ensureTournamentRunDraw(player, event);
   const modal = document.querySelector('#drawModal');
+  const id = eventIdentity(event);
   modal.classList.remove('hidden');
   document.body.classList.add('setup-open');
   document.querySelector('#drawTitle').textContent = event.name;
-  document.querySelector('#drawSub').textContent = `${event.tier} • ${event.surface.toUpperCase()} • chave ${event.drawSize || 32}`;
+  document.querySelector('#drawSub').textContent = `${id.tier.label} • ${id.surface.label} • ${event.city || event.country || 'Circuito mundial'} • ${BUILD_LABEL}`;
+  const stats = document.querySelector('#drawStats');
+  stats.innerHTML = `<article><span>Chave</span><strong>${draw.fieldSize}/${draw.bracketSize}</strong></article><article><span>Cabeças</span><strong>${draw.rules?.seededPlayers || 0}</strong></article><article><span>Qualifiers</span><strong>${draw.rules?.qualifiers || 0}</strong></article><article><span>Wild cards</span><strong>${draw.rules?.wildcards || 0}</strong></article><article><span>Byes</span><strong>${draw.rules?.byes || 0}</strong></article>`;
+  const qHost = document.querySelector('#drawQualifying');
+  qHost.innerHTML = draw.qualifying ? `<div class="draw-col-head">Qualifying</div><div class="draw-q-grid">${draw.qualifying.matches.map(match => `<div class="draw-match ${match.userMatch ? 'user-path' : ''}">${renderDrawLine(match.a, match, 'a')}${renderDrawLine(match.b, match, 'b')}${match.score ? `<div class="draw-score">${match.score}</div>` : ''}</div>`).join('')}</div>` : '';
   const content = document.querySelector('#drawContent');
+  const activeDrawIndex = state.activeTournament?.event?.name === event.name ? roundToDrawIndex(state.activeTournament) : -1;
   content.innerHTML = draw.rounds.map((round, idx) => `<div class="draw-col"><div class="draw-col-head">${round.label}</div>${(round.matches||[]).map(match => `
-    <div class="draw-match ${match.a?.isUser || match.b?.isUser ? 'user-path' : ''} ${idx === (state.activeTournament?.roundIndex ?? -1) ? 'active-round' : ''}">
-      <div class="draw-line ${match.winner?.name === match.a?.name ? 'winner' : ''}">${match.a ? `<span class="draw-name">${match.a.name}</span><span class="draw-country">${match.a.country}</span>` : '<span class="draw-name">TBD</span>'}</div>
-      <div class="draw-line ${match.winner?.name === match.b?.name ? 'winner' : ''}">${match.b ? `<span class="draw-name">${match.b.name}</span><span class="draw-country">${match.b.country}</span>` : '<span class="draw-name">TBD</span>'}</div>
-      ${match.score ? `<div class="draw-score">${match.score}</div>` : ''}
+    <div class="draw-match ${match.a?.isUser || match.b?.isUser ? 'user-path' : ''} ${idx === activeDrawIndex ? 'active-round' : ''} ${match.upset ? 'upset' : ''} ${match.status || ''}">
+      ${renderDrawLine(match.a, match, 'a')}
+      ${renderDrawLine(match.b, match, 'b')}
+      ${match.score ? `<div class="draw-score">${match.score}${match.upset ? ' • zebra' : ''}${match.withdrawal ? ` • desistência: ${escapeHtml(match.withdrawal)}` : ''}</div>` : ''}
     </div>`).join('')}</div>`).join('');
+  const history = state.tournamentLife?.championHistory?.filter(h => h.eventName === event.name).slice(0,5) || [];
+  document.querySelector('#drawHistory').innerHTML = history.length ? `<h4>Histórico de campeões</h4>${history.map(h=>`<div class="report-line">${h.season} S${h.week}: ${escapeHtml(h.champion)} campeão • ${h.score || '—'}</div>`).join('')}` : `<div class="report-line">Histórico de campeões será registrado quando o torneio for concluído nesta carreira.</div>`;
 }
 function closeDrawModal() {
   const modal = document.querySelector('#drawModal');
   if (!modal) return;
   modal.classList.add('hidden');
   document.body.classList.remove('setup-open');
+}
+function pickOpponent(round, player) {
+  const event = state.calendar.find(e => e.week === state.academy.week) || state.activeTournament?.event || {};
+  const pool = (state.ranking || []).filter(row => !row.isUser && row.name !== player?.name);
+  const strength = { Q: 90, R128: 120, R64: 90, R32: 64, R16: 38, QF: 24, SF: 12, F: 6 }[round] || 80;
+  return pool[Math.min(pool.length-1, Math.max(0, Math.floor((eventSeed(event, round) % Math.max(1, strength))))) ] || pool[0] || { name:'Adversário internacional', country:'INT', overall:70, points:200, rank:120 };
 }
 function flagEmoji(code='BRA') {
   const map = { BRA:'🇧🇷', ARG:'🇦🇷', CHI:'🇨🇱', USA:'🇺🇸', GBR:'🇬🇧', ESP:'🇪🇸', GER:'🇩🇪', FRA:'🇫🇷', ITA:'🇮🇹', AUS:'🇦🇺', JPN:'🇯🇵', CHN:'🇨🇳', QAT:'🇶🇦', PRT:'🇵🇹', BEL:'🇧🇪', SWE:'🇸🇪', AUT:'🇦🇹', SRB:'🇷🇸', RUS:'🇷🇺' };
@@ -738,6 +911,10 @@ function migrateState() {
   state.academy.bankruptcyWarnings ??= 0;
   state.academy.owner ??= null;
   state.activeTournament ??= null;
+  state.tournamentDraws ||= {};
+  state.tournamentLife ||= { championHistory: [], drawAudit: [], lastViewedDraw: null };
+  state.tournamentLife.championHistory ||= [];
+  state.tournamentLife.drawAudit ||= [];
   state.roster.forEach(p => {
     p.health ??= 100;
     p.injuredWeeks ??= 0;
@@ -1168,8 +1345,14 @@ function simulateWorldTourWeek() {
     const champion = weighted[0]?.row, finalist = weighted[1]?.row;
     if (champion) champion.points = Math.max(0, Math.round((champion.points||0) + (event.winnerPoints||250)*0.22));
     if (finalist) finalist.points = Math.max(0, Math.round((finalist.points||0) + (event.winnerPoints||250)*0.11));
-    return { eventId:event.id||event.name, eventName:event.name, tier:event.tier, surface:event.surface, city:event.city||'', champion:champion?.name||'A definir', championCountry:champion?.country||'INT', finalist:finalist?.name||'A definir', week, season };
+    const upset = weighted[0] && weighted[0].row?.rank > Math.max(18, Math.round((event.drawSize || 32) * .55));
+    const withdrawalCount = (seed % 7) === 0 ? 1 : 0;
+    return { eventId:event.id||event.name, eventName:event.name, tier:event.tier, surface:event.surface, city:event.city||'', champion:champion?.name||'A definir', championCountry:champion?.country||'INT', finalist:finalist?.name||'A definir', week, season, drawSize:event.drawSize||32, upset, withdrawalCount };
   });
+  state.tournamentLife ||= { championHistory: [], drawAudit: [], lastViewedDraw: null };
+  state.tournamentLife.championHistory ||= [];
+  results.forEach(result => state.tournamentLife.championHistory.unshift({ eventId:result.eventId, eventName:result.eventName, champion:result.champion, championCountry:result.championCountry, finalist:result.finalist, season, week, tier:result.tier, surface:result.surface, worldTour:true, build:BUILD_INFO.build }));
+  state.tournamentLife.championHistory = state.tournamentLife.championHistory.slice(0,80);
   state.worldTour.weeklyResults = [...results, ...(state.worldTour.weeklyResults||[])].slice(0,30);
   state.worldTour.rankingHistory.unshift({ season, week, leader: nonUsers.sort((a,b)=>(b.points||0)-(a.points||0))[0]?.name || '—', events:results.length });
   state.worldTour.rankingHistory = state.worldTour.rankingHistory.slice(0,24);
@@ -1367,18 +1550,6 @@ function renderRanking() {
   $('#rankingTable').innerHTML = header + body;
 }
 
-function getTournamentGate(event) {
-  const player = chooseBestPlayer();
-  const rank = player ? getPlayerRank(player.id) : 999;
-  const mainCut = event.minRank || 999;
-  const qualCut = Math.min(160, mainCut + 40);
-  if (rank <= mainCut) return { label: 'Chave principal', cls: 'ok' };
-  if (rank <= qualCut) return { label: 'Qualifying', cls: 'warn' };
-  if ((event.inviteSlots || 0) > 0 && state.academy.reputation >= 40) return { label: 'Wild card possível', cls: 'warn' };
-  return { label: `Precisa rank ${mainCut}`, cls: '' };
-}
-
-
 function getMatchPlayer(player) {
   return enrichPlayer({ ...(player || {}) });
 }
@@ -1451,13 +1622,13 @@ function startScheduledMatch() {
   const run = state.activeTournament;
   if (!run || run.complete) return addLog('Nenhum torneio ativo.');
   const round = run.rounds[run.roundIndex];
-  const drawPick = pickDrawOpponent(run.draw, run.roundIndex);
+  const drawPick = pickDrawOpponent(run.draw, run.roundIndex, run);
   const opponent = getMatchPlayer(drawPick?.opponent || pickOpponent(round, player));
   const user = getMatchPlayer(player);
   const logo = logoForTournament(event.name);
   const firstServer = (state.academy.week + (run.roundIndex || 0)) % 2 === 0 ? 'player' : 'opponent';
   state.match = {
-    engineVersion: 'v3.7-broadcast-pro-engine', presentation: 'broadcast-pro', event, round, drawType: run.entryType,
+    engineVersion: 'v3.9-real-draws-engine', presentation: 'broadcast-pro', event, round, drawType: run.entryType, tournamentRunId: run.createdAt,
     playerId: player.id, playerName: player.name, opponentName: opponent.name, opponent,
     sets: [], set: 1, setsPlayer: 0, setsOpponent: 0,
     gamesPlayer: 0, gamesOpponent: 0, playerScore: 0, opponentScore: 0,
@@ -1722,7 +1893,7 @@ function finishMatch(playerWon) {
   const event = state.match.event;
   const run = state.activeTournament;
   const round = state.match.round;
-  const roundFactor = { Q: 0.08, R16: 0.18, QF: 0.34, SF: 0.56, F: 1 }[round] || 0.1;
+  const roundFactor = { Q: 0.05, R128: 0.06, R64: 0.09, R32: 0.13, R16: 0.18, QF: 0.34, SF: 0.56, F: 1 }[round] || 0.1;
   const rankFactor = Math.max(0.82, 1 + (120 - getPlayerRank(player.id)) / 500);
   const pointsGain = Math.round(event.prize * roundFactor / 180 * rankFactor * (playerWon ? 1 : 0.45));
   const cashGain = Math.round(event.prize * roundFactor * (playerWon ? 1 : 0.35));
@@ -1757,7 +1928,12 @@ function finishMatch(playerWon) {
       player.rankingPoints += Math.round(event.prize / 75);
       state.academy.money += Math.round(event.prize * 0.4);
       state.academy.reputation += event.tier === 'Grand Slam' ? 18 : event.tier.includes('Masters') ? 12 : 8;
-      addMatchLog('Título conquistado! Sua academia deu um salto de prestígio.');
+      state.tournamentLife ||= { championHistory: [], drawAudit: [], lastViewedDraw: null };
+      state.tournamentLife.championHistory ||= [];
+      state.tournamentLife.championHistory.unshift({ eventId:event.id || event.name, eventName:event.name, champion:player.name, championCountry:player.country, season:state.academy.season, week:state.academy.week, score, tier:event.tier, surface:event.surface, build:BUILD_INFO.build });
+      state.tournamentLife.championHistory = state.tournamentLife.championHistory.slice(0, 80);
+      if (run.draw) { run.draw.champion = { name:player.name, country:player.country, score, season:state.academy.season, week:state.academy.week }; run.draw.history ||= []; run.draw.history.unshift({ champion:player.name, score, at:new Date().toISOString() }); }
+      addMatchLog('Título conquistado! Histórico de campeão registrado na vida do torneio.');
       player.lastResult = `${event.name} campeão • ${score}`;
       state.summary.unshift(`${player.name} foi campeão de ${event.name}!`);
     } else {
@@ -1825,7 +2001,7 @@ function renderMatch() {
     <div class="scout-row"><strong>${opp.name}</strong><span>SAQ ${Math.round(attrValue(opp,'serve'))} • DEV ${Math.round(attrValue(opp,'return'))} • MENT ${Math.round(attrValue(opp,'composure',attrValue(opp,'mental')))}</span></div>
     <div class="last-point-card"><span>Último ponto</span><strong>${last ? `${last.type} • ${last.speed || '—'} km/h • ${last.rally} bolas` : 'Aguardando'}</strong><p>${last?.text || 'Use simular ponto/game/set/partida para iniciar o rally.'}</p><small>${pointTacticalRead(last, match)}</small></div>
     <div class="replay-tape">${replay.length ? replay.map(item=>`<div class="replay-line"><strong>${item.text}</strong><span>${item.detail}</span></div>`).join('') : '<div class="replay-line muted">Mini replay aparecerá conforme os pontos forem jogados.</div>'}</div>`;
-  if (reportHost) reportHost.innerHTML = match.finished ? createBroadcastReport(match).map(line=>`<div class="report-line">${line}</div>`).join('') : `<div class="report-line">Motor v3.8 ativo: transmissão pro, ponto a ponto, saque, rally, tiebreak e pressão do placar.</div><div class="report-line">${broadcastRecommendation(match, player, opp)}</div><div class="report-line">Placar: ${scoreSnapshot(match)} • Estratégia: ${currentStrategy}</div>`;
+  if (reportHost) reportHost.innerHTML = match.finished ? createBroadcastReport(match).map(line=>`<div class="report-line">${line}</div>`).join('') : `<div class="report-line">Motor v3.9 ativo: chaves reais, qualifying, wild cards, byes, zebras, desistências e histórico do torneio.</div><div class="report-line">${broadcastRecommendation(match, player, opp)}</div><div class="report-line">Placar: ${scoreSnapshot(match)} • Estratégia: ${currentStrategy}</div>`;
   const autoBtn = $('#autoMatchBtn');
   if (autoBtn) autoBtn.textContent = autoPlayTimer ? `Auto ${autoPlaySpeed}x ativo` : 'Auto 1x';
   refreshAutoButtons();

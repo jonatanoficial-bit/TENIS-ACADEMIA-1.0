@@ -1,18 +1,30 @@
-# Vale Games Tennis Manager — v3.8.0
+# Vale Games Tennis Manager — v3.9.0
 
-Build `20260620-133614` • Tournament Identity System • 20/06/2026 13:36:14 BRT.
+Build `20260622-101533` • Real Draws & Tournament Life • 22/06/2026 10:15:33 BRT.
 
-Esta build reforça o Tournament Identity System: cada torneio ganha dossiê visual, logo em destaque, identidade por piso/categoria, prestígio, bolsa, pontos, chave e integração com calendário, World Tour e Match Center.
+Esta build transforma a estrutura de torneios em uma experiência mais próxima de um circuito real: chaves por tamanho de evento, cabeças de chave, byes, qualifiers, wild cards, qualifying de entrada, zebras, desistências simuladas e histórico de campeões persistente.
 
 # Vale Games Tennis Manager
 
-**Versão atual:** v3.8.0 — Tournament Identity System  
-**Build:** 20260620-133614  
-**Data/hora:** 20/06/2026 13:36:14 (America/Sao_Paulo)
+**Versão atual:** v3.9.0 — Real Draws & Tournament Life  
+**Build:** 20260622-101533  
+**Data/hora:** 22/06/2026 10:15:33 (America/Sao_Paulo)
 
+Build focada em **vida real de torneio**, com prioridade mobile-first, save protegido, fallback de assets e versão visível no app.
 
-Build focada em **mobile-first real** e avanço de gameplay.
+## v3.9.0 — Real Draws & Tournament Life
 
+- Chaves geradas por tamanho real do evento: 8, 16, 32, 64 e 128.
+- Suporte a byes para eventos com 28/56 jogadores.
+- Cabeças de chave, wild cards, qualifiers e entrada direta aparecem no modal de chave.
+- Jogador pode entrar por chave principal, qualifying ou wild card, conforme ranking/reputação.
+- Qualifying ganhou camada própria antes da chave principal.
+- Simulação de torneio agora registra zebras, desistências e resultados das partidas paralelas.
+- Histórico de campeões persistente em `tournamentLife.championHistory`.
+- Modal de chave refeito para celular com estatísticas, qualifying, colunas roláveis e histórico.
+- Schema de save atualizado para 12.
+
+## Histórico anterior
 
 ## v3.7.0 — Broadcast Match Center Pro
 

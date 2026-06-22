@@ -5,7 +5,7 @@ const STORAGE_KEY = 'vale_tennis_manager_save';
 const LEGACY_KEYS = ['ace_academy_save_v040', 'ace-manager-save'];
 const BACKUP_KEY = 'vale_tennis_manager_save_backup';
 const CORRUPT_KEY = 'vale_tennis_manager_corrupt_save';
-const CURRENT_SCHEMA = 11;
+const CURRENT_SCHEMA = 12;
 
 const clone = (value) => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 
@@ -39,7 +39,7 @@ export function buildInitialState(content) {
     sponsorOffers: [], objectives: { current: 'Entrar no Top 120' },
     worldTour: { weeklyResults: [], rankingHistory: [], lastSimulatedWeek: 0, lastSimulatedSeason: academy.season },
     trainingLab: { cycle: 'balanced', autoApply: true, lastProcessedWeek: 0, lastReport: [], plans: Object.fromEntries(roster.map(p => [p.id, { focus: 'balanced', intensity: 'moderate' }])) },
-    flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
+    tournamentDraws: {}, tournamentLife: { championHistory: [], drawAudit: [], lastViewedDraw: null }, flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
   };
 }
 
@@ -82,6 +82,11 @@ export function migrateSave(data) {
   state.tournamentIdentity ||= { spotlightHistory: [], lastViewedEvent: null };
   state.tournamentIdentity.spotlightHistory ||= [];
   state.tournamentIdentity.lastViewedEvent ??= null;
+  state.tournamentDraws ||= {};
+  state.tournamentLife ||= { championHistory: [], drawAudit: [], lastViewedDraw: null };
+  state.tournamentLife.championHistory ||= [];
+  state.tournamentLife.drawAudit ||= [];
+  state.tournamentLife.lastViewedDraw ??= null;
   state.broadcast ||= { presentationMode: 'pro', replayArchive: [], lastAudit: null };
   state.broadcast.replayArchive ||= [];
   state.broadcast.presentationMode ||= 'pro';
