@@ -1039,7 +1039,7 @@ body[data-current-tab="legacy"] .hero-card { background-image: linear-gradient(1
   .legacy-hero h2 { font-size: 1.35rem; }
 }
 
-/* v4.0.0 Commercial Premium Candidate */
+/* v4.0.1 Release Polish & Stability Hotfix */
 .release-candidate-panel { position: relative; overflow: hidden; }
 .release-candidate-hub { display: grid; gap: 1rem; }
 .release-hero { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1rem; align-items: stretch; padding: 1.25rem; border-radius: 26px; background: linear-gradient(135deg, rgba(91,214,255,.18), rgba(245,196,86,.14)), rgba(8,15,31,.80); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 28px 80px rgba(0,0,0,.34); }
@@ -1079,4 +1079,23 @@ body[data-current-tab="release"] .hero-card { background-image: linear-gradient(
   .release-hero h2 { font-size: 1.36rem; }
   .release-store-grid { grid-template-columns: 1fr 1fr; }
   .release-check { padding: .68rem; }
+}
+
+/* v4.0.1 Release Polish & Stability Hotfix */
+.quality-polish-panel { position: relative; overflow: hidden; }
+.quality-polish-hub { display: grid; gap: 1rem; }
+.quality-hero { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1rem; align-items: stretch; padding: 1.25rem; border-radius: 26px; background: linear-gradient(135deg, rgba(112,246,201,.16), rgba(91,214,255,.12)), rgba(8,15,31,.82); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 28px 80px rgba(0,0,0,.34); }
+.quality-hero.ok { background: linear-gradient(135deg, rgba(112,246,201,.20), rgba(91,214,255,.13)), rgba(8,15,31,.84); }
+.quality-hero.warn { background: linear-gradient(135deg, rgba(255,207,117,.22), rgba(91,214,255,.10)), rgba(8,15,31,.84); }
+.quality-hero.danger { background: linear-gradient(135deg, rgba(255,143,165,.22), rgba(255,207,117,.10)), rgba(8,15,31,.84); }
+.quality-hero h2 { margin: .25rem 0; font-size: clamp(1.45rem, 4.6vw, 2.55rem); }
+.quality-hero p { color: rgba(236,244,255,.78); max-width: 760px; }
+body[data-current-tab="polish"] .hero-card { background-image: linear-gradient(135deg, rgba(112,246,201,.16), rgba(31,41,75,.86)); }
+@media (max-width: 780px) {
+  .quality-hero { grid-template-columns: 1fr; padding: 1rem; border-radius: 22px; }
+  .quality-hero .release-score { min-width: 0; display: flex; justify-content: space-between; text-align: left; }
+  .quality-hero .release-score strong { font-size: 1.95rem; }
+}
+@media (max-width: 360px) {
+  .quality-hero h2 { font-size: 1.34rem; }
 }

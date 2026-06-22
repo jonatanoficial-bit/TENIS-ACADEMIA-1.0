@@ -1,8 +1,8 @@
-# Créditos — Vale Games Tennis Manager v4.0.0
+# Créditos — Vale Games Tennis Manager v4.0.1
 
 Projeto: **Vale Games Tennis Manager**  
 Direção criativa: **Vale Games**  
-Build: **v4.0.0 — Commercial Premium Candidate**  
+Build: **v4.0.1 — Release Polish & Stability Hotfix**  
 Data: **22/06/2026**
 
 ## Assets preservados

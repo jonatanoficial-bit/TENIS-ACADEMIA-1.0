@@ -1,4 +1,4 @@
-# Aviso legal — v4.0.0
+# Aviso legal — v4.0.1
 
 Esta build é uma candidata comercial e ainda exige homologação manual.
 
@@ -12,4 +12,4 @@ Esta build é uma candidata comercial e ainda exige homologação manual.
 
 ## Estado da build
 
-A v4.0.0 é tecnicamente uma **Commercial Premium Candidate**, não uma certificação jurídica, financeira ou de loja.
+A v4.0.1 é tecnicamente uma **Release Polish & Stability Hotfix**, não uma certificação jurídica, financeira ou de loja.

@@ -5,7 +5,7 @@ const STORAGE_KEY = 'vale_tennis_manager_save';
 const LEGACY_KEYS = ['ace_academy_save_v040', 'ace-manager-save'];
 const BACKUP_KEY = 'vale_tennis_manager_save_backup';
 const CORRUPT_KEY = 'vale_tennis_manager_corrupt_save';
-const CURRENT_SCHEMA = 20;
+const CURRENT_SCHEMA = 22;
 
 const clone = (value) => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 
@@ -39,7 +39,7 @@ export function buildInitialState(content) {
     sponsorOffers: [], objectives: { current: 'Entrar no Top 120' },
     worldTour: { weeklyResults: [], rankingHistory: [], lastSimulatedWeek: 0, lastSimulatedSeason: academy.season },
     trainingLab: { cycle: 'balanced', autoApply: true, lastProcessedWeek: 0, lastReport: [], plans: Object.fromEntries(roster.map(p => [p.id, { focus: 'balanced', intensity: 'moderate' }])) },
-    tournamentDraws: {}, tournamentLife: { championHistory: [], drawAudit: [], lastViewedDraw: null }, flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, playerCareer: { weeklyEvents: [], conversations: [], promises: [], lastProcessedToken: null }, tacticalIntelligence: { plan: { serveTarget: 'body', rallyPlan: 'balanced', attackPattern: 'weakness', returnPlan: 'secondServePressure', riskMode: 'balanced' }, history: [], lastAppliedWeek: 0, analyst: 'Plano equilibrado ativo.' }, visualAcademy: { activeScene: 'office', lastViewedScene: 'office', environmentAudit: [], premiumMode: true }, newsroom: { items: [], pressQuestions: [], sentiment: 62, reputationPulse: 0, lastProcessedToken: null, lastInterviewWeek: 0 }, mobileUX: { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] }, commercialCareer: { ledger: [], activeSponsors: [], sponsorPipeline: [], investorOffers: [], travelBudgetMode: 'balanced', riskScore: 24, cashflowTrend: 0, lastProcessedToken: null, boardConfidence: 64 }, generationalCareer: { seasonHistory: [], retirementLog: [], hallOfFame: [], prospects: [], records: {}, legacyScore: 0, lastProcessedSeason: null, simulationAudit: [] }, releaseCandidate: { readiness: 82, safeMode: false, lastAuditToken: null, auditLog: [], checklist: {}, storeChecklist: {}, legal: { privacyOffline: true, creditsReady: true, dataSale: false }, stress: { weeksProjected: 52, status: 'pending', issues: [] } }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
+    tournamentDraws: {}, tournamentLife: { championHistory: [], drawAudit: [], lastViewedDraw: null }, flags: { ownerSetupComplete: false, safeMode: false }, tournamentIdentity: { spotlightHistory: [], lastViewedEvent: null }, broadcast: { presentationMode: 'pro', replayArchive: [], lastAudit: null }, playerCareer: { weeklyEvents: [], conversations: [], promises: [], lastProcessedToken: null }, tacticalIntelligence: { plan: { serveTarget: 'body', rallyPlan: 'balanced', attackPattern: 'weakness', returnPlan: 'secondServePressure', riskMode: 'balanced' }, history: [], lastAppliedWeek: 0, analyst: 'Plano equilibrado ativo.' }, visualAcademy: { activeScene: 'office', lastViewedScene: 'office', environmentAudit: [], premiumMode: true }, newsroom: { items: [], pressQuestions: [], sentiment: 62, reputationPulse: 0, lastProcessedToken: null, lastInterviewWeek: 0 }, mobileUX: { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] }, commercialCareer: { ledger: [], activeSponsors: [], sponsorPipeline: [], investorOffers: [], travelBudgetMode: 'balanced', riskScore: 24, cashflowTrend: 0, lastProcessedToken: null, boardConfidence: 64 }, generationalCareer: { seasonHistory: [], retirementLog: [], hallOfFame: [], prospects: [], records: {}, legacyScore: 0, lastProcessedSeason: null, simulationAudit: [] }, releaseCandidate: { readiness: 82, safeMode: false, lastAuditToken: null, auditLog: [], checklist: {}, storeChecklist: {}, legal: { privacyOffline: true, creditsReady: true, dataSale: false }, stress: { weeksProjected: 52, status: 'pending', issues: [] } }, qualityPolish: { score: 88, lastAuditToken: null, auditLog: [], issues: [], deviceMatrix: ['320x568','360x640','390x844','412x915','tablet','desktop'], checks: { tapTargets: true, scrollSafety: true, assetFallbacks: true, saveRecovery: true, legalAccess: true }, safeLaunchMode: true }, releaseHardening: { score: 90, lastAuditToken: null, auditLog: [], cacheStatus: 'pending', diagnostics: [], recoveryMode: 'guarded', pwaResetRecommended: false, startupChecks: { buildVisible: true, saveWritable: true, cacheVersioned: true, mobileSafeArea: true, fallbackAssets: true } }, ui: { currentTab: 'dashboard', lastStableTab: 'dashboard' }
   };
 }
 
@@ -159,6 +159,33 @@ export function migrateSave(data) {
   state.releaseCandidate.stress.weeksProjected ??= 52;
   state.releaseCandidate.stress.status ||= 'pending';
   state.releaseCandidate.stress.issues ||= [];
+  state.qualityPolish ||= { score: 88, lastAuditToken: null, auditLog: [], issues: [], deviceMatrix: ['320x568','360x640','390x844','412x915','tablet','desktop'], checks: { tapTargets: true, scrollSafety: true, assetFallbacks: true, saveRecovery: true, legalAccess: true }, safeLaunchMode: true };
+  state.qualityPolish.score ??= 88;
+  state.qualityPolish.lastAuditToken ??= null;
+  state.qualityPolish.auditLog ||= [];
+  state.qualityPolish.issues ||= [];
+  state.qualityPolish.deviceMatrix ||= ['320x568','360x640','390x844','412x915','tablet','desktop'];
+  state.qualityPolish.checks ||= { tapTargets: true, scrollSafety: true, assetFallbacks: true, saveRecovery: true, legalAccess: true };
+  state.qualityPolish.checks.tapTargets ??= true;
+  state.qualityPolish.checks.scrollSafety ??= true;
+  state.qualityPolish.checks.assetFallbacks ??= true;
+  state.qualityPolish.checks.saveRecovery ??= true;
+  state.qualityPolish.checks.legalAccess ??= true;
+  state.qualityPolish.safeLaunchMode ??= true;
+  state.releaseHardening ||= { score: 90, lastAuditToken: null, auditLog: [], cacheStatus: 'pending', diagnostics: [], recoveryMode: 'guarded', pwaResetRecommended: false, startupChecks: { buildVisible: true, saveWritable: true, cacheVersioned: true, mobileSafeArea: true, fallbackAssets: true } };
+  state.releaseHardening.score ??= 90;
+  state.releaseHardening.lastAuditToken ??= null;
+  state.releaseHardening.auditLog ||= [];
+  state.releaseHardening.cacheStatus ||= 'pending';
+  state.releaseHardening.diagnostics ||= [];
+  state.releaseHardening.recoveryMode ||= 'guarded';
+  state.releaseHardening.pwaResetRecommended ??= false;
+  state.releaseHardening.startupChecks ||= { buildVisible: true, saveWritable: true, cacheVersioned: true, mobileSafeArea: true, fallbackAssets: true };
+  state.releaseHardening.startupChecks.buildVisible ??= true;
+  state.releaseHardening.startupChecks.saveWritable ??= true;
+  state.releaseHardening.startupChecks.cacheVersioned ??= true;
+  state.releaseHardening.startupChecks.mobileSafeArea ??= true;
+  state.releaseHardening.startupChecks.fallbackAssets ??= true;
 
   state.trainingLab.plans ||= {}; state.trainingLab.lastReport ||= []; state.trainingLab.autoApply ??= true; state.trainingLab.cycle ||= 'balanced';
   state.staff ||= {};

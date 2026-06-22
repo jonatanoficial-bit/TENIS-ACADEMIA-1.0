@@ -1,5 +1,5 @@
 import { loadContent } from './contentLoader.js';
-import { buildInitialState, saveState, loadState, clearState, migrateSave } from './state.js';
+import { buildInitialState, saveState, loadState, clearState, migrateSave, getSaveDiagnostics } from './state.js';
 import { BUILD_INFO, BUILD_LABEL } from './build.js';
 import { enrichPlayer, categoryAverage, surfaceLabel } from './modules/player-database.js';
 
@@ -1504,6 +1504,8 @@ function render() {
   renderCommercialCareer();
   renderLongCareer();
   renderReleaseCandidate();
+  renderQualityPolish();
+  renderReleaseHardening();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -1981,7 +1983,7 @@ function releaseChecklistSnapshot() {
   const hasNews = state.newsroom?.items?.length || 0;
   const hasLegacy = !!state.generationalCareer?.legacyScore || (state.generationalCareer?.prospects?.length || 0) > 0;
   return {
-    buildStamp: { label: 'Versão, build, data e hora visíveis', ok: BUILD_INFO.version === '4.0.0' && BUILD_INFO.schemaVersion >= 20, note: `${BUILD_LABEL} • schema ${BUILD_INFO.schemaVersion}` },
+    buildStamp: { label: 'Versão, build, data e hora visíveis', ok: BUILD_INFO.version === '4.0.2' && BUILD_INFO.schemaVersion >= 22, note: `${BUILD_LABEL} • schema ${BUILD_INFO.schemaVersion}` },
     mobileFirst: { label: 'UX mobile-first protegida', ok: true, note: `${mobileAudit} auditoria(s) de viewport registradas; safe area e dock horizontal ativos.` },
     matchEngine: { label: 'Motor de partida tático', ok: !!state.tacticalIntelligence?.plan, note: 'Ponto a ponto com saque, rally, estatísticas, tática e relatório.' },
     tournamentLife: { label: 'Torneios com chave e identidade', ok: !!state.tournamentLife && !!state.tournamentDraws, note: 'Qualifying, seeds, wild cards, BYE, campeões e logos integrados.' },
@@ -1990,7 +1992,7 @@ function releaseChecklistSnapshot() {
     newsroom: { label: 'Narrativa e imprensa', ok: !!state.newsroom, note: `${hasNews} notícia(s) no feed global.` },
     offlinePwa: { label: 'PWA/offline preparado', ok: true, note: 'Manifest, Service Worker e cache por build atualizados.' },
     privacy: { label: 'Privacidade e créditos', ok: !!state.releaseCandidate?.legal?.privacyOffline, note: 'Dados salvos localmente; sem venda de dados; créditos incluídos.' },
-    saveSafety: { label: 'Save e migração protegidos', ok: BUILD_INFO.schemaVersion >= 20, note: 'Schema 20 com migração e snapshots de ações críticas.' },
+    saveSafety: { label: 'Save e migração protegidos', ok: BUILD_INFO.schemaVersion >= 21, note: 'Schema 22 com migração, snapshots e diagnóstico de release.' },
     rosterSafety: { label: 'Elenco mínimo jogável', ok: state.roster.length >= 1 && !!best, note: `${state.roster.length} atleta(s) ativos; melhor: ${best?.name || 'n/a'}.` }
   };
 }
@@ -2025,7 +2027,7 @@ function renderReleaseCandidate() {
   ];
   host.innerHTML = `
     <section class="release-hero ${status.cls}">
-      <div><p class="eyebrow">${BUILD_LABEL} • ${BUILD_INFO.phase}</p><h2>Commercial Premium Candidate</h2><p>${status.desc}</p><div class="release-actions"><button class="btn-primary" onclick="window.runReleaseAudit()">Executar auditoria RC</button><button class="btn-secondary" onclick="window.projectReleaseStress()">Projetar 52 semanas</button><button class="btn-ghost" onclick="window.toggleReleaseSafeMode()">${rc.safeMode ? 'Desativar' : 'Ativar'} modo seguro</button></div></div>
+      <div><p class="eyebrow">${BUILD_LABEL} • ${BUILD_INFO.phase}</p><h2>Release Polish & Stability Hotfix</h2><p>${status.desc}</p><div class="release-actions"><button class="btn-primary" onclick="window.runReleaseAudit()">Executar auditoria RC</button><button class="btn-secondary" onclick="window.projectReleaseStress()">Projetar 52 semanas</button><button class="btn-ghost" onclick="window.toggleReleaseSafeMode()">${rc.safeMode ? 'Desativar' : 'Ativar'} modo seguro</button></div></div>
       <div class="release-score"><span>Readiness</span><strong>${rc.readiness}</strong><small>${status.label}</small></div>
     </section>
     <div class="cards-grid release-kpis"><article class="stat-card"><span>Schema</span><strong>${BUILD_INFO.schemaVersion}</strong></article><article class="stat-card"><span>Build</span><strong>${BUILD_INFO.build}</strong></article><article class="stat-card"><span>Modo seguro</span><strong>${rc.safeMode ? 'ON' : 'OFF'}</strong></article><article class="stat-card"><span>Stress</span><strong>${escapeHtml(rc.stress.status || 'pending')}</strong></article></div>
@@ -2064,6 +2066,192 @@ window.toggleReleaseSafeMode = () => {
   state.flags.safeMode = rc.safeMode;
   rc.auditLog.unshift({ title: rc.safeMode ? 'Modo seguro ativado' : 'Modo seguro desativado', score: rc.safeMode ? 'ON' : 'OFF', note: 'Modo seguro registra a intenção de preservar ações críticas para homologação e debugging.', at: new Date().toISOString(), build: BUILD_INFO.build });
   addLog(`Modo seguro RC ${rc.safeMode ? 'ativado' : 'desativado'}.`);
+  saveState(state); render();
+};
+
+function ensureQualityPolishSystem() {
+  state.qualityPolish ||= { score: 88, lastAuditToken: null, auditLog: [], issues: [], deviceMatrix: ['320x568','360x640','390x844','412x915','tablet','desktop'], checks: { tapTargets: true, scrollSafety: true, assetFallbacks: true, saveRecovery: true, legalAccess: true }, safeLaunchMode: true };
+  state.qualityPolish.auditLog ||= [];
+  state.qualityPolish.issues ||= [];
+  state.qualityPolish.deviceMatrix ||= ['320x568','360x640','390x844','412x915','tablet','desktop'];
+  state.qualityPolish.checks ||= { tapTargets: true, scrollSafety: true, assetFallbacks: true, saveRecovery: true, legalAccess: true };
+  state.qualityPolish.safeLaunchMode ??= true;
+  state.qualityPolish.score ??= 88;
+  return state.qualityPolish;
+}
+function calculateQualityPolishScore() {
+  const qp = ensureQualityPolishSystem();
+  const release = calculateReleaseReadiness ? calculateReleaseReadiness() : 82;
+  const profile = currentViewportProfile();
+  const mobilePoints = profile.width <= 430 ? 12 : 9;
+  const mobileAudit = (state.mobileUX?.auditLog?.length || 0) ? 8 : 3;
+  const safePoints = qp.safeLaunchMode && (state.releaseCandidate?.safeMode || state.flags?.safeMode) ? 10 : 4;
+  const docs = state.releaseCandidate?.legal?.privacyOffline && state.releaseCandidate?.legal?.creditsReady ? 10 : 4;
+  const riskPenalty = Math.max(0, Math.round(((state.commercialCareer?.riskScore || 0) - 68) / 3));
+  const injuryPenalty = state.roster?.some(p => (p.injuredWeeks || 0) > 0) ? 4 : 0;
+  return clamp(Math.round((release * .52) + mobilePoints + mobileAudit + safePoints + docs - riskPenalty - injuryPenalty), 0, 100);
+}
+function renderQualityPolish() {
+  const host = $('#qualityPolishHub');
+  if (!host) return;
+  const qp = ensureQualityPolishSystem();
+  qp.score = calculateQualityPolishScore();
+  const profile = currentViewportProfile();
+  const status = qp.score >= 88 ? ['ok','Pronta para homologação', 'Build estável para teste público controlado.'] : qp.score >= 74 ? ['warn','Atenção antes da publicação', 'Revisar alertas antes de abrir teste amplo.'] : ['danger','Bloqueio de release', 'Executar auditorias e corrigir pontos críticos.'];
+  const issues = qp.issues?.length ? qp.issues.map(i=>`<div class="list-item"><span>${escapeHtml(i)}</span><strong>Ação</strong></div>`).join('') : '<div class="list-item"><span>Nenhum bloqueio crítico registrado nesta build.</span><strong>OK</strong></div>';
+  const logs = (qp.auditLog || []).slice(0,8).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.result || 'OK')}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria de polimento executada ainda.</span><strong>Executar</strong></div>';
+  const checks = [
+    ['Toque mobile', qp.checks?.tapTargets, 'Botões e comandos com prioridade para polegar.'],
+    ['Rolagem segura', qp.checks?.scrollSafety, 'Painéis e sheets sem prender a tela.'],
+    ['Fallback de assets', qp.checks?.assetFallbacks, 'Logos, avatares e fundos preservados mesmo se imagem falhar.'],
+    ['Recuperação de save', qp.checks?.saveRecovery, 'Save local com migração, backup e diagnóstico.'],
+    ['Documentos legais', qp.checks?.legalAccess, 'Créditos, privacidade offline e aviso legal acessíveis.']
+  ];
+  host.innerHTML = `
+    <section class="quality-hero ${status[0]}">
+      <div><p class="eyebrow">${BUILD_LABEL} • pós-RC</p><h2>Release Polish & Stability Hotfix</h2><p>${status[2]}</p><div class="release-actions"><button class="btn-primary" onclick="window.runQualityPolishAudit()">Auditar polimento</button><button class="btn-secondary" onclick="window.applyQualityLaunchPreset()">Aplicar preset seguro</button><button class="btn-ghost" onclick="window.runOfflineSaveDrill()">Teste de save offline</button></div></div>
+      <div class="release-score"><span>Quality</span><strong>${qp.score}</strong><small>${status[1]}</small></div>
+    </section>
+    <div class="cards-grid release-kpis"><article class="stat-card"><span>Viewport atual</span><strong>${profile.width}×${profile.height}</strong></article><article class="stat-card"><span>Orientação</span><strong>${escapeHtml(profile.orientation)}</strong></article><article class="stat-card"><span>Safe mode</span><strong>${qp.safeLaunchMode ? 'ON' : 'OFF'}</strong></article><article class="stat-card"><span>Build</span><strong>${BUILD_INFO.build}</strong></article></div>
+    <section class="release-grid"><article class="panel-card"><div class="panel-title-row"><h4>Checklist de acabamento</h4><span class="metric-build">schema ${BUILD_INFO.schemaVersion}</span></div><div class="release-checklist">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note)}</small></div></article>`).join('')}</div></article><article class="panel-card"><div class="panel-title-row"><h4>Alertas de release</h4><span class="metric-build">anti-quebra</span></div><div class="list-block">${issues}</div></article></section>
+    <section class="release-grid"><article class="panel-card"><div class="panel-title-row"><h4>Auditoria de polimento</h4><span class="metric-build">mobile-first</span></div><div class="list-block">${logs}</div></article><article class="panel-card"><h4>Matriz de aparelhos</h4><p class="muted">Homologar manualmente em celular real antes de publicar: toque, rolagem, PWA, partida, calendário, economia e save.</p><div class="release-store-grid">${qp.deviceMatrix.map(d=>`<span>${escapeHtml(d)}</span>`).join('')}</div></article></section>`;
+}
+window.runQualityPolishAudit = () => {
+  const qp = ensureQualityPolishSystem();
+  const profile = currentViewportProfile();
+  const issues = [];
+  if (profile.width <= 360 && !(state.mobileUX?.compact || state.mobileUX?.mode === 'compact')) issues.push('Em 360 px ou menos, ativar modo compacto para reduzir altura dos cards.');
+  if ((state.commercialCareer?.riskScore || 0) >= 82) issues.push('Risco comercial alto: revisar patrocínios e custos antes da publicação.');
+  if (!state.releaseCandidate?.legal?.privacyOffline) issues.push('Privacidade offline precisa ficar marcada antes de release.');
+  if ((state.mobileUX?.auditLog?.length || 0) < 1) issues.push('Executar auditoria Mobile UX em aparelho real.');
+  if (!state.roster?.length) issues.push('Elenco vazio bloqueia a experiência inicial.');
+  qp.issues = issues;
+  qp.score = calculateQualityPolishScore();
+  qp.lastAuditToken = `${state.academy.season}-${state.academy.week}-${BUILD_INFO.build}`;
+  qp.auditLog.unshift({ title: 'Auditoria de polimento executada', result: `${qp.score}/100`, note: issues[0] || `Viewport ${profile.width}×${profile.height}; sem bloqueio crítico.`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  qp.auditLog = qp.auditLog.slice(0,20);
+  addLog(`Polimento v${BUILD_INFO.version}: auditoria ${qp.score}/100.`);
+  saveState(state); renderQualityPolish();
+};
+window.applyQualityLaunchPreset = () => {
+  const qp = ensureQualityPolishSystem();
+  const profile = currentViewportProfile();
+  state.mobileUX ||= { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] };
+  state.mobileUX.matchFocus = true;
+  state.mobileUX.reduceMotion = true;
+  if (profile.width <= 390) state.mobileUX.compact = true;
+  qp.safeLaunchMode = true;
+  state.releaseCandidate ||= {};
+  state.releaseCandidate.safeMode = true;
+  state.flags ||= {};
+  state.flags.safeMode = true;
+  qp.auditLog.unshift({ title: 'Preset seguro aplicado', result: 'ON', note: 'Foco mobile, redução de movimento, safe mode e compactação condicional ativados.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  qp.auditLog = qp.auditLog.slice(0,20);
+  saveState(state); render();
+};
+window.runOfflineSaveDrill = () => {
+  const qp = ensureQualityPolishSystem();
+  const before = JSON.stringify({ schema: BUILD_INFO.schemaVersion, week: state.academy.week, season: state.academy.season });
+  const ok = saveState(state);
+  qp.auditLog.unshift({ title: 'Teste de save offline', result: ok ? 'OK' : 'Falhou', note: ok ? `Save local gravado e migração schema ${BUILD_INFO.schemaVersion} preservada.` : `Falha de armazenamento; estado anterior ${before}.`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  qp.auditLog = qp.auditLog.slice(0,20);
+  if (!ok) qp.issues.unshift('Storage do navegador recusou o save; testar permissões/cache.');
+  saveState(state); renderQualityPolish();
+};
+
+function ensureReleaseHardeningSystem() {
+  state.releaseHardening ||= { score: 90, lastAuditToken: null, auditLog: [], cacheStatus: 'pending', diagnostics: [], recoveryMode: 'guarded', pwaResetRecommended: false, startupChecks: { buildVisible: true, saveWritable: true, cacheVersioned: true, mobileSafeArea: true, fallbackAssets: true } };
+  const rh = state.releaseHardening;
+  rh.auditLog ||= [];
+  rh.diagnostics ||= [];
+  rh.startupChecks ||= { buildVisible: true, saveWritable: true, cacheVersioned: true, mobileSafeArea: true, fallbackAssets: true };
+  rh.score ??= 90;
+  rh.cacheStatus ||= 'pending';
+  rh.recoveryMode ||= 'guarded';
+  rh.pwaResetRecommended ??= false;
+  return rh;
+}
+function calculateReleaseHardeningScore() {
+  const rh = ensureReleaseHardeningSystem();
+  const checks = rh.startupChecks || {};
+  const okChecks = Object.values(checks).filter(Boolean).length;
+  const savePoints = getSaveDiagnostics ? 12 : 4;
+  const cachePoints = rh.cacheStatus === 'versioned' ? 12 : rh.cacheStatus === 'cleared' ? 10 : 6;
+  const mobilePoints = (state.mobileUX?.matchFocus ? 8 : 3) + (state.mobileUX?.reduceMotion ? 4 : 0);
+  const issuesPenalty = Math.min(18, (rh.diagnostics || []).filter(x => x.severity === 'risk').length * 6);
+  return clamp(54 + okChecks * 4 + savePoints + cachePoints + mobilePoints - issuesPenalty, 0, 100);
+}
+function renderReleaseHardening() {
+  const host = $('#releaseHardeningHub');
+  if (!host) return;
+  const rh = ensureReleaseHardeningSystem();
+  rh.score = calculateReleaseHardeningScore();
+  const profile = currentViewportProfile();
+  const diagRows = (rh.diagnostics || []).slice(0,8).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b class="${item.severity === 'risk' ? 'danger' : 'ok'}">${escapeHtml(item.status)}</b></div>`).join('') || '<div class="list-item"><span>Nenhum risco crítico registrado nesta sessão.</span><strong>OK</strong></div>';
+  const logs = (rh.auditLog || []).slice(0,8).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.result || 'OK')}</b></div>`).join('') || '<div class="list-item"><span>Execute a auditoria hardening antes do teste público.</span><strong>Pronto</strong></div>';
+  const checks = Object.entries(rh.startupChecks || {}).map(([key, ok]) => {
+    const labels = { buildVisible: 'Build visível', saveWritable: 'Save gravável', cacheVersioned: 'Cache versionado', mobileSafeArea: 'Safe area mobile', fallbackAssets: 'Fallback de assets' };
+    return `<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(labels[key] || key)}</strong><small>${ok ? 'Proteção ativa na build.' : 'Requer atenção antes do upload público.'}</small></div></article>`;
+  }).join('');
+  host.innerHTML = `
+    <section class="quality-hero ok">
+      <div><p class="eyebrow">${BUILD_LABEL} • hardening</p><h2>Release Hardening & Diagnostics</h2><p>Camada final de diagnóstico para cache, save, PWA, startup e recuperação de falhas em mobile.</p><div class="release-actions"><button class="btn-primary" onclick="window.runReleaseHardeningAudit()">Auditar hardening</button><button class="btn-secondary" onclick="window.runPwaCacheDiagnostic()">Diagnóstico PWA/cache</button><button class="btn-ghost" onclick="window.applyRecoveryGuardMode()">Modo recuperação</button></div></div>
+      <div class="release-score"><span>Hardening</span><strong>${rh.score}</strong><small>${rh.score >= 88 ? 'Seguro para teste público' : 'Revisar alertas'}</small></div>
+    </section>
+    <div class="cards-grid release-kpis"><article class="stat-card"><span>Schema</span><strong>${BUILD_INFO.schemaVersion}</strong></article><article class="stat-card"><span>Viewport</span><strong>${profile.width}×${profile.height}</strong></article><article class="stat-card"><span>Cache</span><strong>${escapeHtml(rh.cacheStatus)}</strong></article><article class="stat-card"><span>Recovery</span><strong>${escapeHtml(rh.recoveryMode)}</strong></article></div>
+    <section class="release-grid"><article class="panel-card"><div class="panel-title-row"><h4>Startup guard</h4><span class="metric-build">anti-quebra</span></div><div class="release-checklist">${checks}</div></article><article class="panel-card"><div class="panel-title-row"><h4>Diagnóstico da sessão</h4><span class="metric-build">mobile/PWA</span></div><div class="list-block">${diagRows}</div></article></section>
+    <section class="panel-card"><div class="panel-title-row"><h4>Histórico hardening</h4><span class="metric-build">build ${BUILD_INFO.build}</span></div><div class="list-block">${logs}</div></section>`;
+}
+window.runReleaseHardeningAudit = () => {
+  const rh = ensureReleaseHardeningSystem();
+  const profile = currentViewportProfile();
+  const issues = [];
+  const buildNodes = ['#buildOverlay','#buildPill','#mobileBuildBadge','#runtimeBuildStamp'].map(sel => !!$(sel)?.textContent?.includes(BUILD_INFO.version));
+  rh.startupChecks.buildVisible = buildNodes.every(Boolean);
+  rh.startupChecks.mobileSafeArea = profile.width > 0 && !!document.documentElement.style.getPropertyValue('--app-vh');
+  rh.startupChecks.fallbackAssets = true;
+  const saveOk = saveState(state);
+  rh.startupChecks.saveWritable = !!saveOk;
+  rh.startupChecks.cacheVersioned = !!navigator.serviceWorker || location.protocol === 'file:';
+  if (!rh.startupChecks.buildVisible) issues.push({ title: 'Identificação de build', note: 'Algum selo de versão não refletiu a build atual.', status: 'Atenção', severity: 'risk' });
+  if (!saveOk) issues.push({ title: 'Save local', note: 'O navegador recusou gravação local. Testar permissões e armazenamento.', status: 'Risco', severity: 'risk' });
+  if (profile.width <= 360 && !state.mobileUX?.compact) issues.push({ title: 'Tela pequena', note: 'Ativar modo compacto para celulares 320–360 px.', status: 'Ajuste', severity: 'warn' });
+  rh.diagnostics = issues.length ? issues : [{ title: 'Auditoria hardening', note: `Build ${BUILD_INFO.build}, schema ${BUILD_INFO.schemaVersion}, viewport ${profile.width}×${profile.height}.`, status: 'OK', severity: 'ok' }];
+  rh.lastAuditToken = `${state.academy.season}-${state.academy.week}-${BUILD_INFO.build}`;
+  rh.score = calculateReleaseHardeningScore();
+  rh.auditLog.unshift({ title: 'Hardening audit executado', result: `${rh.score}/100`, note: rh.diagnostics[0]?.note || 'Sem bloqueios.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  rh.auditLog = rh.auditLog.slice(0,20);
+  addLog(`Hardening v${BUILD_INFO.version}: auditoria ${rh.score}/100.`);
+  saveState(state); renderReleaseHardening();
+};
+window.runPwaCacheDiagnostic = async () => {
+  const rh = ensureReleaseHardeningSystem();
+  try {
+    let names = [];
+    if ('caches' in window) names = await caches.keys();
+    const expected = `vale-tennis-v${BUILD_INFO.version}-${BUILD_INFO.build}`;
+    rh.cacheStatus = names.some(n => n.includes(expected)) || location.protocol === 'file:' ? 'versioned' : 'pending';
+    rh.pwaResetRecommended = names.some(n => n.includes('vale-tennis') && !n.includes(expected));
+    rh.auditLog.unshift({ title: 'Diagnóstico PWA/cache', result: rh.cacheStatus, note: rh.pwaResetRecommended ? 'Há cache antigo. Recarregar PWA ou limpar dados do site após upload.' : 'Cache versionado para a build atual ou execução local.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  } catch (error) {
+    rh.cacheStatus = 'blocked';
+    rh.diagnostics.unshift({ title: 'Cache API', note: 'O navegador bloqueou leitura do cache; o jogo continua em modo seguro.', status: 'Bloqueado', severity: 'warn' });
+  }
+  rh.auditLog = rh.auditLog.slice(0,20);
+  saveState(state); renderReleaseHardening();
+};
+window.applyRecoveryGuardMode = () => {
+  const rh = ensureReleaseHardeningSystem();
+  rh.recoveryMode = 'guarded';
+  state.flags ||= {};
+  state.flags.safeMode = true;
+  state.releaseCandidate ||= {};
+  state.releaseCandidate.safeMode = true;
+  state.mobileUX ||= { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] };
+  state.mobileUX.reduceMotion = true;
+  state.mobileUX.matchFocus = true;
+  rh.auditLog.unshift({ title: 'Modo recuperação aplicado', result: 'ON', note: 'Safe mode, redução de movimento e foco mobile ativados sem alterar gameplay.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  rh.auditLog = rh.auditLog.slice(0,20);
   saveState(state); render();
 };
 

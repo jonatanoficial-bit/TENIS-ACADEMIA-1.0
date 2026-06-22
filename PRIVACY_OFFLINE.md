@@ -1,4 +1,4 @@
-# Privacidade e dados — Vale Games Tennis Manager v4.0.0
+# Privacidade e dados — Vale Games Tennis Manager v4.0.1
 
 Esta build foi projetada como jogo offline/PWA sem backend obrigatório.
 

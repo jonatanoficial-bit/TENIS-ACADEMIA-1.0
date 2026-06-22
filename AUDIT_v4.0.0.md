@@ -63,12 +63,3 @@ Preparar a build como candidata comercial/pública, preservando todas as fases a
 ## Limitação honesta
 
 Teste headless/browser automatizado pode ser bloqueado neste ambiente. A homologação final precisa ser feita manualmente em Android, iOS, desktop e PWA instalada.
-
-## Resultado da auditoria local
-
-- JavaScript principal validado sem erro de sintaxe.
-- `js/state.js` validado sem erro de sintaxe.
-- `js/build.js` validado sem erro de sintaxe.
-- JSONs principais carregados corretamente.
-- HTML sem IDs duplicados.
-- Aba Release RC presente no menu desktop e dock mobile.

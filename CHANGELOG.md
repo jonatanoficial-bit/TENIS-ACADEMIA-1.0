@@ -1,13 +1,27 @@
+# Vale Games Tennis Manager v4.0.2
+
+Build `20260622-190812` — Release Hardening & Diagnostics.
+
 # Changelog
+
+## v4.0.2 — Release Polish & Stability Hotfix (20260622-183905)
+
+- Nova aba **Polimento** para auditoria pós-RC.
+- Adicionado estado persistente `qualityPolish` com score de qualidade, auditoria, matriz de aparelhos e checklist de acabamento.
+- Adicionado botão **Auditar polimento** com alertas de release.
+- Adicionado **Preset seguro** para teste público/mobile: foco na partida, redução de movimento, safe mode e compactação condicional.
+- Adicionado **Teste de save offline** para validar armazenamento local e migração.
+- Atualizada build para v4.0.2, build 20260622-183905 e schema 22.
+- Cache PWA isolado da v4.0.0.
+- Nenhum asset anterior removido.
 
 ## v4.0.0 — Commercial Premium Candidate (20260622-181655)
 
-- Fase de release candidata comercial.
-- Adicionada aba **Release RC** com readiness, auditoria RC, checklist de publicação, stress test projetado e modo seguro.
-- Incluídos documentos de preparação comercial: `AUDIT_v4.0.0.md`, `RELEASE_CHECKLIST_v4.0.0.md`, `PRIVACY_OFFLINE.md`, `CREDITS.md` e `LEGAL_NOTICE.md`.
-- Migração automática para schema 20.
-- Versão, build, data e hora atualizadas para v4.0.0 em UI, `build-info.json`, `js/build.js` e Service Worker.
-- Preservados todos os assets, módulos e sistemas das versões anteriores.
+- Criada aba Release RC com score de prontidão comercial.
+- Adicionados checklist de loja/teste público, privacidade offline, créditos e aviso legal.
+- Criado stress test projetivo de 52 semanas.
+- Migrado save para schema 20.
+- Preparada build para homologação manual em mobile, desktop e PWA.
 
 ## v3.16.0 — Long Career Simulation (20260622-180153)
 
@@ -127,8 +141,6 @@ Build: 20260620-121454 • Data/hora visível: 20/06/2026 12:14:54
 - Proteção anti-quebra por ponto: rollback do estado da partida e do atleta em caso de erro.
 - Schema de save atualizado para 9 mantendo compatibilidade com versões anteriores.
 - Auditoria mobile-first para 320px+, touch, rolagem e conteúdo sem overflow crítico.
-
-# Changelog
 
 ## v3.2.0 — Living Players Database + Mobile Profiles
 - Build 20260609-131845, visível no app.
