@@ -1,5 +1,30 @@
 # Changelog
 
+## v4.0.0 — Commercial Premium Candidate (20260622-181655)
+
+- Fase de release candidata comercial.
+- Adicionada aba **Release RC** com readiness, auditoria RC, checklist de publicação, stress test projetado e modo seguro.
+- Incluídos documentos de preparação comercial: `AUDIT_v4.0.0.md`, `RELEASE_CHECKLIST_v4.0.0.md`, `PRIVACY_OFFLINE.md`, `CREDITS.md` e `LEGAL_NOTICE.md`.
+- Migração automática para schema 20.
+- Versão, build, data e hora atualizadas para v4.0.0 em UI, `build-info.json`, `js/build.js` e Service Worker.
+- Preservados todos os assets, módulos e sistemas das versões anteriores.
+
+## v3.16.0 — Long Career Simulation (20260622-180153)
+
+- Nova aba **Legado**.
+- Adicionado sistema persistente `generationalCareer`.
+- Adicionadas fases de carreira: Promessa, Ascensão, Auge, Veterano e Declínio.
+- Adicionado envelhecimento anual com desenvolvimento, auge e declínio.
+- Adicionado risco de aposentadoria por idade, saúde, overall e lesões.
+- Adicionado Hall da Fama da academia.
+- Adicionados recordes históricos de ranking, pico de overall, títulos e longevidade.
+- Adicionado pipeline Next Gen com prospectos promovíveis.
+- Adicionada linha do tempo de temporadas arquivadas.
+- Adicionada auditoria de simulação longa e projeção de temporada.
+- Migração de save para schema 19.
+- Mantida versão/build/data/hora visíveis.
+- Mantido foco mobile-first e proteção anti-quebra.
+
 ## v3.15.0 — Economy, Sponsors & Commercial Career (20260622-171608)
 
 - Nova aba `Economia` / Diretoria Financeira.

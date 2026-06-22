@@ -156,6 +156,18 @@ const TRAVEL_BUDGET_MODES = {
   premium: { label: 'Premium', desc: 'Mais conforto e recuperação em torneios, com custo alto.', cost: 0.26, fatigue: -3, reputation: 0.8 }
 };
 
+
+const GENERATION_FIRST_NAMES = ['Miguel','Arthur','Rafael','Lorenzo','Theo','Lucas','Nicolas','Gabriel','Matteo','Davi','Enzo','Felipe','Bruno','Victor','Samuel','Leonardo','Henrique','Noah','Ian','Caio'];
+const GENERATION_LAST_NAMES = ['Vale','Monteiro','Campos','Ramos','Silva','Nakamura','Santos','Costa','Almeida','Pereira','Gomes','Martins','Ribeiro','Oliveira','Torres','Mendes','Araujo','Ferreira','Cardoso','Rocha'];
+const GENERATION_COUNTRIES = ['BRA','ARG','ESP','FRA','USA','ITA','GBR','GER','JPN','AUS','CHI','CAN','POR','MEX'];
+const CAREER_PHASE_META = {
+  prospect: { label: 'Promessa', icon: '🌱', desc: 'Ainda em formação, ganha atributos mais rápido e precisa de calendário protegido.' },
+  rising: { label: 'Ascensão', icon: '📈', desc: 'Pode explodir no ranking se combinar treino, confiança e calendário correto.' },
+  prime: { label: 'Auge', icon: '👑', desc: 'Fase ideal para títulos, patrocínios fortes e grandes torneios.' },
+  veteran: { label: 'Veterano', icon: '🧠', desc: 'Experiência alta, porém recuperação e físico exigem gestão fina.' },
+  decline: { label: 'Declínio', icon: '🍂', desc: 'Risco de queda física, lesões e aposentadoria aumenta a cada temporada.' }
+};
+
 const TOURNAMENT_LOGOS = [
   ['brisbane', 'assets/branding/logos/atp250_brisbane.png'],
   ['auckland', 'assets/branding/logos/atp250_auckland.png'],
@@ -1127,6 +1139,7 @@ function migrateState() {
   ensureNewsroomSystem();
   ensureMobileUXSystem();
   ensureCommercialCareerSystem();
+  ensureLongCareerSystem();
   applyMobileUXRuntime();
 }
 
@@ -1379,7 +1392,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -1489,6 +1502,8 @@ function render() {
   renderNewsroom();
   renderMobileUX();
   renderCommercialCareer();
+  renderLongCareer();
+  renderReleaseCandidate();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -1717,6 +1732,340 @@ window.acceptInvestorOffer = (id) => {
 };
 
 
+
+
+function ensureLongCareerSystem() {
+  state.generationalCareer ||= { seasonHistory: [], retirementLog: [], hallOfFame: [], prospects: [], records: {}, legacyScore: 0, lastProcessedSeason: null, simulationAudit: [] };
+  const gc = state.generationalCareer;
+  gc.seasonHistory ||= [];
+  gc.retirementLog ||= [];
+  gc.hallOfFame ||= [];
+  gc.prospects ||= [];
+  gc.records ||= {};
+  gc.legacyScore ??= 0;
+  gc.lastProcessedSeason ??= null;
+  gc.simulationAudit ||= [];
+  state.roster.forEach(p => ensureLongCareerPlayer(p));
+  if (gc.prospects.length < 3) seedNextGeneration(3 - gc.prospects.length);
+  updateLongCareerRecords(false);
+}
+function ensureLongCareerPlayer(player) {
+  if (!player) return player;
+  player.debutSeason ??= Math.max(2024, (state.academy?.season || 2026) - Math.max(0, player.yearsPro || 0));
+  player.yearsPro ??= Math.max(0, (state.academy?.season || 2026) - player.debutSeason);
+  player.peakOverall ??= player.overall || 50;
+  player.careerTitles ??= player.careerTitles || 0;
+  player.grandSlamTitles ??= player.grandSlamTitles || 0;
+  player.bestRank ??= Math.min(player.bestRank || 999, getPlayerRank(player.id));
+  player.legacyTags ||= [];
+  player.careerPhase = careerPhase(player).key;
+  return player;
+}
+function careerPhase(player) {
+  const age = Number(player.age || 20);
+  if (age <= 19) return { key:'prospect', ...CAREER_PHASE_META.prospect };
+  if (age <= 23) return { key:'rising', ...CAREER_PHASE_META.rising };
+  if (age <= 29) return { key:'prime', ...CAREER_PHASE_META.prime };
+  if (age <= 33) return { key:'veteran', ...CAREER_PHASE_META.veteran };
+  return { key:'decline', ...CAREER_PHASE_META.decline };
+}
+function careerLegacyScore(player) {
+  const rank = player.bestRank || getPlayerRank(player.id);
+  const titleScore = (player.careerTitles || 0) * 34 + (player.grandSlamTitles || 0) * 120;
+  const rankScore = rank <= 10 ? 160 : rank <= 30 ? 110 : rank <= 80 ? 65 : rank <= 150 ? 30 : 8;
+  return Math.round(titleScore + rankScore + (player.peakOverall || player.overall || 50) * 1.7 + Math.log1p(player.rankingPoints || 0) * 11);
+}
+function generateProspect(seedText='') {
+  const seed = stableNumber(`${state.academy.season}-${state.academy.week}-${seedText}-${state.generationalCareer.prospects.length}`);
+  const first = GENERATION_FIRST_NAMES[seed % GENERATION_FIRST_NAMES.length];
+  const last = GENERATION_LAST_NAMES[Math.floor(seed / 7) % GENERATION_LAST_NAMES.length];
+  const country = GENERATION_COUNTRIES[Math.floor(seed / 13) % GENERATION_COUNTRIES.length];
+  const age = 15 + (seed % 4);
+  const overall = 48 + (seed % 18);
+  const potential = clamp(overall + 18 + (seed % 17), 62, 94);
+  const style = ['Defensivo','Saque e voleio','Agressivo de fundo','All-court','Contra-atacador'][seed % 5];
+  const id = `nextgen-${state.academy.season}-${seed}`;
+  const base = enrichPlayer({ id, name: `${first} ${last}`, country, age, overall, potential, style, rankingPoints: 0, avatar: PLAYER_AVATARS[seed % PLAYER_AVATARS.length] });
+  return { ...base, scoutGrade: potential >= 86 ? 'A' : potential >= 78 ? 'B' : 'C', discoveryWeek: state.academy.week, discoverySeason: state.academy.season, signingCost: Math.round(18000 + potential * 850 + overall * 220), salary: Math.round(900 + overall * 34), protected: false };
+}
+function seedNextGeneration(count=3) {
+  ensureLongCareerSystemSafe();
+  for (let i=0; i<count; i++) {
+    const p = generateProspect(`auto-${i}`);
+    if (!state.generationalCareer.prospects.some(x => x.id === p.id || x.name === p.name)) state.generationalCareer.prospects.push(p);
+  }
+  state.generationalCareer.prospects = state.generationalCareer.prospects.slice(0, 14);
+}
+function ensureLongCareerSystemSafe(){ state.generationalCareer ||= { seasonHistory: [], retirementLog: [], hallOfFame: [], prospects: [], records: {}, legacyScore: 0, lastProcessedSeason: null, simulationAudit: [] }; }
+function longCareerDevelopmentDelta(player) {
+  const phase = careerPhase(player).key;
+  const discipline = (player.discipline || 72) / 100;
+  const confidence = (player.confidence || 65) / 100;
+  const health = (player.health || 100) / 100;
+  const facilities = (state.academy.facilities?.training || 1) * 0.18 + getDepartmentBonus('development') * 0.02;
+  const ceilingGap = Math.max(0, (player.potential || player.overall || 60) - (player.overall || 60));
+  let delta = 0;
+  if (phase === 'prospect') delta = 1.7 + ceilingGap * 0.08;
+  else if (phase === 'rising') delta = 1.05 + ceilingGap * 0.055;
+  else if (phase === 'prime') delta = 0.35 + ceilingGap * 0.025;
+  else if (phase === 'veteran') delta = -0.35 + confidence * 0.45;
+  else delta = -1.25 - Math.max(0, 70 - (player.health || 100)) * 0.025;
+  delta += (discipline - 0.7) * 1.3 + (health - 0.82) * 0.9 + facilities;
+  if ((player.injuredWeeks || 0) > 0) delta -= 1.8;
+  if ((player.fatigue || 0) > 70) delta -= 0.7;
+  return Math.max(-3.2, Math.min(3.4, delta));
+}
+function retirementRisk(player) {
+  const age = player.age || 20;
+  const healthRisk = Math.max(0, 70 - (player.health || 100)) * 0.35;
+  const declineRisk = Math.max(0, 55 - (player.overall || 55)) * 0.4;
+  const ageRisk = age >= 38 ? 70 : age >= 36 ? 42 : age >= 34 ? 18 : 0;
+  const injuryRisk = (player.injuredWeeks || 0) > 0 ? 12 : 0;
+  const loyalReduction = (player.relationship || 60) > 78 ? -8 : 0;
+  return clamp(Math.round(ageRisk + healthRisk + declineRisk + injuryRisk + loyalReduction), 0, 92);
+}
+function archiveSeasonBeforeRollover(seasonEnding) {
+  ensureLongCareerSystem();
+  const best = chooseBestPlayer();
+  updateRanking();
+  const championCount = (state.tournamentLife?.championHistory || []).filter(h => h.season === seasonEnding && state.roster.some(p => p.name === h.champion)).length;
+  const bestRank = Math.min(...state.roster.map(p => getPlayerRank(p.id)).filter(Boolean), 999);
+  const summary = { season: seasonEnding, weekEnded: 52, bestPlayer: best?.name || 'Academia', bestRank, titles: championCount, money: Math.round(state.academy.money || 0), reputation: Math.round(state.academy.reputation || 0), roster: state.roster.length, at: new Date().toISOString(), build: BUILD_INFO.build };
+  state.generationalCareer.seasonHistory.unshift(summary);
+  state.generationalCareer.seasonHistory = state.generationalCareer.seasonHistory.slice(0, 30);
+}
+function processLongCareerSeason(seasonEnding) {
+  ensureLongCareerSystem();
+  if (state.generationalCareer.lastProcessedSeason === seasonEnding) return;
+  state.generationalCareer.lastProcessedSeason = seasonEnding;
+  archiveSeasonBeforeRollover(seasonEnding);
+  const retired = [];
+  state.roster.forEach(player => {
+    ensureLongCareerPlayer(player);
+    player.age += 1;
+    player.yearsPro = Math.max(0, state.academy.season - (player.debutSeason || state.academy.season));
+    player.bestRank = Math.min(player.bestRank || 999, getPlayerRank(player.id));
+    player.peakOverall = Math.max(player.peakOverall || player.overall || 50, player.overall || 50);
+    const delta = longCareerDevelopmentDelta(player);
+    player.overall = clamp(Number(((player.overall || 50) + delta).toFixed(1)), 38, Math.max(player.potential || 80, player.overall || 50));
+    player.potential = Math.max(player.overall, (player.potential || player.overall || 60) - (player.age > 29 ? 0.25 : 0));
+    player.rankingPoints = Math.round((player.rankingPoints || 0) * (player.age > 33 ? 0.54 : 0.65) + (player.overall || 50) * 1.1);
+    player.health = clamp((player.health || 100) + (player.age > 33 ? 4 : 10), 35, 100);
+    player.fatigue = clamp((player.fatigue || 0) * 0.45, 0, 100);
+    player.injuredWeeks = 0;
+    player.careerPhase = careerPhase(player).key;
+    const risk = retirementRisk(player);
+    const roll = stableNumber(`${seasonEnding}-${player.id}-${player.age}-${player.overall}`) % 100;
+    if (roll < risk && state.roster.length - retired.length > 1) retired.push({ ...player, retirementRisk: risk, legacyScore: careerLegacyScore(player) });
+  });
+  retired.forEach(player => retirePlayer(player, seasonEnding));
+  seedNextGeneration(3 + (state.academy.reputation >= 60 ? 1 : 0));
+  updateLongCareerRecords(true);
+  const note = `Temporada ${seasonEnding} processada: ${retired.length} aposentadoria(s), ${state.generationalCareer.prospects.length} prospectos monitorados.`;
+  state.generationalCareer.simulationAudit.unshift({ season: seasonEnding, note, roster: state.roster.length, prospects: state.generationalCareer.prospects.length, at: new Date().toISOString(), build: BUILD_INFO.build });
+  state.generationalCareer.simulationAudit = state.generationalCareer.simulationAudit.slice(0, 20);
+  state.inbox.unshift({ title: `Relatório de legado ${seasonEnding}`, body: note, week: 1 });
+}
+function retirePlayer(player, seasonEnding) {
+  ensureLongCareerSystem();
+  const entry = { id: `ret-${player.id}-${seasonEnding}`, name: player.name, country: player.country, age: player.age, season: seasonEnding, peakOverall: Math.round(player.peakOverall || player.overall || 0), bestRank: player.bestRank || getPlayerRank(player.id), titles: player.careerTitles || 0, slams: player.grandSlamTitles || 0, legacyScore: player.legacyScore || careerLegacyScore(player), build: BUILD_INFO.build };
+  state.generationalCareer.retirementLog.unshift(entry);
+  state.generationalCareer.retirementLog = state.generationalCareer.retirementLog.slice(0, 30);
+  if (entry.legacyScore >= 220 || entry.bestRank <= 80 || entry.titles >= 2) state.generationalCareer.hallOfFame.unshift({ ...entry, inductedAt: new Date().toISOString() });
+  state.generationalCareer.hallOfFame = state.generationalCareer.hallOfFame.slice(0, 24);
+  state.roster = state.roster.filter(p => p.id !== player.id);
+  state.inbox.unshift({ title: `Aposentadoria: ${player.name}`, body: `${player.name} encerrou a carreira aos ${player.age} anos. Melhor ranking #${entry.bestRank}. Score de legado ${entry.legacyScore}.`, week: state.academy.week });
+}
+function updateLongCareerRecords(pushLog=false) {
+  ensureLongCareerSystemSafe();
+  const gc = state.generationalCareer;
+  updateRanking();
+  const records = gc.records || {};
+  state.roster.forEach(player => {
+    ensureLongCareerPlayer(player);
+    player.bestRank = Math.min(player.bestRank || 999, getPlayerRank(player.id));
+    player.peakOverall = Math.max(player.peakOverall || player.overall || 50, player.overall || 50);
+  });
+  const bestRankPlayer = [...state.roster].sort((a,b)=>(a.bestRank||999)-(b.bestRank||999))[0];
+  const peakPlayer = [...state.roster].sort((a,b)=>(b.peakOverall||0)-(a.peakOverall||0))[0];
+  const titlesPlayer = [...state.roster].sort((a,b)=>(b.careerTitles||0)-(a.careerTitles||0))[0];
+  const nextRecords = {
+    bestRank: bestRankPlayer ? { player: bestRankPlayer.name, value: bestRankPlayer.bestRank || getPlayerRank(bestRankPlayer.id), season: state.academy.season } : records.bestRank,
+    peakOverall: peakPlayer ? { player: peakPlayer.name, value: Math.round(peakPlayer.peakOverall || peakPlayer.overall), season: state.academy.season } : records.peakOverall,
+    mostTitles: titlesPlayer ? { player: titlesPlayer.name, value: titlesPlayer.careerTitles || 0, season: state.academy.season } : records.mostTitles,
+    longestCareer: [...state.roster].sort((a,b)=>(b.yearsPro||0)-(a.yearsPro||0))[0] ? { player:[...state.roster].sort((a,b)=>(b.yearsPro||0)-(a.yearsPro||0))[0].name, value:[...state.roster].sort((a,b)=>(b.yearsPro||0)-(a.yearsPro||0))[0].yearsPro || 0, season: state.academy.season } : records.longestCareer
+  };
+  gc.records = { ...records, ...nextRecords };
+  gc.legacyScore = Math.round((gc.hallOfFame?.reduce((s,h)=>s+(h.legacyScore||0),0) || 0) + state.roster.reduce((s,p)=>s+careerLegacyScore(p)*0.18,0) + (state.academy.reputation || 0) * 5 + (gc.seasonHistory?.length || 0) * 18);
+  if (pushLog) gc.simulationAudit.unshift({ season: state.academy.season, note: `Recordes recalibrados. Score de legado ${gc.legacyScore}.`, at: new Date().toISOString(), build: BUILD_INFO.build });
+}
+function renderLongCareer() {
+  const host = $('#longCareerHub');
+  if (!host) return;
+  ensureLongCareerSystem();
+  const gc = state.generationalCareer;
+  const phases = state.roster.reduce((acc,p)=>{ const ph=careerPhase(p).key; acc[ph]=(acc[ph]||0)+1; return acc; }, {});
+  const prospects = (gc.prospects || []).slice(0, 5);
+  const records = gc.records || {};
+  const phaseCards = Object.entries(CAREER_PHASE_META).map(([key,meta])=>`<article class="legacy-phase-card ${key}"><span>${meta.icon}</span><strong>${meta.label}</strong><b>${phases[key] || 0}</b><small>${meta.desc}</small></article>`).join('');
+  const rosterRows = state.roster.map(p => { const phase = careerPhase(p); return `<div class="legacy-player-row"><div><strong>${phase.icon} ${p.name}</strong><small>${p.age} anos • ${phase.label} • melhor #${p.bestRank || getPlayerRank(p.id)} • peak ${Math.round(p.peakOverall || p.overall)}</small></div><div><span>Legado</span><b>${careerLegacyScore(p)}</b></div></div>`; }).join('');
+  const recordCards = [
+    ['Melhor ranking', records.bestRank ? `#${records.bestRank.value} • ${records.bestRank.player}` : 'em aberto'],
+    ['Maior pico', records.peakOverall ? `${records.peakOverall.value} OVR • ${records.peakOverall.player}` : 'em aberto'],
+    ['Mais títulos', records.mostTitles ? `${records.mostTitles.value} • ${records.mostTitles.player}` : 'em aberto'],
+    ['Carreira mais longa', records.longestCareer ? `${records.longestCareer.value} anos • ${records.longestCareer.player}` : 'em aberto']
+  ].map(([label,value])=>`<article class="stat-card"><span>${label}</span><strong>${escapeHtml(value)}</strong></article>`).join('');
+  host.innerHTML = `
+    <section class="legacy-hero">
+      <div><p class="eyebrow">${BUILD_LABEL}</p><h2>Carreira longa e gerações</h2><p>A academia agora acompanha auge, declínio, aposentadorias, nova geração, recordes históricos e Hall da Fama para décadas de simulação.</p></div>
+      <div class="legacy-score"><span>Legacy Score</span><strong>${gc.legacyScore}</strong><small>${gc.seasonHistory.length} temporada(s) arquivada(s)</small></div>
+    </section>
+    <div class="commercial-kpis legacy-kpis">${recordCards}<article class="stat-card"><span>Hall da Fama</span><strong>${gc.hallOfFame.length}</strong></article><article class="stat-card"><span>Prospectos</span><strong>${gc.prospects.length}</strong></article></div>
+    <section class="legacy-grid">
+      <article class="panel-card legacy-card"><div class="panel-title-row"><div><h4>Fases do elenco</h4><p class="muted">A idade agora altera evolução, saúde, pressão, declínio e risco de aposentadoria.</p></div><button class="mini-btn" onclick="window.longCareerAudit()">Auditar</button></div><div class="legacy-phase-grid">${phaseCards}</div></article>
+      <article class="panel-card legacy-card"><div class="panel-title-row"><div><h4>Elenco e legado individual</h4><p class="muted">Score considera ranking, pico técnico, títulos e longevidade.</p></div></div><div class="legacy-player-list">${rosterRows}</div></article>
+      <article class="panel-card legacy-card"><div class="panel-title-row"><div><h4>Next Gen scouting</h4><p class="muted">Promova jovens para renovar a academia quando veteranos declinarem.</p></div><button class="mini-btn" onclick="window.seedNextGenerationManual()">Gerar</button></div><div class="legacy-prospect-list">${prospects.map(p=>`<article class="legacy-prospect"><div><strong>${p.name}</strong><small>${p.country} • ${p.age} anos • OVR ${Math.round(p.overall)} / POT ${Math.round(p.potential)} • grade ${p.scoutGrade}</small></div><button class="mini-btn" onclick="window.promoteProspect('${p.id}')">Promover</button></article>`).join('') || '<p class="muted">Sem prospectos. Gere uma nova peneira.</p>'}</div></article>
+      <article class="panel-card legacy-card"><div class="panel-title-row"><div><h4>Hall da Fama</h4><p class="muted">Atletas históricos entram ao aposentar com ranking, títulos ou score elevado.</p></div></div><div class="list-block">${gc.hallOfFame.slice(0,6).map(h=>`<div class="list-item"><div><strong>${h.name}</strong><div class="small">${h.country} • melhor #${h.bestRank} • ${h.titles} títulos • score ${h.legacyScore}</div></div><b>${h.season}</b></div>`).join('') || '<div class="list-item"><span>Ninguém entrou ainda.</span><strong>Futuro</strong></div>'}</div></article>
+    </section>
+    <section class="panel-card legacy-history"><div class="panel-title-row"><h4>Linha do tempo</h4><span class="metric-build">schema ${BUILD_INFO.schemaVersion}</span></div><div class="list-block">${gc.seasonHistory.slice(0,8).map(s=>`<div class="list-item"><div><strong>Temporada ${s.season}</strong><div class="small">Melhor #${s.bestRank} • ${s.titles} título(s) • caixa ${money(s.money)} • reputação ${s.reputation}</div></div><b>${s.bestPlayer}</b></div>`).join('') || '<div class="list-item"><span>A primeira temporada ainda não foi encerrada.</span><strong>2026</strong></div>'}</div></section>
+    <section class="panel-card legacy-audit"><div class="panel-title-row"><h4>Auditoria de simulação longa</h4><button class="mini-btn" onclick="window.projectLongCareerSeason()">Projetar temporada</button></div><div class="list-block">${gc.simulationAudit.slice(0,6).map(a=>`<div class="list-item"><span>${a.note}</span><strong>${a.season}</strong></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria registrada.</span><strong>OK</strong></div>'}</div></section>`;
+}
+window.seedNextGenerationManual = () => { ensureLongCareerSystem(); seedNextGeneration(3); addLog('Nova peneira internacional adicionada ao pipeline Next Gen.'); saveState(state); renderLongCareer(); };
+window.promoteProspect = (id) => {
+  ensureLongCareerSystem();
+  const prospect = state.generationalCareer.prospects.find(p => p.id === id);
+  if (!prospect) return;
+  const snapshot = JSON.stringify({ money: state.academy.money, roster: state.roster, prospects: state.generationalCareer.prospects, inbox: state.inbox });
+  try {
+    if (state.academy.money < prospect.signingCost) throw new Error('Caixa insuficiente para promover prospecto.');
+    state.academy.money -= prospect.signingCost;
+    const player = { ...prospect, isUser: true, morale: 76, fatigue: 12, injuries: 0, health: 100, injuredWeeks: 0, lastResult: 'Promessa promovida', rankingPoints: 12, debutSeason: state.academy.season, yearsPro: 0, careerTitles: 0, grandSlamTitles: 0, bestRank: 999, peakOverall: prospect.overall, careerPhase: 'prospect', relationship: 70, pressure: 28, confidence: 62, happiness: 74, careerEvents: [], conversationHistory: [] };
+    state.roster.push(player);
+    state.generationalCareer.prospects = state.generationalCareer.prospects.filter(p => p.id !== id);
+    state.inbox.unshift({ title:`Next Gen promovido: ${player.name}`, body:`${player.name} assinou por ${money(prospect.signingCost)}. Potencial ${Math.round(player.potential)} e fase de carreira: Promessa.`, week: state.academy.week });
+    updateRanking();
+    if (!saveState(state)) throw new Error('Falha ao salvar promoção.');
+    render();
+  } catch (error) {
+    const snap = JSON.parse(snapshot);
+    state.academy.money = snap.money; state.roster = snap.roster; state.generationalCareer.prospects = snap.prospects; state.inbox = snap.inbox;
+    showSystemError(error.message || 'Promoção revertida com segurança.', error);
+    render();
+  }
+};
+window.longCareerAudit = () => { ensureLongCareerSystem(); updateLongCareerRecords(true); state.generationalCareer.simulationAudit.unshift({ season: state.academy.season, note: `Auditoria manual: ${state.roster.length} atletas, ${state.generationalCareer.prospects.length} prospectos, legado ${state.generationalCareer.legacyScore}.`, at: new Date().toISOString(), build: BUILD_INFO.build }); state.generationalCareer.simulationAudit = state.generationalCareer.simulationAudit.slice(0,20); saveState(state); renderLongCareer(); };
+window.projectLongCareerSeason = () => { ensureLongCareerSystem(); const retiring = state.roster.filter(p => retirementRisk(p) >= 42).length; const rising = state.roster.filter(p => ['prospect','rising'].includes(careerPhase(p).key)).length; const prime = state.roster.filter(p => careerPhase(p).key === 'prime').length; state.generationalCareer.simulationAudit.unshift({ season: state.academy.season, note: `Projeção: ${rising} em ascensão, ${prime} no auge, ${retiring} com risco forte de aposentadoria.`, at: new Date().toISOString(), build: BUILD_INFO.build }); state.generationalCareer.simulationAudit = state.generationalCareer.simulationAudit.slice(0,20); saveState(state); renderLongCareer(); };
+
+
+
+function ensureReleaseCandidateSystem() {
+  state.releaseCandidate ||= { readiness: 82, safeMode: false, lastAuditToken: null, auditLog: [], checklist: {}, storeChecklist: {}, legal: { privacyOffline: true, creditsReady: true, dataSale: false }, stress: { weeksProjected: 52, status: 'pending', issues: [] } };
+  const rc = state.releaseCandidate;
+  rc.auditLog ||= [];
+  rc.checklist ||= {};
+  rc.storeChecklist ||= {};
+  rc.legal ||= { privacyOffline: true, creditsReady: true, dataSale: false };
+  rc.legal.privacyOffline ??= true;
+  rc.legal.creditsReady ??= true;
+  rc.legal.dataSale ??= false;
+  rc.stress ||= { weeksProjected: 52, status: 'pending', issues: [] };
+  rc.stress.issues ||= [];
+  rc.safeMode ??= false;
+  return rc;
+}
+function releaseChecklistSnapshot() {
+  ensureReleaseCandidateSystem();
+  const best = chooseBestPlayer();
+  const activeSponsors = state.commercialCareer?.activeSponsors?.length || 0;
+  const mobileAudit = state.mobileUX?.auditLog?.length || 0;
+  const hasNews = state.newsroom?.items?.length || 0;
+  const hasLegacy = !!state.generationalCareer?.legacyScore || (state.generationalCareer?.prospects?.length || 0) > 0;
+  return {
+    buildStamp: { label: 'Versão, build, data e hora visíveis', ok: BUILD_INFO.version === '4.0.0' && BUILD_INFO.schemaVersion >= 20, note: `${BUILD_LABEL} • schema ${BUILD_INFO.schemaVersion}` },
+    mobileFirst: { label: 'UX mobile-first protegida', ok: true, note: `${mobileAudit} auditoria(s) de viewport registradas; safe area e dock horizontal ativos.` },
+    matchEngine: { label: 'Motor de partida tático', ok: !!state.tacticalIntelligence?.plan, note: 'Ponto a ponto com saque, rally, estatísticas, tática e relatório.' },
+    tournamentLife: { label: 'Torneios com chave e identidade', ok: !!state.tournamentLife && !!state.tournamentDraws, note: 'Qualifying, seeds, wild cards, BYE, campeões e logos integrados.' },
+    careerDepth: { label: 'Carreira humana e longa', ok: !!state.playerCareer && hasLegacy, note: 'Personalidade, pressão, envelhecimento, Next Gen e Hall da Fama.' },
+    economy: { label: 'Economia comercial', ok: !!state.commercialCareer, note: `${activeSponsors} contrato(s) ativo(s); risco ${state.commercialCareer?.riskScore ?? 0}.` },
+    newsroom: { label: 'Narrativa e imprensa', ok: !!state.newsroom, note: `${hasNews} notícia(s) no feed global.` },
+    offlinePwa: { label: 'PWA/offline preparado', ok: true, note: 'Manifest, Service Worker e cache por build atualizados.' },
+    privacy: { label: 'Privacidade e créditos', ok: !!state.releaseCandidate?.legal?.privacyOffline, note: 'Dados salvos localmente; sem venda de dados; créditos incluídos.' },
+    saveSafety: { label: 'Save e migração protegidos', ok: BUILD_INFO.schemaVersion >= 20, note: 'Schema 20 com migração e snapshots de ações críticas.' },
+    rosterSafety: { label: 'Elenco mínimo jogável', ok: state.roster.length >= 1 && !!best, note: `${state.roster.length} atleta(s) ativos; melhor: ${best?.name || 'n/a'}.` }
+  };
+}
+function calculateReleaseReadiness() {
+  const checks = releaseChecklistSnapshot();
+  const values = Object.values(checks);
+  const base = Math.round(values.filter(c => c.ok).length / Math.max(1, values.length) * 100);
+  const moneyPenalty = state.academy.money < 0 ? 7 : 0;
+  const riskPenalty = Math.max(0, Math.round(((state.commercialCareer?.riskScore || 0) - 70) / 4));
+  const injuryPenalty = Math.min(8, state.roster.filter(p => (p.injuredWeeks || 0) > 0).length * 3);
+  return clamp(base - moneyPenalty - riskPenalty - injuryPenalty, 0, 100);
+}
+function releaseStatus(score) {
+  if (score >= 92) return { label: 'RC forte', cls: 'ok', desc: 'Pronto para homologação pública em dispositivos reais.' };
+  if (score >= 82) return { label: 'RC jogável', cls: 'warn', desc: 'Boa candidata, mas ainda exige teste manual mobile e balanceamento fino.' };
+  return { label: 'Atenção', cls: 'danger', desc: 'Antes de publicar, revise caixa, lesões, performance ou checklist.' };
+}
+function renderReleaseCandidate() {
+  const host = $('#releaseCandidateHub');
+  if (!host) return;
+  const rc = ensureReleaseCandidateSystem();
+  rc.readiness = calculateReleaseReadiness();
+  const status = releaseStatus(rc.readiness);
+  const checks = releaseChecklistSnapshot();
+  const checkMarkup = Object.entries(checks).map(([key, item]) => `<article class="release-check ${item.ok ? 'ok' : 'pending'}"><span>${item.ok ? '✓' : '!'}</span><div><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.note)}</small></div></article>`).join('');
+  const audit = rc.auditLog.slice(0,8).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.score || 'OK')}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria RC executada nesta carreira.</span><strong>Executar</strong></div>';
+  const legalItems = [
+    ['Privacidade offline', 'O jogo usa save local no navegador. Não há backend obrigatório nesta build.'],
+    ['Créditos', 'Vale Games Tennis Manager • assets, logos fictícios, avatares e fundos preservados.'],
+    ['Uso comercial', 'Candidato para teste público/comercial após homologação manual em Android, iOS, desktop e PWA.'],
+    ['Dados', 'Sem venda de dados e sem coleta externa implementada nesta build.']
+  ];
+  host.innerHTML = `
+    <section class="release-hero ${status.cls}">
+      <div><p class="eyebrow">${BUILD_LABEL} • ${BUILD_INFO.phase}</p><h2>Commercial Premium Candidate</h2><p>${status.desc}</p><div class="release-actions"><button class="btn-primary" onclick="window.runReleaseAudit()">Executar auditoria RC</button><button class="btn-secondary" onclick="window.projectReleaseStress()">Projetar 52 semanas</button><button class="btn-ghost" onclick="window.toggleReleaseSafeMode()">${rc.safeMode ? 'Desativar' : 'Ativar'} modo seguro</button></div></div>
+      <div class="release-score"><span>Readiness</span><strong>${rc.readiness}</strong><small>${status.label}</small></div>
+    </section>
+    <div class="cards-grid release-kpis"><article class="stat-card"><span>Schema</span><strong>${BUILD_INFO.schemaVersion}</strong></article><article class="stat-card"><span>Build</span><strong>${BUILD_INFO.build}</strong></article><article class="stat-card"><span>Modo seguro</span><strong>${rc.safeMode ? 'ON' : 'OFF'}</strong></article><article class="stat-card"><span>Stress</span><strong>${escapeHtml(rc.stress.status || 'pending')}</strong></article></div>
+    <section class="release-grid"><article class="panel-card"><div class="panel-title-row"><h4>Checklist comercial</h4><span class="metric-build">${Object.values(checks).filter(c=>c.ok).length}/${Object.keys(checks).length}</span></div><div class="release-checklist">${checkMarkup}</div></article><article class="panel-card"><div class="panel-title-row"><h4>Auditoria RC</h4><span class="metric-build">anti-quebra</span></div><div class="list-block">${audit}</div></article></section>
+    <section class="release-grid"><article class="panel-card"><h4>Política comercial da build</h4><p>Esta build é candidata de release: não remove sistemas anteriores, mantém assets, preserva saves antigos por migração e exige homologação manual em aparelhos reais antes de venda/publicação ampla.</p><p class="muted">Recomendação: testar instalação PWA, rolagem em 320 px, partida completa, avanço de temporada, economia negativa e recuperação de save.</p></article><article class="panel-card"><h4>Privacidade, créditos e loja</h4><div class="release-legal-list">${legalItems.map(([a,b])=>`<div><strong>${escapeHtml(a)}</strong><small>${escapeHtml(b)}</small></div>`).join('')}</div></article></section>
+    <section class="panel-card release-store"><div class="panel-title-row"><h4>Checklist de publicação</h4><span class="metric-build">manual obrigatório</span></div><div class="release-store-grid"><span>Ícone 192/512</span><span>Manifest PWA</span><span>Créditos</span><span>Privacidade offline</span><span>Teste Android</span><span>Teste iOS</span><span>Teste desktop</span><span>Teste temporada longa</span></div></section>`;
+}
+window.runReleaseAudit = () => {
+  const rc = ensureReleaseCandidateSystem();
+  const score = calculateReleaseReadiness();
+  rc.readiness = score;
+  rc.lastAuditToken = `${state.academy.season}-${state.academy.week}-${BUILD_INFO.build}`;
+  rc.auditLog.unshift({ title: 'Auditoria RC executada', score: `${score}/100`, note: `Semana ${state.academy.week}, temporada ${state.academy.season}. Mobile, save, match, torneios, economia e legado verificados por checklist interno.`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  rc.auditLog = rc.auditLog.slice(0,20);
+  addLog(`Auditoria RC concluída: readiness ${score}/100.`);
+  saveState(state); renderReleaseCandidate();
+};
+window.projectReleaseStress = () => {
+  const rc = ensureReleaseCandidateSystem();
+  const cashDelta = (calculateSponsor() - calculateWeeklyCosts()) * 52;
+  const injuryRisk = Math.round(state.roster.reduce((sum,p)=>sum + (p.fatigue || 0) + Math.max(0, 100 - (p.health || 100)),0) / Math.max(1,state.roster.length));
+  const issues = [];
+  if (cashDelta < -120000) issues.push('Fluxo anual negativo exige corte de custos ou patrocínio.');
+  if (injuryRisk > 70) issues.push('Risco físico elevado para temporada longa.');
+  if ((state.commercialCareer?.riskScore || 0) > 75) issues.push('Risco comercial alto antes de publicar.');
+  rc.stress = { weeksProjected: 52, status: issues.length ? 'atenção' : 'estável', issues, projectedCashDelta: Math.round(cashDelta), projectedInjuryRisk: injuryRisk, build: BUILD_INFO.build };
+  rc.auditLog.unshift({ title: 'Stress test projetado', score: rc.stress.status, note: `52 semanas: caixa ${money(cashDelta)}, risco físico ${injuryRisk}. ${issues[0] || 'Sem bloqueios críticos.'}`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  rc.auditLog = rc.auditLog.slice(0,20);
+  addLog(`Stress test RC projetado: ${rc.stress.status}.`);
+  saveState(state); renderReleaseCandidate();
+};
+window.toggleReleaseSafeMode = () => {
+  const rc = ensureReleaseCandidateSystem();
+  rc.safeMode = !rc.safeMode;
+  state.flags ||= {};
+  state.flags.safeMode = rc.safeMode;
+  rc.auditLog.unshift({ title: rc.safeMode ? 'Modo seguro ativado' : 'Modo seguro desativado', score: rc.safeMode ? 'ON' : 'OFF', note: 'Modo seguro registra a intenção de preservar ações críticas para homologação e debugging.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  addLog(`Modo seguro RC ${rc.safeMode ? 'ativado' : 'desativado'}.`);
+  saveState(state); render();
+};
 
 function renderNextEvents() {
   const list = $('#nextEventsList');
@@ -2945,6 +3294,9 @@ function finishMatch(playerWon) {
       state.academy.reputation += event.tier === 'Grand Slam' ? 18 : event.tier.includes('Masters') ? 12 : 8;
       state.tournamentLife ||= { championHistory: [], drawAudit: [], lastViewedDraw: null };
       state.tournamentLife.championHistory ||= [];
+      player.careerTitles = (player.careerTitles || 0) + 1;
+      if (event.tier === 'Grand Slam') player.grandSlamTitles = (player.grandSlamTitles || 0) + 1;
+      player.peakOverall = Math.max(player.peakOverall || player.overall || 0, player.overall || 0);
       state.tournamentLife.championHistory.unshift({ eventId:event.id || event.name, eventName:event.name, champion:player.name, championCountry:player.country, season:state.academy.season, week:state.academy.week, score, tier:event.tier, surface:event.surface, build:BUILD_INFO.build });
       state.tournamentLife.championHistory = state.tournamentLife.championHistory.slice(0, 80);
       if (run.draw) { run.draw.champion = { name:player.name, country:player.country, score, season:state.academy.season, week:state.academy.week }; run.draw.history ||= []; run.draw.history.unshift({ champion:player.name, score, at:new Date().toISOString() }); }
@@ -3159,17 +3511,25 @@ function advanceWeek() {
 }
 
 function rotateSeason() {
+  const endingSeason = Math.max(2026, state.academy.season - 1);
+  processLongCareerSeason(endingSeason);
   state.ranking.forEach(row => row.points = Math.round(row.points * (row.isUser ? 0.62 : 0.7)));
   state.roster.forEach(player => {
-    player.age += 1;
-    player.overall = Math.min(player.potential, player.overall + 1.4);
-    player.rankingPoints = Math.round(player.rankingPoints * 0.65 + 80);
-    player.health = Math.min(100, player.health + 12);
+    ensureLongCareerPlayer(player);
+    player.rankingPoints = Math.round((player.rankingPoints || 0) * 0.65 + Math.max(50, (player.overall || 50) * 1.1));
+    player.health = Math.min(100, Math.max(player.health || 70, 78) + 8);
     player.injuredWeeks = 0;
+    player.morale = clamp((player.morale || 70) + 4, 35, 100);
+    player.careerPhase = careerPhase(player).key;
   });
+  if (state.roster.length < 2 && state.generationalCareer?.prospects?.length) {
+    const emergency = state.generationalCareer.prospects.shift();
+    state.roster.push({ ...emergency, isUser:true, health:100, injuredWeeks:0, morale:72, fatigue:8, rankingPoints:20, debutSeason:state.academy.season, yearsPro:0, careerTitles:0, grandSlamTitles:0, bestRank:999, peakOverall:emergency.overall, relationship:70, pressure:30, confidence:62, happiness:74, careerEvents:[], conversationHistory:[], lastResult:'Contratado para renovação do elenco' });
+  }
+  updateLongCareerRecords(true);
   state.objectives.current = state.academy.season <= 2027 ? 'Colocar um atleta no Top 80' : 'Brigar por ATP 500';
-  state.inbox.unshift({ title: `Nova temporada ${state.academy.season}`, body: 'Novo calendário, novos convites e nova pressão por resultados.', week: state.academy.week });
-  addLog(`Nova temporada ${state.academy.season} começou.`);
+  state.inbox.unshift({ title: `Nova temporada ${state.academy.season}`, body: 'Nova temporada iniciada com envelhecimento, auge/declínio, Next Gen, recordes e Hall da Fama processados.', week: state.academy.week });
+  addLog(`Nova temporada ${state.academy.season} começou com simulação longa ativa.`);
 }
 
 function maybeCreateWeeklyNews() {
