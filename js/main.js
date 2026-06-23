@@ -1103,6 +1103,7 @@ async function boot() {
   applyBuildMarkers();
   installMobileUXRuntime();
   installInputReliabilityRuntime();
+  installAccessibilityReadabilityRuntime();
   startCourtAnimation();
   drawCourt();
   render();
@@ -1405,7 +1406,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', input: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -1523,6 +1524,7 @@ function render() {
   renderQAAutomation();
   renderBrowserCompatibility();
   renderInputReliability();
+  renderAccessibilityReadability();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -2869,6 +2871,194 @@ window.exportInputReport = () => {
     document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
   } catch (error) { console.info('Input report fallback', payload, error); }
   saveState(state); renderInputReliability();
+};
+
+
+function ensureAccessibilityReadabilitySystem() {
+  state.accessibilityReadability ||= { score: 95, mode: 'auto', largeText: false, highContrast: false, readingMode: false, reducedTransparency: false, focusRing: true, ariaAudit: [], readabilityAudit: [], lastAuditToken: null, exportReady: false, environment: { colorScheme: 'dark', reducedMotion: false, textScale: 1, contrast: 'normal', focusVisible: true }, flags: { contrastGuard: true, textScaleGuard: true, focusGuard: true, ariaGuard: true } };
+  const ar = state.accessibilityReadability;
+  ar.mode ||= 'auto';
+  ar.score ??= 95;
+  ar.largeText ??= false;
+  ar.highContrast ??= false;
+  ar.readingMode ??= false;
+  ar.reducedTransparency ??= false;
+  ar.focusRing ??= true;
+  ar.ariaAudit ||= [];
+  ar.readabilityAudit ||= [];
+  ar.environment ||= { colorScheme: 'dark', reducedMotion: false, textScale: 1, contrast: 'normal', focusVisible: true };
+  ar.flags ||= { contrastGuard: true, textScaleGuard: true, focusGuard: true, ariaGuard: true };
+  return ar;
+}
+
+function accessibilityEnvironmentSnapshot() {
+  const root = document.documentElement;
+  const buttons = [...document.querySelectorAll('button, a, input, select, textarea')];
+  const unlabeled = buttons.filter(el => {
+    const text = (el.textContent || el.value || '').trim();
+    return !text && !el.getAttribute('aria-label') && !el.getAttribute('title');
+  }).length;
+  const textNodes = [...document.querySelectorAll('p, small, span, strong, button, label, h1, h2, h3, h4')].slice(0, 140);
+  const tinyText = textNodes.filter(el => {
+    const size = parseFloat(getComputedStyle(el).fontSize || '16');
+    const rect = el.getBoundingClientRect?.();
+    return rect && rect.width > 0 && rect.height > 0 && size < 12;
+  }).length;
+  const focusables = buttons.filter(el => !el.disabled && el.offsetParent !== null).length;
+  const colorScheme = window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !!state?.mobileUX?.reduceMotion;
+  return {
+    width: Math.round(window.innerWidth || root.clientWidth || 390),
+    height: Math.round(window.innerHeight || root.clientHeight || 720),
+    colorScheme,
+    reducedMotion,
+    textScale: state?.accessibilityReadability?.largeText ? 1.12 : 1,
+    contrast: state?.accessibilityReadability?.highContrast ? 'high' : 'normal',
+    focusVisible: !!state?.accessibilityReadability?.focusRing,
+    focusables,
+    unlabeled,
+    tinyText,
+    activeTab: state?.ui?.currentTab || 'dashboard',
+    at: new Date().toISOString()
+  };
+}
+
+function calculateAccessibilityScore() {
+  const ar = ensureAccessibilityReadabilitySystem();
+  const env = accessibilityEnvironmentSnapshot();
+  let score = 100;
+  if (env.unlabeled > 0) score -= Math.min(16, env.unlabeled * 3);
+  if (env.tinyText > 0) score -= Math.min(14, env.tinyText * 2);
+  if (!ar.focusRing) score -= 10;
+  if (!ar.highContrast && env.width <= 390) score -= 3;
+  if (ar.largeText) score += 3;
+  if (ar.highContrast) score += 3;
+  if (ar.readingMode) score += 2;
+  if (ar.reducedTransparency) score += 2;
+  return clamp(Math.round(score), 0, 100);
+}
+
+function applyAccessibilityReadabilityRuntime() {
+  if (!document?.body) return;
+  const ar = ensureAccessibilityReadabilitySystem();
+  const env = accessibilityEnvironmentSnapshot();
+  ar.environment = { colorScheme: env.colorScheme, reducedMotion: env.reducedMotion, textScale: ar.largeText ? 1.12 : 1, contrast: ar.highContrast ? 'high' : 'normal', focusVisible: !!ar.focusRing, width: env.width, height: env.height, unlabeled: env.unlabeled, tinyText: env.tinyText };
+  ar.score = calculateAccessibilityScore();
+  document.body.classList.toggle('a11y-large-text-ui', !!ar.largeText);
+  document.body.classList.toggle('a11y-high-contrast-ui', !!ar.highContrast);
+  document.body.classList.toggle('a11y-reading-mode-ui', !!ar.readingMode);
+  document.body.classList.toggle('a11y-reduced-transparency-ui', !!ar.reducedTransparency);
+  document.body.classList.toggle('a11y-focus-ring-ui', !!ar.focusRing);
+  document.documentElement.style.setProperty('--readability-font-scale', ar.largeText ? '1.12' : '1');
+  document.documentElement.dataset.contrast = ar.highContrast ? 'high' : 'normal';
+}
+
+function installAccessibilityReadabilityRuntime() {
+  const run = () => { try { applyAccessibilityReadabilityRuntime(); renderAccessibilityReadability(); } catch (error) { console.warn('Accessibility readability fallback', error); } };
+  window.addEventListener('resize', run, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(run, 180), { passive: true });
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', run);
+  run();
+}
+
+function renderAccessibilityReadability() {
+  const host = $('#accessibilityReadabilityHub');
+  if (!host || !state) return;
+  const ar = ensureAccessibilityReadabilitySystem();
+  const env = accessibilityEnvironmentSnapshot();
+  ar.environment = { colorScheme: env.colorScheme, reducedMotion: env.reducedMotion, textScale: ar.largeText ? 1.12 : 1, contrast: ar.highContrast ? 'high' : 'normal', focusVisible: !!ar.focusRing, width: env.width, height: env.height, unlabeled: env.unlabeled, tinyText: env.tinyText };
+  ar.score = calculateAccessibilityScore();
+  const status = ar.score >= 92 ? 'Pronto' : ar.score >= 78 ? 'Atenção' : 'Crítico';
+  const checks = [
+    { title: 'Contraste', status: ar.highContrast || env.width > 390 ? 'OK' : 'Atenção', note: ar.highContrast ? 'Alto contraste ativo.' : 'Contraste normal; alto contraste recomendado em celular pequeno.' },
+    { title: 'Escala de texto', status: env.tinyText === 0 || ar.largeText ? 'OK' : 'Atenção', note: ar.largeText ? 'Texto ampliado para leitura mobile.' : `${env.tinyText} textos muito pequenos detectados.` },
+    { title: 'Foco visível', status: ar.focusRing ? 'OK' : 'Risco', note: ar.focusRing ? 'Anel de foco reforçado para teclado/acessibilidade.' : 'Foco visual desativado.' },
+    { title: 'Labels/ARIA', status: env.unlabeled === 0 ? 'OK' : 'Atenção', note: env.unlabeled === 0 ? 'Controles principais possuem texto ou rótulo.' : `${env.unlabeled} controles sem texto/aria.` },
+    { title: 'Leitura limpa', status: ar.readingMode || ar.reducedTransparency ? 'OK' : 'Pendente', note: ar.readingMode ? 'Modo leitura ativo.' : 'Modo leitura opcional para telas pequenas.' }
+  ];
+  const checklist = checks.map(item => `<article class="release-check ${item.status === 'OK' ? 'ok' : item.status === 'Risco' ? 'danger' : 'pending'}"><span>${item.status === 'OK' ? '✓' : item.status === 'Risco' ? '!' : '•'}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.note)}</small></div><b>${escapeHtml(item.status)}</b></article>`).join('');
+  const logs = (ar.readabilityAudit || []).slice(0,8).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.result)}</b></div>`).join('') || '<div class="list-item"><span>Execute a auditoria de acessibilidade.</span><strong>Pendente</strong></div>';
+  host.innerHTML = `
+    <section class="quality-hero accessibility-hero ${ar.score >= 92 ? 'ok' : ar.score >= 78 ? 'warn' : 'danger'}">
+      <div><p class="eyebrow">v${BUILD_INFO.version} • Accessibility Readability</p><h2>Leitura segura, contraste e foco para teste público</h2><p>Central para reforçar legibilidade em celular pequeno, PWA instalado, desktop e uso por teclado/leitor de tela.</p></div>
+      <div class="release-score"><span>A11y Score</span><strong>${ar.score}</strong><small>${status}</small></div>
+    </section>
+    <div class="cards-grid release-kpis"><article class="stat-card"><span>Texto</span><strong>${ar.largeText ? 'Grande' : 'Normal'}</strong></article><article class="stat-card"><span>Contraste</span><strong>${ar.highContrast ? 'Alto' : 'Normal'}</strong></article><article class="stat-card"><span>Foco</span><strong>${ar.focusRing ? 'Visível' : 'Fraco'}</strong></article><article class="stat-card"><span>Viewport</span><strong>${env.width}×${env.height}</strong></article></div>
+    <div class="release-actions"><button class="btn-primary" onclick="window.runAccessibilityAudit()">Auditar acessibilidade</button><button class="btn-secondary" onclick="window.toggleReadingMode()">Modo leitura</button><button class="btn-secondary" onclick="window.toggleHighContrast()">Alto contraste</button><button class="btn-ghost" onclick="window.exportAccessibilityReport()">Exportar relatório</button></div>
+    <div class="release-actions secondary"><button class="mini-btn" onclick="window.toggleLargeText()">Texto grande</button><button class="mini-btn" onclick="window.toggleReducedTransparency()">Reduzir transparência</button><button class="mini-btn" onclick="window.toggleFocusRing()">Foco visível</button></div>
+    <section class="release-grid"><div><h4>Checklist de leitura</h4><div class="release-checklist">${checklist}</div></div><div><h4>Logs recentes</h4><div class="list-stack">${logs}</div></div></section>`;
+}
+
+window.runAccessibilityAudit = () => {
+  const ar = ensureAccessibilityReadabilitySystem();
+  const env = accessibilityEnvironmentSnapshot();
+  const aria = { title: 'Rótulos e foco', result: env.unlabeled === 0 ? 'OK' : 'Atenção', note: `${env.focusables} controles focáveis • ${env.unlabeled} sem rótulo`, at: env.at, build: BUILD_INFO.build };
+  const read = { title: 'Leitura e contraste', result: calculateAccessibilityScore() + '/100', note: `${env.tinyText} textos pequenos • contraste ${ar.highContrast ? 'alto' : 'normal'} • texto ${ar.largeText ? 'grande' : 'normal'}`, at: env.at, build: BUILD_INFO.build };
+  ar.ariaAudit.unshift(aria);
+  ar.readabilityAudit.unshift(read);
+  ar.ariaAudit = ar.ariaAudit.slice(0,16);
+  ar.readabilityAudit = ar.readabilityAudit.slice(0,16);
+  ar.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  ar.score = calculateAccessibilityScore();
+  ar.exportReady = true;
+  addLog(`Acessibilidade v${BUILD_INFO.version}: auditoria ${ar.score}/100.`);
+  saveState(state); renderAccessibilityReadability();
+};
+
+window.toggleReadingMode = () => {
+  const ar = ensureAccessibilityReadabilitySystem();
+  ar.readingMode = !ar.readingMode;
+  if (ar.readingMode) { ar.largeText = true; ar.reducedTransparency = true; }
+  applyAccessibilityReadabilityRuntime();
+  ar.readabilityAudit.unshift({ title: 'Modo leitura alterado', result: ar.readingMode ? 'ON' : 'OFF', note: ar.readingMode ? 'Texto ampliado e transparência reduzida.' : 'Interface visual padrão restaurada.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  addLog(`Modo leitura ${ar.readingMode ? 'ativado' : 'desativado'}.`);
+  saveState(state); render();
+};
+
+window.toggleHighContrast = () => {
+  const ar = ensureAccessibilityReadabilitySystem();
+  ar.highContrast = !ar.highContrast;
+  applyAccessibilityReadabilityRuntime();
+  ar.readabilityAudit.unshift({ title: 'Alto contraste alterado', result: ar.highContrast ? 'ON' : 'OFF', note: 'Ajuste visual sem alterar gameplay.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  saveState(state); renderAccessibilityReadability();
+};
+
+window.toggleLargeText = () => {
+  const ar = ensureAccessibilityReadabilitySystem();
+  ar.largeText = !ar.largeText;
+  applyAccessibilityReadabilityRuntime();
+  ar.readabilityAudit.unshift({ title: 'Escala de texto alterada', result: ar.largeText ? 'Grande' : 'Normal', note: 'Aplicado via variável --readability-font-scale.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  saveState(state); renderAccessibilityReadability();
+};
+
+window.toggleReducedTransparency = () => {
+  const ar = ensureAccessibilityReadabilitySystem();
+  ar.reducedTransparency = !ar.reducedTransparency;
+  applyAccessibilityReadabilityRuntime();
+  ar.readabilityAudit.unshift({ title: 'Transparência visual alterada', result: ar.reducedTransparency ? 'Reduzida' : 'Normal', note: 'Melhora leitura em telas com baixo brilho.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  saveState(state); renderAccessibilityReadability();
+};
+
+window.toggleFocusRing = () => {
+  const ar = ensureAccessibilityReadabilitySystem();
+  ar.focusRing = !ar.focusRing;
+  applyAccessibilityReadabilityRuntime();
+  ar.ariaAudit.unshift({ title: 'Foco visível alterado', result: ar.focusRing ? 'ON' : 'OFF', note: 'Afeta navegação por teclado e leitores de tela.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  saveState(state); renderAccessibilityReadability();
+};
+
+window.exportAccessibilityReport = () => {
+  const ar = ensureAccessibilityReadabilitySystem();
+  const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, generatedAt: new Date().toISOString(), score: calculateAccessibilityScore(), environment: accessibilityEnvironmentSnapshot(), ariaAudit: ar.ariaAudit, readabilityAudit: ar.readabilityAudit, settings: { largeText: ar.largeText, highContrast: ar.highContrast, readingMode: ar.readingMode, reducedTransparency: ar.reducedTransparency, focusRing: ar.focusRing } };
+  ar.readabilityAudit.unshift({ title: 'Relatório de acessibilidade gerado', result: 'JSON', note: 'Arquivo local preparado para homologação.', at: payload.generatedAt, build: BUILD_INFO.build });
+  try {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = `vale-tennis-a11y-${BUILD_INFO.version}-${BUILD_INFO.build}.json`;
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+  } catch (error) { console.info('Accessibility report fallback', payload, error); }
+  saveState(state); renderAccessibilityReadability();
 };
 
 function renderNextEvents() {

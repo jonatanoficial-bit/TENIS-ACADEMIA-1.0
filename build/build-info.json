@@ -1,10 +1,10 @@
 {
   "appName": "Vale Games Tennis Manager",
-  "version": "4.0.6",
-  "build": "20260623-102045",
-  "phase": "Input, Touch & Scroll Reliability Hotfix",
-  "builtAt": "2026-06-23T10:20:45-03:00",
+  "version": "4.0.7",
+  "build": "20260623-112101",
+  "phase": "Accessibility, Readability & Text Scaling Hotfix",
+  "builtAt": "2026-06-23T11:21:01-03:00",
   "date": "23/06/2026",
-  "time": "10:20:45",
-  "schemaVersion": 26
+  "time": "11:21:01",
+  "schemaVersion": 27
 }

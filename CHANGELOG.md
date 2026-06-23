@@ -1,4 +1,13 @@
 
+## v4.0.7 — Accessibility, Readability & Text Scaling Hotfix — build 20260623-112101
+- Adicionada aba Acessibilidade.
+- Adicionado sistema persistente `accessibilityReadability` com schema 27.
+- Incluídos modos de texto grande, alto contraste, modo leitura, redução de transparência e foco visível.
+- Incluída auditoria de rótulos/ARIA, texto pequeno, contraste e foco.
+- Incluída exportação local de relatório JSON de acessibilidade.
+- Atualizados build-info, Service Worker, manifest PWA, README e auditoria.
+
+
 
 ## v4.0.6 — Input, Touch & Scroll Reliability Hotfix — 20260623-102045
 - Nova aba **Toque/Rolagem** para diagnosticar input real no celular.

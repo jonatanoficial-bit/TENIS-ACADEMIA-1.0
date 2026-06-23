@@ -1208,3 +1208,41 @@ button, a, input, select, textarea, .tab-btn, .dock-btn, .mobile-quick-btn { tou
   .input-reliability-hub .release-actions > button { width: 100%; justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* v4.0.7 Accessibility, Readability & Text Scaling Hotfix */
+.accessibility-readability-panel { position: relative; }
+.accessibility-readability-hub { display: grid; gap: 16px; }
+.accessibility-hero { background: linear-gradient(135deg, rgba(37, 99, 235, .24), rgba(16, 185, 129, .14)); border: 1px solid rgba(147, 197, 253, .26); }
+.accessibility-hero.ok { box-shadow: inset 0 0 0 1px rgba(34, 197, 94, .22); }
+.accessibility-hero.warn { box-shadow: inset 0 0 0 1px rgba(250, 204, 21, .26); }
+.accessibility-hero.danger { box-shadow: inset 0 0 0 1px rgba(248, 113, 113, .28); }
+.release-actions.secondary { margin-top: -8px; }
+.release-actions.secondary .mini-btn { min-height: 40px; }
+body.a11y-large-text-ui { font-size: calc(16px * var(--readability-font-scale, 1.12)); }
+body.a11y-large-text-ui .small,
+body.a11y-large-text-ui small,
+body.a11y-large-text-ui .eyebrow { font-size: max(12px, .86em); }
+body.a11y-high-contrast-ui { --glass-bg: rgba(2, 6, 23, .94); --text-muted: #f8fafc; color: #ffffff; }
+body.a11y-high-contrast-ui .glass,
+body.a11y-high-contrast-ui .panel-card,
+body.a11y-high-contrast-ui .stat-card,
+body.a11y-high-contrast-ui .release-check,
+body.a11y-high-contrast-ui .list-item { background: rgba(2, 6, 23, .96) !important; border-color: rgba(255,255,255,.34) !important; }
+body.a11y-high-contrast-ui button,
+body.a11y-high-contrast-ui .btn-primary,
+body.a11y-high-contrast-ui .btn-secondary,
+body.a11y-high-contrast-ui .btn-ghost,
+body.a11y-high-contrast-ui .mini-btn { border-color: rgba(255,255,255,.42) !important; }
+body.a11y-reading-mode-ui .content-stack { line-height: 1.58; letter-spacing: .01em; }
+body.a11y-reading-mode-ui .panel-card,
+body.a11y-reading-mode-ui .glass { backdrop-filter: none; }
+body.a11y-reduced-transparency-ui .glass,
+body.a11y-reduced-transparency-ui .panel-card,
+body.a11y-reduced-transparency-ui .stat-card { backdrop-filter: none !important; background: rgba(8, 16, 29, .96) !important; }
+body.a11y-focus-ring-ui :focus-visible { outline: 3px solid #facc15 !important; outline-offset: 3px !important; box-shadow: 0 0 0 5px rgba(250, 204, 21, .18) !important; }
+@media (max-width: 520px) {
+  .accessibility-readability-hub .release-actions { grid-template-columns: 1fr; }
+  .accessibility-readability-hub .release-score strong { font-size: 42px; }
+  body.a11y-large-text-ui .dock-btn,
+  body.a11y-large-text-ui .mobile-quick-btn { min-width: 78px; }
+}
