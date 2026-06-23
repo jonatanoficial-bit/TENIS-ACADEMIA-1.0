@@ -1,3 +1,12 @@
+
+## Build v4.1.2 — Cache/PWA Update Guard
+
+Esta build adiciona uma aba Cache/PWA para confirmar a versão carregada no celular, registrar o Service Worker com cache-busting, limpar caches antigos e confirmar o primeiro acesso. Foi criada para evitar que o Chrome/PWA continue exibindo builds antigas como v4.0.8 depois do upload.
+
+Versão: v4.1.2  
+Build: 20260623-181210  
+Schema: 32
+
 # Vale Games Tennis Manager — v4.1.1
 
 Build `20260623-150206` — **Onboarding Flow & Button Reliability Hotfix**.

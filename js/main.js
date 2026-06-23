@@ -11,6 +11,10 @@ let state;
 let content;
 let currentStrategy = 'balanced';
 
+const LAST_SEEN_BUILD_KEY = 'vale_tennis_last_seen_build';
+const LAST_SEEN_VERSION_KEY = 'vale_tennis_last_seen_version';
+const CACHE_GUARD_HISTORY_KEY = 'vale_tennis_cache_guard_history';
+
 const STRATEGY_EFFECTS = {
   balanced: { offense: 0, defense: 0, serve: 0, stamina: 0, error: 0, pressure: 0 },
   aggressive: { offense: 6, defense: -2, serve: 1, stamina: 1.5, error: 4.2, pressure: 1 },
@@ -604,7 +608,7 @@ const OWNER_AVATARS = PLAYER_AVATARS;
 const CRITICAL_ONBOARDING_BUTTONS = [
   'openSetupBtn','openSetupBannerBtn','saveOwnerSetupBtn','repairStartBtn','recoverCareerBtn','resetBtn','advanceWeekBtn','saveBtn','mobileQuickSave','mobileQuickTop'
 ];
-const CRITICAL_ONBOARDING_TABS = ['dashboard','roster','career','training','calendar','match','ranking','onboarding'];
+const CRITICAL_ONBOARDING_TABS = ['dashboard','roster','career','training','calendar','match','ranking','onboarding','cacheguard'];
 
 
 
@@ -1342,6 +1346,179 @@ window.exportOnboardingReport = () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
+
+function ensureCacheUpdateGuardSystem() {
+  state.cacheUpdateGuard ||= { score: 99, previousBuild: null, currentBuild: BUILD_INFO.build, lastSeenBuild: null, staleDetected: false, firstRunConfirmed: false, serviceWorkerStatus: 'pending', cacheKeys: [], auditLog: [], clearCount: 0, reloadCount: 0, flags: { serviceWorkerRegister: true, cacheBustAssets: true, visibleBuildGate: true, forceFreshJson: true } };
+  const cg = state.cacheUpdateGuard;
+  cg.score ??= 99;
+  cg.currentBuild = BUILD_INFO.build;
+  cg.previousBuild ??= null;
+  cg.lastSeenBuild ??= null;
+  cg.staleDetected ??= false;
+  cg.firstRunConfirmed ??= false;
+  cg.serviceWorkerStatus ||= 'pending';
+  cg.cacheKeys ||= [];
+  cg.auditLog ||= [];
+  cg.clearCount ??= 0;
+  cg.reloadCount ??= 0;
+  cg.flags ||= { serviceWorkerRegister: true, cacheBustAssets: true, visibleBuildGate: true, forceFreshJson: true };
+  cg.flags.serviceWorkerRegister ??= true;
+  cg.flags.cacheBustAssets ??= true;
+  cg.flags.visibleBuildGate ??= true;
+  cg.flags.forceFreshJson ??= true;
+  return cg;
+}
+function readLastSeenBuild() {
+  try { return localStorage.getItem(LAST_SEEN_BUILD_KEY) || ''; } catch { return ''; }
+}
+function writeCacheGuardHistory(entry) {
+  try {
+    const history = JSON.parse(localStorage.getItem(CACHE_GUARD_HISTORY_KEY) || '[]');
+    history.unshift(entry);
+    localStorage.setItem(CACHE_GUARD_HISTORY_KEY, JSON.stringify(history.slice(0, 20)));
+  } catch {}
+}
+function cacheUpdateSnapshot() {
+  const cg = ensureCacheUpdateGuardSystem();
+  const lastSeen = readLastSeenBuild();
+  const swReady = 'serviceWorker' in navigator;
+  const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || navigator.standalone === true;
+  const buildVisible = [$('#buildPill')?.textContent, $('#mobileBuildBadge')?.textContent, $('#runtimeBuildStamp')?.textContent].some(text => String(text || '').includes(BUILD_INFO.version) && String(text || '').includes(BUILD_INFO.time));
+  const buildMatch = !lastSeen || lastSeen === BUILD_INFO.build;
+  const cacheCount = Array.isArray(cg.cacheKeys) ? cg.cacheKeys.length : 0;
+  let score = 100;
+  if (!buildVisible) score -= 20;
+  if (!swReady && location.protocol !== 'file:') score -= 18;
+  if (!buildMatch) score -= 14;
+  if (cg.staleDetected) score -= 12;
+  if (cg.serviceWorkerStatus === 'erro') score -= 14;
+  if (!cg.firstRunConfirmed) score -= 4;
+  cg.score = clamp(Math.round(score), 0, 100);
+  return { at: new Date().toISOString(), version: BUILD_INFO.version, build: BUILD_INFO.build, label: BUILD_LABEL, previousBuild: cg.previousBuild || lastSeen || null, lastSeenBuild: lastSeen || cg.lastSeenBuild || null, buildVisible, buildMatch, swReady, standalone, online: navigator.onLine !== false, cacheCount, cacheKeys: cg.cacheKeys || [], serviceWorkerStatus: cg.serviceWorkerStatus, staleDetected: !!cg.staleDetected, firstRunConfirmed: !!cg.firstRunConfirmed, score: cg.score };
+}
+async function listValeCaches() {
+  if (!('caches' in window)) return [];
+  const keys = await caches.keys();
+  return keys.filter(key => key.includes('vale') || key.includes('tennis'));
+}
+async function registerServiceWorkerWithGuard() {
+  const cg = ensureCacheUpdateGuardSystem();
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') {
+    cg.serviceWorkerStatus = location.protocol === 'file:' ? 'file-mode' : 'indisponivel';
+    return cg.serviceWorkerStatus;
+  }
+  try {
+    const registration = await navigator.serviceWorker.register(`./sw.js?v=${BUILD_INFO.version}-${BUILD_INFO.build}`, { updateViaCache: 'none' });
+    cg.serviceWorkerStatus = 'registrado';
+    await registration.update().catch(() => null);
+    if (registration.waiting) registration.waiting.postMessage({ type: 'SKIP_WAITING', build: BUILD_INFO.build });
+    if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'BUILD_CHECK', build: BUILD_INFO.build, version: BUILD_INFO.version });
+    cg.cacheKeys = await listValeCaches();
+    return cg.serviceWorkerStatus;
+  } catch (error) {
+    cg.serviceWorkerStatus = 'erro';
+    cg.auditLog.unshift({ title: 'Falha ao registrar Service Worker', result: 'Atenção', note: String(error?.message || error), at: new Date().toISOString(), build: BUILD_INFO.build });
+    return cg.serviceWorkerStatus;
+  }
+}
+function installCacheUpdateGuardRuntime() {
+  const cg = ensureCacheUpdateGuardSystem();
+  const lastSeen = readLastSeenBuild();
+  cg.previousBuild = lastSeen || cg.previousBuild || null;
+  cg.lastSeenBuild = lastSeen || null;
+  cg.currentBuild = BUILD_INFO.build;
+  cg.staleDetected = !!lastSeen && lastSeen !== BUILD_INFO.build;
+  if (cg.staleDetected) {
+    cg.auditLog.unshift({ title: 'Nova build detectada', result: 'Atualização', note: `Anterior ${lastSeen}; atual ${BUILD_INFO.build}.`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  }
+  try {
+    localStorage.setItem(LAST_SEEN_BUILD_KEY, BUILD_INFO.build);
+    localStorage.setItem(LAST_SEEN_VERSION_KEY, BUILD_INFO.version);
+  } catch {}
+  writeCacheGuardHistory({ build: BUILD_INFO.build, version: BUILD_INFO.version, at: new Date().toISOString(), previous: lastSeen || null });
+  registerServiceWorkerWithGuard().then(() => { saveState(state); renderCacheUpdateGuard(); }).catch(() => null);
+  window.addEventListener('online', () => { ensureCacheUpdateGuardSystem().auditLog.unshift({ title: 'Conexão restaurada', result: 'Online', note: 'Pronto para atualizar cache/PWA.', at: new Date().toISOString(), build: BUILD_INFO.build }); renderCacheUpdateGuard(); });
+  window.addEventListener('offline', () => { ensureCacheUpdateGuardSystem().auditLog.unshift({ title: 'Modo offline', result: 'Offline', note: 'O jogo continua local, mas atualização depende de internet.', at: new Date().toISOString(), build: BUILD_INFO.build }); renderCacheUpdateGuard(); });
+}
+function renderCacheUpdateGuard() {
+  const host = $('#cacheUpdateGuardHub');
+  if (!host) return;
+  const cg = ensureCacheUpdateGuardSystem();
+  const snap = cacheUpdateSnapshot();
+  const checks = [
+    ['Build visível', snap.buildVisible, snap.buildVisible ? `${BUILD_LABEL}` : 'Badge de build não foi encontrado na tela'],
+    ['Controle de versão', snap.buildMatch && !snap.staleDetected, snap.previousBuild && snap.previousBuild !== BUILD_INFO.build ? `Atualizou de ${snap.previousBuild} para ${BUILD_INFO.build}` : `Build atual ${BUILD_INFO.build}`],
+    ['Service Worker', snap.swReady || location.protocol === 'file:', snap.swReady ? `Status: ${snap.serviceWorkerStatus}` : 'Indisponível neste ambiente'],
+    ['Caches do app', true, snap.cacheCount ? `${snap.cacheCount} cache(s) Vale/Tennis encontrados` : 'Sem cache antigo detectado ou ainda aguardando navegador'],
+    ['Primeiro acesso', snap.firstRunConfirmed, snap.firstRunConfirmed ? 'Confirmado pelo usuário/teste' : 'Pendente de confirmação manual'],
+    ['Base jogável', hasPlayableCareer(state), hasPlayableCareer(state) ? 'Elenco/ranking/calendário OK' : playableCoreIssues(state).join(', ')]
+  ];
+  host.innerHTML = `
+    <section class="quality-hero cache-hero ${snap.score >= 92 ? 'ok' : snap.score >= 78 ? 'warn' : 'danger'}">
+      <div><p class="eyebrow">${BUILD_LABEL} • cache/PWA guard</p><h2>Atualização protegida contra build antiga</h2><p>Esta central confirma a versão carregada, registra o Service Worker com cache-busting e ajuda a limpar versões antigas presas no Chrome/PWA.</p><div class="release-actions"><button class="btn-primary" onclick="window.auditCacheUpdateGuard()">Auditar atualização</button><button class="btn-secondary" onclick="window.clearOldValeCaches()">Limpar caches antigos</button><button class="btn-secondary" onclick="window.confirmFirstRunBuild()">Confirmar primeiro acesso</button><button class="btn-ghost" onclick="window.hardReloadCurrentBuild()">Recarregar build atual</button></div></div>
+      <div class="release-score"><span>Cache Score</span><strong>${snap.score}</strong><small>${snap.serviceWorkerStatus}</small></div>
+    </section>
+    <section class="onboarding-check-grid">${checks.map(([label,ok,note]) => `<article class="release-check ${ok ? 'ok' : 'pending'}"><span>${ok ? '✓' : '!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section>
+    <section class="release-grid"><article class="panel-card"><div class="panel-title-row"><h4>Versão carregada</h4><span class="metric-build">schema ${BUILD_INFO.schemaVersion}</span></div><div class="cards-grid release-kpis compact"><article class="stat-card"><span>Atual</span><strong>${escapeHtml(BUILD_INFO.version)}</strong></article><article class="stat-card"><span>Build</span><strong>${escapeHtml(BUILD_INFO.build)}</strong></article><article class="stat-card"><span>Anterior</span><strong>${escapeHtml(snap.previousBuild || 'nenhuma')}</strong></article><article class="stat-card"><span>PWA</span><strong>${snap.standalone ? 'instalado' : 'browser'}</strong></article></div></article><article class="panel-card"><div class="panel-title-row"><h4>Logs de atualização</h4><span class="mini-badge">${(cg.auditLog||[]).length}</span></div><div class="list-block">${(cg.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || 'OK')}</b></div>`).join('') || '<div class="list-item"><span>Nenhum alerta de cache nesta build.</span><strong>OK</strong></div>'}</div></article></section>`;
+}
+window.auditCacheUpdateGuard = async () => {
+  const cg = ensureCacheUpdateGuardSystem();
+  cg.cacheKeys = await listValeCaches();
+  const status = await registerServiceWorkerWithGuard();
+  const snap = cacheUpdateSnapshot();
+  cg.auditLog.unshift({ title: 'Auditoria Cache/PWA concluída', result: `${snap.score}/100`, note: `SW ${status}; cache(s) ${snap.cacheCount}; build ${BUILD_INFO.build}.`, at: snap.at, build: BUILD_INFO.build });
+  cg.auditLog = cg.auditLog.slice(0, 18);
+  saveState(state);
+  renderCacheUpdateGuard();
+  addLog(`Auditoria Cache/PWA: ${snap.score}/100.`);
+};
+window.clearOldValeCaches = async () => {
+  const cg = ensureCacheUpdateGuardSystem();
+  const keys = await listValeCaches();
+  const current = `vale-tennis-v${BUILD_INFO.version}-${BUILD_INFO.build}`;
+  let removed = 0;
+  if ('caches' in window) {
+    await Promise.all(keys.map(async key => {
+      if (key !== current) { const ok = await caches.delete(key); if (ok) removed += 1; }
+    }));
+  }
+  cg.cacheKeys = await listValeCaches();
+  cg.clearCount = (cg.clearCount || 0) + 1;
+  cg.staleDetected = false;
+  cg.auditLog.unshift({ title: 'Limpeza de cache executada', result: `${removed} removido(s)`, note: `Cache atual preservado: ${current}.`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  saveState(state);
+  renderCacheUpdateGuard();
+};
+window.confirmFirstRunBuild = () => {
+  const cg = ensureCacheUpdateGuardSystem();
+  cg.firstRunConfirmed = true;
+  cg.lastSeenBuild = BUILD_INFO.build;
+  cg.currentBuild = BUILD_INFO.build;
+  cg.staleDetected = false;
+  cg.auditLog.unshift({ title: 'Primeiro acesso confirmado', result: 'OK', note: `${BUILD_LABEL} confirmado visualmente.`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  try { localStorage.setItem(LAST_SEEN_BUILD_KEY, BUILD_INFO.build); } catch {}
+  saveState(state);
+  renderCacheUpdateGuard();
+};
+window.hardReloadCurrentBuild = () => {
+  const cg = ensureCacheUpdateGuardSystem();
+  cg.reloadCount = (cg.reloadCount || 0) + 1;
+  cg.auditLog.unshift({ title: 'Recarregamento solicitado', result: 'reload', note: `Forçando URL com v=${BUILD_INFO.version}-${BUILD_INFO.build}.`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  saveState(state);
+  const base = location.href.split('#')[0].split('?')[0];
+  location.replace(`${base}?v=${encodeURIComponent(BUILD_INFO.version + '-' + BUILD_INFO.build)}#cacheguard`);
+};
+window.exportCacheUpdateReport = () => {
+  const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, schema: BUILD_INFO.schemaVersion, generatedAt: new Date().toISOString(), snapshot: cacheUpdateSnapshot(), cacheUpdateGuard: state.cacheUpdateGuard, privacy: 'Relatório local. Não envia dados para servidor.' };
+  const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vale-tennis-cache-pwa-${BUILD_INFO.build}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 window.openCareerSetup = () => openOwnerSetup(false);
 window.repairPlayableCareer = () => { rebuildPlayableCareer('correção manual solicitada'); render(); openOwnerSetup(true); };
 function launchEvent(eventName='') {
@@ -1394,6 +1571,7 @@ async function boot() {
   installAccessibilityReadabilityRuntime();
   installLocalizationStoreRuntime();
   installHelpCenterRuntime();
+  installCacheUpdateGuardRuntime();
   startCourtAnimation();
   drawCourt();
   render();
@@ -1434,6 +1612,7 @@ function migrateState() {
   ensureCommercialCareerSystem();
   ensureLongCareerSystem();
   ensureInputReliabilitySystem();
+  ensureCacheUpdateGuardSystem();
   applyMobileUXRuntime();
   applyInputReliabilityRuntime();
 }
@@ -1701,7 +1880,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -1824,6 +2003,7 @@ function render() {
   renderLocalizationStore();
   renderHelpCenter();
   renderOnboardingReliabilityHub();
+  renderCacheUpdateGuard();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -3573,7 +3753,7 @@ function ensureHelpCenterSystem() {
 function helpCenterSnapshot() {
   const help = ensureHelpCenterSystem();
   const tabs = [...document.querySelectorAll('.tab-panel')].map(p=>p.id.replace('tab-',''));
-  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md'];
+  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md'];
   const checklist = help.onboardingChecklist || {};
   const done = Object.values(checklist).filter(Boolean).length;
   const total = Math.max(1, Object.keys(checklist).length);

@@ -1,3 +1,15 @@
+# v4.1.2 — Cache/PWA Update Guard & First-Run Verification Hotfix
+
+- Nova aba Cache/PWA.
+- Novo sistema `cacheUpdateGuard` no save, schema 32.
+- Registro explícito do Service Worker com cache-busting.
+- Botão para auditar atualização e cache.
+- Botão para limpar caches antigos do app.
+- Botão para confirmar primeiro acesso na build correta.
+- Botão para recarregar URL com versão/build atual.
+- Manifest PWA atualizado com atalho para Cache/PWA.
+- Documentos adicionados: `AUDIT_v4.1.2.md` e `CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md`.
+
 
 ## v4.1.1 — Onboarding Flow & Button Reliability Hotfix — 23/06/2026 15:02:06
 
