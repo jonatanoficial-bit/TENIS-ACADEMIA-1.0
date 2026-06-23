@@ -1,11 +1,10 @@
 
-## v4.0.7 — Accessibility, Readability & Text Scaling Hotfix — build 20260623-112101
-- Adicionada aba Acessibilidade.
-- Adicionado sistema persistente `accessibilityReadability` com schema 27.
-- Incluídos modos de texto grande, alto contraste, modo leitura, redução de transparência e foco visível.
-- Incluída auditoria de rótulos/ARIA, texto pequeno, contraste e foco.
-- Incluída exportação local de relatório JSON de acessibilidade.
-- Atualizados build-info, Service Worker, manifest PWA, README e auditoria.
+## v4.0.8 — Localization & Store Readiness Hotfix — 20260623-114902
+- Nova aba Localização com diagnóstico de PT-BR/EN/ES.
+- Sistema persistente `localizationStore` migrado para schema 28.
+- Prévia de textos de loja, cobertura por idioma e relatório JSON exportável.
+- Manifest PWA recebeu atalho para Localização e Loja.
+- Preset loja segura reforça fallback, legal e cobertura mínima sem alterar gameplay.
 
 
 
