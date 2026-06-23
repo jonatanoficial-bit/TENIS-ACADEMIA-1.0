@@ -1,4 +1,4 @@
-# Vale Games Tennis Manager — v4.0.8
+# Vale Games Tennis Manager — v4.0.9
 
 Build `20260623-102045` — Input, Touch & Scroll Reliability Hotfix. Esta build adiciona ferramentas de confiabilidade para toque, rolagem, teclado mobile, viewport e gestos em celulares Android/iOS, preservando todos os sistemas anteriores.
 
@@ -34,6 +34,11 @@ git push -u origin main
 ```
 
 
-## Build v4.0.8 — Localization & Store Readiness Hotfix
+## Build v4.0.9 — Localization & Store Readiness Hotfix
 
 Esta build adiciona a central Localização/Loja para preparação internacional PT-BR/EN/ES, diagnóstico de cobertura textual, prévia de textos de loja, exportação de relatório JSON e preset seguro para publicação. O schema do save foi atualizado para 28 com migração automática e preservação de todos os sistemas anteriores.
+
+
+## v4.0.9 — Release Notes, Help Center & First-Run Guide
+
+A build adiciona uma central Ajuda/Release offline com guia de primeiro uso, notas de versão internas, checklist de onboarding e exportação local de relatório de suporte. Schema 29.

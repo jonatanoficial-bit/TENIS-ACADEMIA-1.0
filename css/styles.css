@@ -1272,3 +1272,13 @@ body[data-locale="es"] .build-pill span::after { content: " • ES"; }
   .localization-store-hub .quality-hero h2 { font-size: 1.28rem; }
   .store-preview-card { padding: .85rem; }
 }
+
+/* v4.0.9 Help Center */
+.help-center-panel .help-center-hub{display:grid;gap:16px}
+.help-hero{background:linear-gradient(135deg,rgba(45,222,255,.18),rgba(118,255,174,.10));}
+.help-step-list{display:grid;gap:10px;padding-left:0;margin:0;list-style:none}
+.help-step-list li{padding:10px 12px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.05);color:var(--text-muted,#cfe2f5)}
+.release-kpis.compact{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+.tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tag-row span{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);border-radius:999px;padding:6px 10px;font-size:.82rem;color:#dff3ff}
+@media (max-width:640px){.help-center-panel .release-grid{grid-template-columns:1fr}.help-step-list li{font-size:.92rem}.help-center-panel .release-actions{display:grid;grid-template-columns:1fr;gap:10px}.help-center-panel button{min-height:44px}}

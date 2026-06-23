@@ -1105,6 +1105,7 @@ async function boot() {
   installInputReliabilityRuntime();
   installAccessibilityReadabilityRuntime();
   installLocalizationStoreRuntime();
+  installHelpCenterRuntime();
   startCourtAnimation();
   drawCourt();
   render();
@@ -1527,6 +1528,7 @@ function render() {
   renderInputReliability();
   renderAccessibilityReadability();
   renderLocalizationStore();
+  renderHelpCenter();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -3230,6 +3232,166 @@ window.exportStoreReadinessReport = () => {
     document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
   } catch (error) { console.info('Store readiness report fallback', payload, error); }
   saveState(state); renderLocalizationStore();
+};
+
+
+const HELP_GUIDES = {
+  quickstart: {
+    label: 'Primeiros passos',
+    title: 'Comece uma carreira segura',
+    steps: ['Revise a aba Dashboard e confirme academia/caixa.', 'Abra Atletas para escolher quem será trabalhado.', 'Use Treino para evoluir sem excesso de fadiga.', 'Entre em Partida para testar o Match Center.', 'Depois rode QA Final ou Diagnóstico antes de publicar.']
+  },
+  manager: {
+    label: 'Gestão avançada',
+    title: 'Carreira comercial e legado',
+    steps: ['Economia controla patrocínio, investidores e viagem.', 'Newsroom afeta reputação e pressão pública.', 'Legado acompanha envelhecimento, aposentadoria e Hall da Fama.', 'Release RC, QA, Performance e Compatibilidade ajudam na homologação.']
+  },
+  mobile: {
+    label: 'Mobile/PWA',
+    title: 'Teste no celular',
+    steps: ['Instale pelo navegador quando possível.', 'Teste toque e rolagem na aba Toque/Rolagem.', 'Use modo leitura se a tela estiver pequena.', 'Limpe caches antigos na aba Compatibilidade se notar versão presa.', 'Teste sempre em retrato e paisagem.']
+  }
+};
+
+const RELEASE_NOTES_V409 = [
+  { title: 'Central de ajuda offline', note: 'Nova aba com guias rápidos, perguntas frequentes e ações de suporte local.' },
+  { title: 'Guia de primeiro uso', note: 'Checklist de onboarding sem alterar ranking, atletas ou economia.' },
+  { title: 'Notas de versão dentro do jogo', note: 'Resumo da build, documentos e próximos testes recomendados.' },
+  { title: 'Exportação de suporte', note: 'Gera JSON local com versão, schema, navegação e estado de QA sem enviar dados.' }
+];
+
+function ensureHelpCenterSystem() {
+  state.releaseNotesHelp ||= { score: 97, firstRunSeen: false, activeGuide: 'quickstart', releaseNotesSeenBuild: null, helpArticles: [], onboardingChecklist: { createCareer: false, trainPlayer: false, playMatch: false, reviewEconomy: false, runQA: false }, auditLog: [], exportReady: false, lastAuditToken: null, flags: { offlineHelp: true, releaseNotesGuard: true, firstRunGuide: true, supportExport: true } };
+  const help = state.releaseNotesHelp;
+  help.score ??= 97;
+  help.firstRunSeen ??= false;
+  help.activeGuide ||= 'quickstart';
+  help.releaseNotesSeenBuild ??= null;
+  help.helpArticles ||= [];
+  help.onboardingChecklist ||= { createCareer: false, trainPlayer: false, playMatch: false, reviewEconomy: false, runQA: false };
+  help.auditLog ||= [];
+  help.exportReady ??= false;
+  help.flags ||= { offlineHelp: true, releaseNotesGuard: true, firstRunGuide: true, supportExport: true };
+  return help;
+}
+
+function helpCenterSnapshot() {
+  const help = ensureHelpCenterSystem();
+  const tabs = [...document.querySelectorAll('.tab-panel')].map(p=>p.id.replace('tab-',''));
+  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md'];
+  const checklist = help.onboardingChecklist || {};
+  const done = Object.values(checklist).filter(Boolean).length;
+  const total = Math.max(1, Object.keys(checklist).length);
+  return { build: BUILD_INFO.build, version: BUILD_INFO.version, schema: BUILD_INFO.schemaVersion, activeGuide: help.activeGuide, tabCount: tabs.length, docs, done, total, completion: Math.round((done / total) * 100), firstRunSeen: !!help.firstRunSeen, releaseSeen: help.releaseNotesSeenBuild === BUILD_INFO.build, at: new Date().toISOString() };
+}
+
+function calculateHelpCenterScore() {
+  const help = ensureHelpCenterSystem();
+  const snap = helpCenterSnapshot();
+  let score = 100;
+  if (!help.flags?.offlineHelp) score -= 12;
+  if (!help.flags?.releaseNotesGuard) score -= 8;
+  if (!help.flags?.firstRunGuide) score -= 8;
+  if (!help.flags?.supportExport) score -= 8;
+  if (snap.tabCount < 18) score -= 6;
+  if (!snap.releaseSeen) score -= 3;
+  return clamp(Math.round(score), 0, 100);
+}
+
+function installHelpCenterRuntime() {
+  try {
+    const help = ensureHelpCenterSystem();
+    document.body.dataset.helpCenter = 'ready';
+    if (!help.firstRunSeen && !help.auditLog.length) {
+      help.auditLog.unshift({ title: 'Guia inicial preparado', result: 'OK', note: 'Central de ajuda offline disponível para a primeira execução.', at: new Date().toISOString(), build: BUILD_INFO.build });
+      help.auditLog = help.auditLog.slice(0,20);
+    }
+  } catch (error) { console.warn('Help center runtime fallback', error); }
+}
+
+function renderHelpCenter() {
+  const host = $('#helpCenterHub');
+  if (!host || !state) return;
+  const help = ensureHelpCenterSystem();
+  const snap = helpCenterSnapshot();
+  const score = calculateHelpCenterScore();
+  help.score = score;
+  const guide = HELP_GUIDES[help.activeGuide] || HELP_GUIDES.quickstart;
+  const guideButtons = Object.entries(HELP_GUIDES).map(([key,item]) => `<button class="mini-btn ${help.activeGuide === key ? 'active' : ''}" onclick="window.setHelpGuide('${key}')">${escapeHtml(item.label)}</button>`).join('');
+  const checklist = [
+    ['createCareer','Carreira criada', !!state.flags?.ownerSetupComplete || !!state.academy?.owner],
+    ['trainPlayer','Treino configurado', !!state.trainingLab?.lastReport || (state.trainingLab?.cycle && state.trainingLab?.focus)],
+    ['playMatch','Partida testada', !!state.match || (state.broadcast?.replayArchive || []).length > 0],
+    ['reviewEconomy','Economia revisada', !!state.commercialCareer?.ledger?.length || !!state.commercialCareer],
+    ['runQA','QA executado', !!state.qaAutomation?.lastRunToken || !!state.releaseCandidate?.lastAuditToken]
+  ].map(([key,label,auto]) => { const checked = !!help.onboardingChecklist?.[key] || !!auto; return `<article class="release-check ${checked ? 'ok' : 'pending'}"><span>${checked ? '✓' : '•'}</span><div><strong>${escapeHtml(label)}</strong><small>${checked ? 'Concluído ou detectado automaticamente.' : 'Pendente para homologação manual.'}</small></div><button class="mini-btn" onclick="window.toggleHelpChecklist('${key}')">${checked ? 'Rever' : 'Marcar'}</button></article>`; }).join('');
+  const notes = RELEASE_NOTES_V409.map(item => `<article class="release-check ok"><span>✓</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.note)}</small></div><b>v${BUILD_INFO.version}</b></article>`).join('');
+  const steps = guide.steps.map((step,i)=>`<li><strong>${i+1}.</strong> ${escapeHtml(step)}</li>`).join('');
+  const logs = (help.auditLog || []).slice(0,8).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.result)}</b></div>`).join('') || '<div class="list-item"><span>Use a central de ajuda para registrar auditoria.</span><strong>Pendente</strong></div>';
+  host.innerHTML = `
+    <section class="quality-hero help-hero ${score >= 92 ? 'ok' : score >= 78 ? 'warn' : 'danger'}">
+      <div><p class="eyebrow">v${BUILD_INFO.version} • Help Center</p><h2>Guia inicial, notas de versão e suporte offline</h2><p>Central leve para orientar teste público, explicar as abas principais e exportar um relatório local de suporte sem enviar dados para servidor.</p></div>
+      <div class="release-score"><span>Help Score</span><strong>${score}</strong><small>${snap.completion}% onboarding</small></div>
+    </section>
+    <div class="release-actions" role="group" aria-label="Selecionar guia">${guideButtons}</div>
+    <section class="release-grid"><article class="panel-card"><div class="panel-title-row"><h4>${escapeHtml(guide.title)}</h4><span class="mini-badge">${escapeHtml(guide.label)}</span></div><ol class="help-step-list">${steps}</ol></article><article class="panel-card"><div class="panel-title-row"><h4>Status da build</h4><span class="metric-build">${BUILD_INFO.build}</span></div><div class="cards-grid release-kpis compact"><article class="stat-card"><span>Versão</span><strong>${BUILD_INFO.version}</strong></article><article class="stat-card"><span>Schema</span><strong>${BUILD_INFO.schemaVersion}</strong></article><article class="stat-card"><span>Telas</span><strong>${snap.tabCount}</strong></article><article class="stat-card"><span>Offline</span><strong>${help.flags.offlineHelp ? 'OK' : 'Atenção'}</strong></article></div></article></section>
+    <div class="release-actions"><button class="btn-primary" onclick="window.runHelpCenterAudit()">Auditar ajuda</button><button class="btn-secondary" onclick="window.markFirstRunGuideSeen()">Marcar guia visto</button><button class="btn-ghost" onclick="window.exportHelpCenterReport()">Exportar suporte</button></div>
+    <section class="release-grid"><div><h4>Checklist de primeiro uso</h4><div class="release-checklist">${checklist}</div></div><div><h4>Notas v${BUILD_INFO.version}</h4><div class="release-checklist">${notes}</div></div></section>
+    <section class="release-grid"><article class="panel-card"><div class="panel-title-row"><h4>Documentos úteis no ZIP</h4><span class="mini-badge">offline</span></div><div class="tag-row">${snap.docs.map(doc=>`<span>${escapeHtml(doc)}</span>`).join('')}</div></article><article class="panel-card"><div class="panel-title-row"><h4>Histórico da central</h4><span class="mini-badge">local</span></div><div class="list-stack">${logs}</div></article></section>`;
+}
+
+window.setHelpGuide = (guide='quickstart') => {
+  const help = ensureHelpCenterSystem();
+  help.activeGuide = HELP_GUIDES[guide] ? guide : 'quickstart';
+  help.auditLog.unshift({ title: 'Guia selecionado', result: HELP_GUIDES[help.activeGuide].label, note: 'Mudança visual de guia sem alterar gameplay.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  help.auditLog = help.auditLog.slice(0,20);
+  saveState(state); renderHelpCenter();
+};
+
+window.toggleHelpChecklist = (key) => {
+  const help = ensureHelpCenterSystem();
+  help.onboardingChecklist ||= {};
+  help.onboardingChecklist[key] = !help.onboardingChecklist[key];
+  help.auditLog.unshift({ title: 'Checklist de primeiro uso atualizado', result: help.onboardingChecklist[key] ? 'Marcado' : 'Reaberto', note: key, at: new Date().toISOString(), build: BUILD_INFO.build });
+  help.auditLog = help.auditLog.slice(0,20);
+  saveState(state); renderHelpCenter();
+};
+
+window.markFirstRunGuideSeen = () => {
+  const help = ensureHelpCenterSystem();
+  help.firstRunSeen = true;
+  help.releaseNotesSeenBuild = BUILD_INFO.build;
+  help.auditLog.unshift({ title: 'Guia inicial marcado como visto', result: 'OK', note: `Notas da build ${BUILD_INFO.build} confirmadas localmente.`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  help.auditLog = help.auditLog.slice(0,20);
+  addLog('Guia inicial e notas de versão marcados como vistos.');
+  saveState(state); renderHelpCenter();
+};
+
+window.runHelpCenterAudit = () => {
+  const help = ensureHelpCenterSystem();
+  const snap = helpCenterSnapshot();
+  help.score = calculateHelpCenterScore();
+  help.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  help.exportReady = true;
+  help.auditLog.unshift({ title: 'Auditoria de ajuda concluída', result: `${help.score}/100`, note: `${snap.tabCount} telas, ${snap.docs.length} documentos e ${snap.completion}% onboarding.`, at: snap.at, build: BUILD_INFO.build });
+  help.auditLog = help.auditLog.slice(0,20);
+  addLog(`Ajuda/Release v${BUILD_INFO.version}: auditoria ${help.score}/100.`);
+  saveState(state); renderHelpCenter();
+};
+
+window.exportHelpCenterReport = () => {
+  const help = ensureHelpCenterSystem();
+  const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, schema: BUILD_INFO.schemaVersion, generatedAt: new Date().toISOString(), helpScore: calculateHelpCenterScore(), snapshot: helpCenterSnapshot(), releaseNotes: RELEASE_NOTES_V409, activeGuide: help.activeGuide, onboardingChecklist: help.onboardingChecklist, auditLog: help.auditLog, privacy: 'Relatório gerado localmente. Não envia dados para servidor.' };
+  help.exportReady = true;
+  help.auditLog.unshift({ title: 'Relatório de suporte gerado', result: 'JSON', note: 'Arquivo local com build, guia, checklist e notas de versão.', at: payload.generatedAt, build: BUILD_INFO.build });
+  try {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = `vale-tennis-help-center-${BUILD_INFO.version}-${BUILD_INFO.build}.json`;
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+  } catch (error) { console.info('Help center report fallback', payload, error); }
+  saveState(state); renderHelpCenter();
 };
 
 function renderNextEvents() {

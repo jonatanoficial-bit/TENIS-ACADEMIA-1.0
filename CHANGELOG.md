@@ -1,4 +1,11 @@
 
+## v4.0.9 — Release Notes, Help Center & First-Run Guide
+- Nova aba Ajuda/Release.
+- Central de ajuda offline, guia de primeiro uso, notas de versão internas e exportação local de suporte.
+- Save schema 29 com `releaseNotesHelp`.
+- Manifest PWA com atalho para Ajuda e Guia Inicial.
+
+
 ## v4.0.8 — Localization & Store Readiness Hotfix — 20260623-114902
 - Nova aba Localização com diagnóstico de PT-BR/EN/ES.
 - Sistema persistente `localizationStore` migrado para schema 28.
