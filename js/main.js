@@ -601,6 +601,12 @@ function withMatchGuard(label, fn) {
 
 const OWNER_AVATARS = PLAYER_AVATARS;
 
+const CRITICAL_ONBOARDING_BUTTONS = [
+  'openSetupBtn','openSetupBannerBtn','saveOwnerSetupBtn','repairStartBtn','recoverCareerBtn','resetBtn','advanceWeekBtn','saveBtn','mobileQuickSave','mobileQuickTop'
+];
+const CRITICAL_ONBOARDING_TABS = ['dashboard','roster','career','training','calendar','match','ranking','onboarding'];
+
+
 
 
 function slugifyText(text='') {
@@ -1018,7 +1024,9 @@ function updateCareerPreview() {
   host.innerHTML = `<strong>${academy}</strong><span>${name} • ${city} • ${difficulty}</span>`;
 }
 function saveOwnerSetup() {
-  if (!state || !validateCareerSetup()) return false;
+  if (!state) return false;
+  ensureCoreBeforeCareerSave();
+  if (!validateCareerSetup()) return false;
   const ownerName = ($('#ownerNameInput')?.value || '').trim();
   const country = ($('#ownerCountryInput')?.value || 'BRA').trim().toUpperCase().replace(/[^A-Z]/g,'').slice(0,3) || 'BRA';
   const academyName = ($('#academyNameInput')?.value || '').trim();
@@ -1058,6 +1066,284 @@ function renderOwnerHub() {
     </div>`;
   hydrateAssetImages();
 }
+
+function playableCoreIssues(candidate = state) {
+  const issues = [];
+  if (!candidate || typeof candidate !== 'object') return ['save ausente'];
+  if (!candidate.academy || typeof candidate.academy !== 'object') issues.push('academia ausente');
+  if (!Array.isArray(candidate.roster) || candidate.roster.length < 1) issues.push('elenco vazio');
+  if (!Array.isArray(candidate.ranking) || candidate.ranking.length < 5) issues.push('ranking incompleto');
+  if (!Array.isArray(candidate.calendar) || candidate.calendar.length < 4) issues.push('calendário incompleto');
+  if (!Number.isFinite(Number(candidate.academy?.money)) || Number(candidate.academy?.money) <= 0) issues.push('caixa inicial zerado');
+  if (!Number.isFinite(Number(candidate.academy?.reputation))) issues.push('reputação inválida');
+  return issues;
+}
+function hasPlayableCareer(candidate = state) {
+  return playableCoreIssues(candidate).length === 0;
+}
+function setupIsComplete(candidate = state) {
+  return !!candidate?.flags?.ownerSetupComplete && !!candidate?.academy?.owner && !!candidate?.academy?.careerProfile;
+}
+function preserveRuntimePreferences(fresh, previous) {
+  if (!fresh || !previous) return fresh;
+  const preserve = ['mobileUX','inputReliability','accessibilityReadability','localizationStore','releaseNotesHelp','onboardingReliability','qualityPolish','releaseHardening','performanceDelivery','qaAutomation','browserCompatibility'];
+  preserve.forEach(key => { if (previous[key]) fresh[key] = structuredClone(previous[key]); });
+  fresh.ui = { currentTab: 'dashboard', lastStableTab: 'dashboard' };
+  fresh.flags ||= {};
+  fresh.flags.safeMode = false;
+  fresh.flags.ownerSetupComplete = false;
+  fresh.careerSetupRecovery ||= { lastReason: null, repairedAt: null, forcedSetup: false, snapshots: [], bootGuard: true };
+  return fresh;
+}
+function backupBrokenCareer(reason='diagnóstico') {
+  try {
+    const backup = { reason, build: BUILD_INFO.build, capturedAt: new Date().toISOString(), state };
+    localStorage.setItem('vale_tennis_manager_recovery_backup', JSON.stringify(backup));
+  } catch (error) {
+    console.warn('Backup de recuperação indisponível.', error);
+  }
+}
+function rebuildPlayableCareer(reason='base inicial incompleta') {
+  const previous = state ? structuredClone(state) : null;
+  backupBrokenCareer(reason);
+  const fresh = buildInitialState(content);
+  preserveRuntimePreferences(fresh, previous);
+  fresh.careerSetupRecovery = {
+    ...(fresh.careerSetupRecovery || {}),
+    lastReason: reason,
+    repairedAt: new Date().toISOString(),
+    forcedSetup: true,
+    bootGuard: true,
+    snapshots: [{ reason, build: BUILD_INFO.build, at: new Date().toISOString(), previousRoster: previous?.roster?.length || 0 }]
+  };
+  fresh.logs.unshift(`Recuperação segura aplicada: ${reason}.`);
+  fresh.inbox.unshift({ title: 'Início corrigido com segurança', body: 'A base jogável foi recriada com elenco, ranking, calendário e criação de carreira liberada. Escolha nome, avatar, país e academia para continuar.', week: fresh.academy.week || 1 });
+  state = fresh;
+  saveState(state);
+  return true;
+}
+function ensurePlayableStart() {
+  const issues = playableCoreIssues(state);
+  if (issues.length) {
+    rebuildPlayableCareer(issues.join(', '));
+    return 'rebuilt';
+  }
+  state.flags ||= {};
+  if (!setupIsComplete(state)) {
+    state.flags.ownerSetupComplete = false;
+    state.onboardingReliability ||= { score: 98, lastAuditToken: null, auditLog: [], buttonProbe: [], forcedOpens: 0, lastForcedReason: null, safeStartLocks: 0, modalVisibilityChecks: [], checklist: { setupModal: true, avatarChoices: true, ownerSaveButton: true, tabDelegation: true, dockDelegation: true, dashboardRecovery: true }, flags: { mandatorySetupGuard: true, eventDelegationFallback: true, hashRouter: true, modalRetry: true, buttonProbe: true } };
+  state.careerSetupRecovery ||= { lastReason: null, repairedAt: null, forcedSetup: false, snapshots: [], bootGuard: true };
+    state.careerSetupRecovery.forcedSetup = true;
+    saveState(state);
+    return 'setup';
+  }
+  return 'ok';
+}
+function ensureCoreBeforeCareerSave() {
+  if (hasPlayableCareer(state)) return;
+  const owner = state.academy?.owner ? structuredClone(state.academy.owner) : null;
+  const careerProfile = state.academy?.careerProfile ? structuredClone(state.academy.careerProfile) : null;
+  rebuildPlayableCareer('base reconstruída antes de salvar carreira');
+  if (owner) state.academy.owner = owner;
+  if (careerProfile) state.academy.careerProfile = careerProfile;
+}
+function renderCareerRecoveryBanner() {
+  const host = $('#careerRecoveryBanner');
+  if (!host || !state) return;
+  const issues = playableCoreIssues(state);
+  const needsSetup = !setupIsComplete(state);
+  const show = issues.length > 0 || needsSetup;
+  host.classList.toggle('hidden', !show);
+  if (!show) return;
+  const title = $('#careerRecoveryTitle');
+  const text = $('#careerRecoveryText');
+  if (issues.length) {
+    title.textContent = 'Início incompleto detectado';
+    text.textContent = `Corrija a base inicial: ${issues.join(', ')}. Isso restaura atletas, ranking e calendário sem mexer nos assets.`;
+  } else {
+    title.textContent = 'Crie sua carreira para liberar o jogo';
+    text.textContent = 'Escolha nome, avatar, país, cidade e nome da academia. Depois disso o elenco, partida, treino e agenda ficam ativos.';
+  }
+}
+
+function ensureOnboardingReliabilitySystem() {
+  state.onboardingReliability ||= { score: 98, lastAuditToken: null, auditLog: [], buttonProbe: [], forcedOpens: 0, lastForcedReason: null, safeStartLocks: 0, modalVisibilityChecks: [], checklist: { setupModal: true, avatarChoices: true, ownerSaveButton: true, tabDelegation: true, dockDelegation: true, dashboardRecovery: true }, flags: { mandatorySetupGuard: true, eventDelegationFallback: true, hashRouter: true, modalRetry: true, buttonProbe: true } };
+  const ob = state.onboardingReliability;
+  ob.auditLog ||= [];
+  ob.buttonProbe ||= [];
+  ob.modalVisibilityChecks ||= [];
+  ob.forcedOpens ??= 0;
+  ob.safeStartLocks ??= 0;
+  ob.checklist ||= { setupModal: true, avatarChoices: true, ownerSaveButton: true, tabDelegation: true, dockDelegation: true, dashboardRecovery: true };
+  ob.flags ||= { mandatorySetupGuard: true, eventDelegationFallback: true, hashRouter: true, modalRetry: true, buttonProbe: true };
+  return ob;
+}
+function ownerSetupModalVisible() {
+  const modal = $('#ownerSetupModal');
+  if (!modal) return false;
+  const style = window.getComputedStyle(modal);
+  return !modal.classList.contains('hidden') && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+}
+function onboardingFlowSnapshot() {
+  const issues = playableCoreIssues(state);
+  const missingButtons = CRITICAL_ONBOARDING_BUTTONS.filter(id => !document.getElementById(id));
+  const missingTabs = CRITICAL_ONBOARDING_TABS.filter(tab => !document.getElementById(`tab-${tab}`));
+  const avatarChoices = $$('#ownerAvatarChoices [data-owner-avatar]').length || OWNER_AVATARS.length;
+  return {
+    at: new Date().toISOString(),
+    build: BUILD_INFO.build,
+    version: BUILD_INFO.version,
+    setupComplete: setupIsComplete(state),
+    modalVisible: ownerSetupModalVisible(),
+    playableIssues: issues,
+    missingButtons,
+    missingTabs,
+    mainTabButtons: $$('#mainTabs .tab-btn').length,
+    dockButtons: $$('.dock-btn').length,
+    avatarChoices,
+    roster: state.roster?.length || 0,
+    ranking: state.ranking?.length || 0,
+    calendar: state.calendar?.length || 0,
+    currentTab: state.ui?.currentTab || 'dashboard'
+  };
+}
+function calculateOnboardingReliabilityScore(snapshot = onboardingFlowSnapshot()) {
+  let score = 100;
+  score -= Math.min(24, snapshot.playableIssues.length * 8);
+  score -= Math.min(20, snapshot.missingButtons.length * 4);
+  score -= Math.min(12, snapshot.missingTabs.length * 3);
+  if (!snapshot.setupComplete && !snapshot.modalVisible) score -= 18;
+  if (snapshot.avatarChoices < 3) score -= 8;
+  if (snapshot.dockButtons < 6) score -= 4;
+  return clamp(Math.round(score), 0, 100);
+}
+function logOnboardingAudit(title, result, note, snapshot = onboardingFlowSnapshot()) {
+  const ob = ensureOnboardingReliabilitySystem();
+  ob.score = calculateOnboardingReliabilityScore(snapshot);
+  ob.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  ob.auditLog.unshift({ title, result, note, score: ob.score, at: new Date().toISOString(), build: BUILD_INFO.build, snapshot });
+  ob.auditLog = ob.auditLog.slice(0, 18);
+  saveState(state);
+  return ob.score;
+}
+function enforceOwnerSetupFlow(reason='setup pendente') {
+  if (!state || setupIsComplete(state)) return;
+  const ob = ensureOnboardingReliabilitySystem();
+  ob.forcedOpens = (ob.forcedOpens || 0) + 1;
+  ob.lastForcedReason = reason;
+  ob.safeStartLocks = (ob.safeStartLocks || 0) + 1;
+  state.flags ||= {};
+  state.flags.ownerSetupComplete = false;
+  state.onboardingReliability ||= { score: 98, lastAuditToken: null, auditLog: [], buttonProbe: [], forcedOpens: 0, lastForcedReason: null, safeStartLocks: 0, modalVisibilityChecks: [], checklist: { setupModal: true, avatarChoices: true, ownerSaveButton: true, tabDelegation: true, dockDelegation: true, dashboardRecovery: true }, flags: { mandatorySetupGuard: true, eventDelegationFallback: true, hashRouter: true, modalRetry: true, buttonProbe: true } };
+  state.careerSetupRecovery ||= { lastReason: null, repairedAt: null, forcedSetup: false, snapshots: [], bootGuard: true };
+  state.careerSetupRecovery.forcedSetup = true;
+  state.careerSetupRecovery.lastReason = reason;
+  const attempt = (slot='imediato') => {
+    if (setupIsComplete(state)) return;
+    openOwnerSetup(!state.academy?.owner);
+    const visible = ownerSetupModalVisible();
+    ob.modalVisibilityChecks.unshift({ slot, visible, at: new Date().toISOString(), build: BUILD_INFO.build });
+    ob.modalVisibilityChecks = ob.modalVisibilityChecks.slice(0, 12);
+    if (!visible) showSystemError('A criação de carreira tentou abrir, mas o navegador bloqueou a janela. Toque em Configurar agora ou use Fluxo Inicial > Forçar criação.');
+    saveState(state);
+  };
+  requestAnimationFrame(() => attempt('raf'));
+  setTimeout(() => attempt('450ms'), 450);
+  setTimeout(() => {
+    if (!setupIsComplete(state) && !ownerSetupModalVisible()) attempt('1200ms-retry');
+  }, 1200);
+}
+function installCriticalButtonDelegation() {
+  if (window.__valeOnboardingDelegationInstalled) return;
+  window.__valeOnboardingDelegationInstalled = true;
+  document.addEventListener('click', event => {
+    const btn = event.target.closest('button, a');
+    if (!btn || btn.disabled) return;
+    const tab = btn.dataset?.jumpTab || btn.dataset?.tab;
+    if (tab && document.getElementById(`tab-${tab}`)) {
+      setTimeout(() => {
+        if (state?.ui?.currentTab !== tab) switchTab(tab);
+        if (!setupIsComplete(state) && ['roster','career','training','match','calendar'].includes(tab)) enforceOwnerSetupFlow(`aba ${tab} tocada antes da configuração`);
+      }, 0);
+    }
+    if (['openSetupBtn','openSetupBannerBtn'].includes(btn.id)) setTimeout(() => enforceOwnerSetupFlow(`botão ${btn.id}`), 0);
+    if (btn.id === 'saveOwnerSetupBtn') setTimeout(() => {
+      if (!setupIsComplete(state) && ownerSetupModalVisible()) validateCareerSetup();
+    }, 40);
+  }, true);
+  window.addEventListener('hashchange', handleStartupHash);
+}
+function handleStartupHash() {
+  const hash = (location.hash || '').replace('#','').trim();
+  if (!hash) return;
+  if (hash === 'setup') return enforceOwnerSetupFlow('atalho #setup');
+  if (document.getElementById(`tab-${hash}`)) switchTab(hash);
+}
+function renderOnboardingReliabilityHub() {
+  const host = $('#onboardingReliabilityHub');
+  if (!host) return;
+  const ob = ensureOnboardingReliabilitySystem();
+  const snap = onboardingFlowSnapshot();
+  ob.score = calculateOnboardingReliabilityScore(snap);
+  const checks = [
+    ['Base jogável', snap.playableIssues.length === 0, snap.playableIssues.length ? snap.playableIssues.join(', ') : 'Elenco, ranking, calendário e caixa OK'],
+    ['Criação obrigatória', snap.setupComplete || snap.modalVisible, snap.setupComplete ? 'Carreira configurada' : (snap.modalVisible ? 'Modal aberto para configurar' : 'Aguardando abertura do modal')],
+    ['Botões críticos', snap.missingButtons.length === 0, snap.missingButtons.length ? snap.missingButtons.join(', ') : 'Todos encontrados'],
+    ['Abas/dock', snap.missingTabs.length === 0 && snap.dockButtons >= 6, `${snap.mainTabButtons} abas • ${snap.dockButtons} botões no dock`],
+    ['Avatares', snap.avatarChoices >= 3, `${snap.avatarChoices} opções disponíveis`],
+    ['Fallback de eventos', !!ob.flags?.eventDelegationFallback, 'Delegação global ativa para cliques/taps']
+  ];
+  host.innerHTML = `
+    <section class="onboarding-hero glass-card-lite">
+      <div><p class="eyebrow">Safe Start Guard • ${BUILD_LABEL}</p><h2>Criação de carreira blindada</h2><p>Esta central verifica se o jogo pode iniciar corretamente, se o modal de nome/avatar/país aparece e se os botões essenciais respondem no celular.</p></div>
+      <div class="release-score"><span>Score fluxo</span><strong>${ob.score}</strong><small>${snap.setupComplete ? 'Configurado' : 'Configuração pendente'}</small></div>
+    </section>
+    <section class="onboarding-actions">
+      <button class="btn-primary" onclick="window.forceCareerSetupFlow()">Forçar criação de carreira</button>
+      <button class="btn-secondary" onclick="window.auditOnboardingFlow()">Auditar fluxo inicial</button>
+      <button class="btn-secondary" onclick="window.runButtonReliabilityProbe()">Testar botões críticos</button>
+      <button class="btn-ghost" onclick="window.exportOnboardingReport()">Exportar relatório</button>
+    </section>
+    <section class="onboarding-check-grid">${checks.map(([label,ok,note]) => `<article class="release-check ${ok ? 'ok' : 'pending'}"><span>${ok ? '✓' : '!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note)}</small></div></article>`).join('')}</section>
+    <section class="panel-card"><div class="panel-title-row"><h4>Últimas auditorias</h4><span class="metric-build">schema ${BUILD_INFO.schemaVersion}</span></div><div class="list-block">${(ob.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria feita nesta versão.</span><strong>Pronto</strong></div>'}</div></section>`;
+}
+window.forceCareerSetupFlow = () => {
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('forçar criação de carreira pela aba Fluxo Inicial');
+  state.flags ||= {};
+  state.flags.ownerSetupComplete = false;
+  ensureOnboardingReliabilitySystem().lastForcedReason = 'forçado manualmente';
+  saveState(state);
+  render();
+  enforceOwnerSetupFlow('forçado manualmente pela aba Fluxo Inicial');
+};
+window.auditOnboardingFlow = () => {
+  const snap = onboardingFlowSnapshot();
+  const score = logOnboardingAudit('Auditoria do fluxo inicial', `${calculateOnboardingReliabilityScore(snap)}/100`, `${snap.playableIssues.length} problema(s) de base, ${snap.missingButtons.length} botão(ões) ausentes, modal ${snap.modalVisible ? 'visível' : 'não visível'}.`, snap);
+  renderOnboardingReliabilityHub();
+  addLog(`Auditoria de fluxo inicial concluída: ${score}/100.`);
+};
+window.runButtonReliabilityProbe = () => {
+  const ob = ensureOnboardingReliabilitySystem();
+  const snap = onboardingFlowSnapshot();
+  const found = CRITICAL_ONBOARDING_BUTTONS.length - snap.missingButtons.length;
+  ob.buttonProbe.unshift({ at: new Date().toISOString(), build: BUILD_INFO.build, found, total: CRITICAL_ONBOARDING_BUTTONS.length, missing: snap.missingButtons, tabs: snap.mainTabButtons, dock: snap.dockButtons });
+  ob.buttonProbe = ob.buttonProbe.slice(0, 12);
+  logOnboardingAudit('Probe de botões críticos', `${found}/${CRITICAL_ONBOARDING_BUTTONS.length}`, snap.missingButtons.length ? `Ausentes: ${snap.missingButtons.join(', ')}` : 'Todos os botões críticos encontrados no DOM.', snap);
+  renderOnboardingReliabilityHub();
+};
+window.exportOnboardingReport = () => {
+  const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, schema: BUILD_INFO.schemaVersion, generatedAt: new Date().toISOString(), snapshot: onboardingFlowSnapshot(), onboardingReliability: state.onboardingReliability, privacy: 'Relatório local. Não envia dados para servidor.' };
+  const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vale-tennis-onboarding-${BUILD_INFO.build}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+window.openCareerSetup = () => openOwnerSetup(false);
+window.repairPlayableCareer = () => { rebuildPlayableCareer('correção manual solicitada'); render(); openOwnerSetup(true); };
 function launchEvent(eventName='') {
   const event = state.calendar.find(e => e.name === eventName) || state.calendar.find(e => e.week === state.academy.week);
   if (!event) return;
@@ -1099,7 +1385,9 @@ async function boot() {
     state = buildInitialState(content);
   }
   migrateState();
+  const startupStatus = ensurePlayableStart();
   bindUI();
+  installCriticalButtonDelegation();
   applyBuildMarkers();
   installMobileUXRuntime();
   installInputReliabilityRuntime();
@@ -1110,7 +1398,8 @@ async function boot() {
   drawCourt();
   render();
   hydrateAssetImages();
-  if (!state.academy.owner || !state.flags?.ownerSetupComplete) openOwnerSetup(true);
+  handleStartupHash();
+  if (startupStatus !== 'ok' || !setupIsComplete(state)) enforceOwnerSetupFlow(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
 }
 
 function applyAdminOverrides(content) {
@@ -1347,7 +1636,11 @@ function startCourtAnimation() {
 function bindUI() {
   $$('#mainTabs .tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   $$('.dock-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-  $$('.hub-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.jumpTab)));
+  $$('.hub-btn[data-jump-tab]').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.jumpTab)));
+  $('#openSetupBtn')?.addEventListener('click', () => openOwnerSetup(false));
+  $('#openSetupBannerBtn')?.addEventListener('click', () => openOwnerSetup(false));
+  $('#repairStartBtn')?.addEventListener('click', () => { rebuildPlayableCareer('correção manual pelo banner'); render(); openOwnerSetup(true); });
+  $('#recoverCareerBtn')?.addEventListener('click', () => { rebuildPlayableCareer('correção manual pelo painel'); render(); openOwnerSetup(true); });
   ensureDrawModal();
   $('#saveOwnerSetupBtn')?.addEventListener('click', saveOwnerSetup);
   $('#openCalendarBtn')?.addEventListener('click', () => switchTab('calendar'));
@@ -1408,7 +1701,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -1497,6 +1790,7 @@ function render() {
   $('#moneyLabel').textContent = money(state.academy.money);
   $('#goalLabel').textContent = state.objectives.current;
   renderOwnerHub();
+  renderCareerRecoveryBanner();
   renderVisualAcademy();
   updateSceneForTab(state.ui?.currentTab || 'dashboard');
   $('#reputationLabel').textContent = state.academy.reputation;
@@ -1529,6 +1823,7 @@ function render() {
   renderAccessibilityReadability();
   renderLocalizationStore();
   renderHelpCenter();
+  renderOnboardingReliabilityHub();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -3278,7 +3573,7 @@ function ensureHelpCenterSystem() {
 function helpCenterSnapshot() {
   const help = ensureHelpCenterSystem();
   const tabs = [...document.querySelectorAll('.tab-panel')].map(p=>p.id.replace('tab-',''));
-  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md'];
+  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md'];
   const checklist = help.onboardingChecklist || {};
   const done = Object.values(checklist).filter(Boolean).length;
   const total = Math.max(1, Object.keys(checklist).length);

@@ -1282,3 +1282,63 @@ body[data-locale="es"] .build-pill span::after { content: " • ES"; }
 .tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .tag-row span{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);border-radius:999px;padding:6px 10px;font-size:.82rem;color:#dff3ff}
 @media (max-width:640px){.help-center-panel .release-grid{grid-template-columns:1fr}.help-step-list li{font-size:.92rem}.help-center-panel .release-actions{display:grid;grid-template-columns:1fr;gap:10px}.help-center-panel button{min-height:44px}}
+
+/* v4.1.1 — Career Setup Recovery & Safe Start Hotfix */
+.career-recovery-banner{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:14px;
+  align-items:center;
+  margin:14px 0;
+  padding:16px;
+  border:1px solid rgba(154,255,129,.28);
+  border-radius:22px;
+  background:linear-gradient(135deg,rgba(154,255,129,.14),rgba(97,235,255,.08),rgba(255,255,255,.035));
+  box-shadow:0 18px 50px rgba(0,0,0,.18);
+}
+.career-recovery-banner.hidden{display:none!important;}
+.career-recovery-banner h4{margin:0 0 4px;font-size:20px;}
+.career-recovery-banner p{margin:0;color:var(--muted);line-height:1.45;}
+.career-recovery-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+.career-recovery-actions button{min-width:150px;}
+.owner-hub-actions .recovery-primary{border-color:rgba(154,255,129,.38);background:linear-gradient(135deg,rgba(154,255,129,.18),rgba(97,235,255,.10));}
+.owner-hub-actions .recovery-secondary{border-color:rgba(255,209,102,.25);}
+.setup-open .mobile-dock,
+.setup-open .mobile-quick-bar,
+.setup-open .runtime-build-stamp,
+.setup-open .build-overlay{display:none!important;}
+body.setup-open{overflow:hidden;}
+body.setup-open .setup-card{touch-action:pan-y;}
+@media(max-width:1099px){
+  body{padding-bottom:calc(178px + env(safe-area-inset-bottom));}
+  .app-shell{padding-bottom:calc(188px + env(safe-area-inset-bottom));}
+  .content-stack{padding-bottom:calc(178px + env(safe-area-inset-bottom));}
+  .tab-panel{padding-bottom:calc(190px + env(safe-area-inset-bottom));}
+  .mobile-quick-bar{bottom:calc(94px + env(safe-area-inset-bottom));}
+  .runtime-build-stamp{bottom:calc(150px + env(safe-area-inset-bottom));}
+  .career-recovery-banner{grid-template-columns:1fr;padding:14px;}
+  .career-recovery-actions{display:grid;grid-template-columns:1fr;justify-content:stretch;}
+  .career-recovery-actions button{width:100%;min-width:0;}
+  .owner-hub-actions{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:390px){
+  .owner-hub-actions{grid-template-columns:1fr 1fr;}
+  .career-recovery-banner h4{font-size:18px;}
+}
+body.setup-open{touch-action:auto!important;}
+
+
+/* v4.1.1 Onboarding Flow & Button Reliability */
+.onboarding-reliability-hub{display:grid;gap:14px;}
+.onboarding-hero{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:18px;border:1px solid rgba(154,255,129,.22);border-radius:24px;background:linear-gradient(135deg,rgba(97,235,255,.10),rgba(154,255,129,.08),rgba(255,255,255,.035));}
+.onboarding-hero h2{margin:4px 0 6px;font-size:clamp(24px,5vw,36px);}
+.onboarding-hero p{margin:0;color:var(--muted);line-height:1.45;}
+.onboarding-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+.onboarding-actions button{min-height:54px;}
+.onboarding-check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+body.setup-open .setup-modal{display:flex!important;pointer-events:auto!important;visibility:visible;}
+body.setup-open .setup-card{scroll-margin-bottom:calc(24px + env(safe-area-inset-bottom));}
+#saveOwnerSetupBtn{min-height:58px;font-size:17px;}
+#ownerSetupModal input,#ownerSetupModal select,#ownerSetupModal button{touch-action:manipulation;}
+@media(max-width:760px){.onboarding-hero{grid-template-columns:1fr}.onboarding-actions{grid-template-columns:1fr 1fr}.onboarding-check-grid{grid-template-columns:1fr}.setup-actions{position:sticky;bottom:0;z-index:3;padding:10px 0 calc(6px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(8,16,29,0),rgba(8,16,29,.96) 28%,rgba(8,16,29,.98));}}
+@media(max-width:390px){.onboarding-actions{grid-template-columns:1fr}.onboarding-hero{padding:14px;border-radius:20px}}

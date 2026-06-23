@@ -14,7 +14,7 @@
     }
   ],
   "id": "vale-games-tennis-manager",
-  "description": "Simulador mobile-first de gestão de tênis com carreira, torneios, economia, QA interno, compatibilidade PWA, acessibilidade, localização PT/EN/ES, central de ajuda e modo offline.",
+  "description": "Simulador mobile-first de gestão de tênis com carreira, torneios, economia, QA interno, recuperação segura de criação de carreira e auditoria de botões/onboarding.",
   "shortcuts": [
     {
       "name": "Abrir Partida",
@@ -57,6 +57,18 @@
       "short_name": "Ajuda",
       "url": "./index.html#helpcenter",
       "description": "Abrir notas de versão, guia inicial e central de suporte offline"
+    },
+    {
+      "name": "Configurar Carreira",
+      "short_name": "Início",
+      "url": "./index.html#setup",
+      "description": "Abrir a criação de carreira, avatar, país e academia"
+    },
+    {
+      "name": "Fluxo Inicial e Botões",
+      "short_name": "Fluxo",
+      "url": "./index.html#onboarding",
+      "description": "Auditar criação de carreira, botões críticos e abertura obrigatória do onboarding"
     }
   ]
 }

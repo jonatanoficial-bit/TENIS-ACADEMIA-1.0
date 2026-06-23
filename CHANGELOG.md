@@ -1,9 +1,25 @@
 
-## v4.0.9 — Release Notes, Help Center & First-Run Guide
-- Nova aba Ajuda/Release.
-- Central de ajuda offline, guia de primeiro uso, notas de versão internas e exportação local de suporte.
-- Save schema 29 com `releaseNotesHelp`.
-- Manifest PWA com atalho para Ajuda e Guia Inicial.
+## v4.1.1 — Onboarding Flow & Button Reliability Hotfix — 23/06/2026 15:02:06
+
+- Nova aba Fluxo Inicial com score de confiabilidade do onboarding.
+- Auditoria de botões críticos, abas, dock mobile, modal de criação e avatares.
+- Fallback de delegação global para toque/clique em botões essenciais.
+- Reforço de abertura obrigatória do modal de criação quando a carreira ainda não foi configurada.
+- Schema atualizado para 31; cache PWA versionado.
+# Changelog
+
+## v4.1.0 — Career Setup Recovery & Safe Start Hotfix — 20260623-135529
+
+- Corrigido início direto no Dashboard com valores zerados quando havia save antigo/incompleto no navegador.
+- Adicionado boot guard que detecta elenco vazio, ranking incompleto, calendário incompleto, caixa inicial inválido e reputação inválida.
+- Adicionada reconstrução segura da base jogável com elenco, ranking e calendário do pacote base.
+- Criação de carreira agora é forçada quando faltam dono, perfil ou `ownerSetupComplete`.
+- Adicionado banner visível no Dashboard com **Configurar agora** e **Recriar base segura**.
+- Adicionados botões **Configurar** e **Corrigir** no hub inicial da academia.
+- Carregamento de JSONs recebeu cache-busting por build para reduzir risco de conteúdo antigo no PWA/Vercel.
+- Ajustado espaçamento inferior mobile e ocultação do dock durante o modal de criação.
+- Save schema atualizado para 30 com `careerSetupRecovery`.
+
 
 
 ## v4.0.8 — Localization & Store Readiness Hotfix — 20260623-114902
@@ -273,3 +289,13 @@ Build: 20260620-121454 • Data/hora visível: 20/06/2026 12:14:54
 - Processamento transacional com rollback anti-quebra.
 - Migração automática de saves para schema 7.
 - Layout mobile-first desde 320 px.
+
+## v4.1.0 — Career Setup Recovery & Safe Start Hotfix
+
+- Corrigido caso em que a aplicação podia abrir direto no Dashboard com tudo zerado e sem tela de criação.
+- Adicionado boot guard para detectar save incompleto, elenco vazio, ranking/calendário ausentes e caixa inicial inválido.
+- Adicionada reconstrução segura da base inicial preservando preferências mobile/acessibilidade.
+- Adicionado banner de correção no Dashboard e botões Configurar/Corrigir.
+- Modal de criação passa a abrir obrigatoriamente quando a carreira ainda não tem dono/perfil.
+- Conteúdo JSON agora recebe cache-busting por build.
+- Ajustado espaço inferior mobile para evitar que dock/barra rápida cubram botões.

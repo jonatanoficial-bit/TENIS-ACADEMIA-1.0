@@ -1,5 +1,7 @@
+import { BUILD_INFO } from './build.js';
 export async function loadJson(path) {
-  const res = await fetch(path);
+  const versionedPath = path.includes('?') ? `${path}&v=${BUILD_INFO.build}` : `${path}?v=${BUILD_INFO.build}`;
+  const res = await fetch(versionedPath, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Falha ao carregar ${path}`);
   return res.json();
 }
