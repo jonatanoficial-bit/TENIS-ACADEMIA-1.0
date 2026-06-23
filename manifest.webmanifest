@@ -14,7 +14,7 @@
     }
   ],
   "id": "vale-games-tennis-manager",
-  "description": "Simulador mobile-first de gestão de tênis com carreira, torneios, economia, QA interno e modo offline.",
+  "description": "Simulador mobile-first de gestão de tênis com carreira, torneios, economia, QA interno, compatibilidade PWA, toque/rolagem confiáveis e modo offline.",
   "shortcuts": [
     {
       "name": "Abrir Partida",
@@ -27,6 +27,18 @@
       "short_name": "QA",
       "url": "./index.html#qa",
       "description": "Ir para a central de testes da build"
+    },
+    {
+      "name": "Compatibilidade Mobile",
+      "short_name": "Compat",
+      "url": "./index.html#compat",
+      "description": "Abrir diagnóstico de navegador e instalação PWA"
+    },
+    {
+      "name": "Teste de Toque e Rolagem",
+      "short_name": "Input",
+      "url": "./index.html#input",
+      "description": "Abrir diagnóstico de toque, teclado, rolagem e viewport"
     }
   ]
 }

@@ -1,4 +1,25 @@
 
+
+## v4.0.6 — Input, Touch & Scroll Reliability Hotfix — 20260623-102045
+- Nova aba **Toque/Rolagem** para diagnosticar input real no celular.
+- Adicionado sistema persistente `inputReliability` com score, logs e relatórios JSON.
+- Auditoria de botões pequenos, rolagem presa, viewport real, teclado mobile e ponteiro coarse/fine.
+- Preset seguro de toque ativa conforto, modo uma mão, foco de partida e redução de movimento.
+- CSS de hardening para `touch-action`, `overscroll-behavior`, `-webkit-overflow-scrolling` e offset de teclado.
+- Save migrado para schema 26 com build visível e cache PWA v4.0.6.
+# Changelog
+
+## v4.0.5 — Browser Compatibility & Install QA Hotfix (20260622-193123)
+
+- Nova aba **Compatibilidade** para validação de ambiente real.
+- Adicionado sistema persistente `browserCompatibility` com score, matriz de compatibilidade e logs.
+- Adicionada auditoria de Android/Chrome, iOS/Safari, desktop, PWA instalado, cache, save local, toque e viewport.
+- Adicionado preset de instalação segura para mobile/PWA.
+- Adicionada limpeza segura de caches antigos do app sem alterar carreira.
+- Adicionada exportação de relatório de compatibilidade em JSON.
+- Atualizado schema para 25, build 20260622-193123 e cache PWA isolado.
+
+
 ## v4.0.4 — Final QA Automation & Public Test Tools (20260622-190941)
 - Nova aba QA Final.
 - Smoke test interno para boot, HUD, save, PWA/cache e viewport mobile.

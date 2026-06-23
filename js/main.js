@@ -1102,6 +1102,7 @@ async function boot() {
   bindUI();
   applyBuildMarkers();
   installMobileUXRuntime();
+  installInputReliabilityRuntime();
   startCourtAnimation();
   drawCourt();
   render();
@@ -1140,7 +1141,9 @@ function migrateState() {
   ensureMobileUXSystem();
   ensureCommercialCareerSystem();
   ensureLongCareerSystem();
+  ensureInputReliabilitySystem();
   applyMobileUXRuntime();
+  applyInputReliabilityRuntime();
 }
 
 
@@ -1402,7 +1405,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', input: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -1518,6 +1521,8 @@ function render() {
   renderReleaseHardening();
   renderPerformanceDelivery();
   renderQAAutomation();
+  renderBrowserCompatibility();
+  renderInputReliability();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -2522,6 +2527,348 @@ window.enablePublicTestMode = () => {
   qa.score = calculateQAScore();
   addLog('Modo teste público ativado para homologação controlada.');
   saveState(state); render();
+};
+
+
+function ensureBrowserCompatibilitySystem() {
+  state.browserCompatibility ||= { score: 93, lastAuditToken: null, auditLog: [], installDiagnostics: [], compatibilityMatrix: [], installMode: 'auto', lastUserAgent: '', environment: { serviceWorker: false, standalone: false, touch: true, storage: true, online: true, viewportStable: true }, flags: { iosSafari: false, androidChrome: false, desktopChrome: false, pwaInstalled: false } };
+  const bc = state.browserCompatibility;
+  bc.auditLog ||= [];
+  bc.installDiagnostics ||= [];
+  bc.compatibilityMatrix ||= [];
+  bc.installMode ||= 'auto';
+  bc.lastUserAgent ||= '';
+  bc.environment ||= { serviceWorker: false, standalone: false, touch: true, storage: true, online: true, viewportStable: true };
+  bc.flags ||= { iosSafari: false, androidChrome: false, desktopChrome: false, pwaInstalled: false };
+  bc.score ??= 93;
+  bc.lastAuditToken ??= null;
+  return bc;
+}
+
+function browserEnvironmentSnapshot() {
+  const ua = navigator.userAgent || '';
+  const platform = navigator.platform || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1);
+  const isAndroid = /Android/i.test(ua);
+  const isChrome = /Chrome|CriOS/i.test(ua);
+  const isSafari = /Safari/i.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/i.test(ua);
+  const standalone = !!(window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone);
+  let storage = false;
+  try {
+    const key = `vale-tennis-compat-${BUILD_INFO.build}`;
+    localStorage.setItem(key, 'ok');
+    storage = localStorage.getItem(key) === 'ok';
+    localStorage.removeItem(key);
+  } catch (error) { storage = false; }
+  const viewportStable = !!getComputedStyle(document.documentElement).getPropertyValue('--app-vh').trim() && window.innerWidth >= 300 && window.innerHeight >= 420;
+  const touch = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0 || window.matchMedia?.('(pointer: coarse)').matches;
+  return {
+    ua, isIOS, isAndroid, isChrome, isSafari, standalone,
+    serviceWorker: 'serviceWorker' in navigator,
+    caches: 'caches' in window,
+    storage,
+    online: navigator.onLine !== false,
+    touch: !!touch,
+    viewportStable,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    pixelRatio: Math.round((window.devicePixelRatio || 1) * 100) / 100
+  };
+}
+
+function buildCompatibilityMatrix(env = browserEnvironmentSnapshot()) {
+  return [
+    { title: 'Android Chrome / Edge', status: env.isAndroid && env.isChrome ? 'Detectado' : 'Compatível', note: 'PWA instalável via menu do navegador, cache versionado e toque coarse.' },
+    { title: 'iPhone / iPad Safari', status: env.isIOS ? 'Detectado' : 'Compatível', note: 'Suporte a Adicionar à Tela de Início, safe area e viewport recalculado.' },
+    { title: 'Desktop Chrome / Edge', status: !env.isAndroid && !env.isIOS && env.isChrome ? 'Detectado' : 'Compatível', note: 'Modo desktop/tablet preservado para gestão longa e QA.' },
+    { title: 'PWA instalado', status: env.standalone ? 'Instalado' : 'Navegador', note: env.standalone ? 'Rodando como app instalado.' : 'Pode rodar pelo navegador; instalação deve ser testada manualmente.' },
+    { title: 'Offline/cache', status: env.serviceWorker && env.caches ? 'OK' : 'Atenção', note: env.serviceWorker ? 'Service Worker disponível para cache.' : 'Service Worker indisponível neste navegador.' },
+    { title: 'Save local', status: env.storage ? 'OK' : 'Risco', note: env.storage ? 'LocalStorage gravável.' : 'Save local bloqueado pelo navegador/modo privado.' },
+    { title: 'Toque mobile', status: env.touch ? 'OK' : 'Desktop', note: env.touch ? 'Dispositivo com toque ou ponteiro coarse detectado.' : 'Sem toque detectado; teclado/mouse esperado.' },
+    { title: 'Viewport real', status: env.viewportStable ? 'OK' : 'Atenção', note: `${env.width}×${env.height} • DPR ${env.pixelRatio}` }
+  ];
+}
+
+function calculateBrowserCompatibilityScore() {
+  const bc = ensureBrowserCompatibilitySystem();
+  const matrix = bc.compatibilityMatrix || [];
+  const risk = matrix.filter(item => item.status === 'Risco').length;
+  const warn = matrix.filter(item => item.status === 'Atenção').length;
+  const installedBoost = bc.environment?.standalone ? 4 : 0;
+  const cacheBoost = bc.environment?.serviceWorker ? 3 : 0;
+  return clamp(100 - risk * 12 - warn * 5 + installedBoost + cacheBoost, 0, 100);
+}
+
+function renderBrowserCompatibility() {
+  const host = $('#browserCompatibilityHub');
+  if (!host) return;
+  const bc = ensureBrowserCompatibilitySystem();
+  const env = browserEnvironmentSnapshot();
+  bc.environment = { serviceWorker: env.serviceWorker, standalone: env.standalone, touch: env.touch, storage: env.storage, online: env.online, viewportStable: env.viewportStable };
+  bc.flags = { iosSafari: env.isIOS && env.isSafari, androidChrome: env.isAndroid && env.isChrome, desktopChrome: !env.isAndroid && !env.isIOS && env.isChrome, pwaInstalled: env.standalone };
+  bc.lastUserAgent = env.ua;
+  if (!bc.compatibilityMatrix?.length) bc.compatibilityMatrix = buildCompatibilityMatrix(env);
+  bc.score = calculateBrowserCompatibilityScore();
+  const matrix = (bc.compatibilityMatrix || []).map(item => `<article class="release-check ${item.status === 'OK' || item.status === 'Detectado' || item.status === 'Instalado' || item.status === 'Compatível' ? 'ok' : 'pending'}"><span>${item.status === 'Risco' ? '!' : '✓'}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.note)}</small></div><b>${escapeHtml(item.status)}</b></article>`).join('');
+  const logs = (bc.auditLog || []).slice(0,8).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.result || 'OK')}</b></div>`).join('') || '<div class="list-item"><span>Execute a auditoria de compatibilidade para gerar o primeiro relatório.</span><strong>Pendente</strong></div>';
+  const install = (bc.installDiagnostics || []).slice(0,6).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.status)}</b></div>`).join('') || '<div class="list-item"><span>Sem diagnóstico de instalação ainda.</span><strong>Pronto</strong></div>';
+  host.innerHTML = `
+    <section class="quality-hero compat-hero ${bc.score >= 90 ? 'ok' : bc.score >= 76 ? 'warn' : 'danger'}">
+      <div><p class="eyebrow">v${BUILD_INFO.version} • Browser Compatibility</p><h2>Compatibilidade, instalação PWA e ambiente real do jogador</h2><p>Central para validar Android, iOS, desktop, PWA instalado, cache, save local, viewport real e toque antes de publicação pública.</p></div>
+      <div class="release-score"><span>Compat Score</span><strong>${bc.score}</strong><small>${bc.score >= 90 ? 'Pronto para teste público' : 'Revisar ambiente'}</small></div>
+    </section>
+    <div class="cards-grid release-kpis"><article class="stat-card"><span>Build</span><strong>${escapeHtml(BUILD_INFO.version)}</strong></article><article class="stat-card"><span>Viewport</span><strong>${env.width}×${env.height}</strong></article><article class="stat-card"><span>PWA</span><strong>${env.standalone ? 'Instalado' : 'Browser'}</strong></article><article class="stat-card"><span>Online</span><strong>${env.online ? 'Sim' : 'Offline'}</strong></article></div>
+    <div class="release-actions"><button class="btn-primary" onclick="window.runBrowserCompatibilityAudit()">Auditar navegador</button><button class="btn-secondary" onclick="window.applyInstallSafePreset()">Preset instalação segura</button><button class="btn-secondary" onclick="window.clearOldPwaCaches()">Limpar caches antigos</button><button class="btn-ghost" onclick="window.exportCompatibilityReport()">Exportar relatório</button></div>
+    <section class="release-grid"><div><h4>Matriz de compatibilidade</h4><div class="release-checklist">${matrix}</div></div><div><h4>Instalação e logs</h4><div class="list-stack">${install}${logs}</div></div></section>`;
+}
+
+window.runBrowserCompatibilityAudit = () => {
+  const bc = ensureBrowserCompatibilitySystem();
+  const env = browserEnvironmentSnapshot();
+  bc.compatibilityMatrix = buildCompatibilityMatrix(env);
+  bc.environment = { serviceWorker: env.serviceWorker, standalone: env.standalone, touch: env.touch, storage: env.storage, online: env.online, viewportStable: env.viewportStable };
+  bc.flags = { iosSafari: env.isIOS && env.isSafari, androidChrome: env.isAndroid && env.isChrome, desktopChrome: !env.isAndroid && !env.isIOS && env.isChrome, pwaInstalled: env.standalone };
+  bc.lastUserAgent = env.ua;
+  bc.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  bc.installDiagnostics = [
+    { title: 'Instalação PWA', status: env.standalone ? 'Instalado' : 'Manual', note: env.isIOS ? 'No iOS, usar Compartilhar > Adicionar à Tela de Início.' : 'No Android/Chrome, usar Instalar app ou Adicionar à tela inicial.' },
+    { title: 'Cache versionado', status: env.serviceWorker && env.caches ? 'OK' : 'Atenção', note: `Cache alvo: vale-tennis-v${BUILD_INFO.version}-${BUILD_INFO.build}` },
+    { title: 'Save local', status: env.storage ? 'OK' : 'Risco', note: env.storage ? 'Save gravável no navegador atual.' : 'Modo privado ou bloqueio de armazenamento pode impedir progresso.' },
+    { title: 'Safe area / notch', status: env.viewportStable ? 'OK' : 'Atenção', note: 'Layout usa viewport-fit=cover e --app-vh recalculado.' }
+  ];
+  bc.score = calculateBrowserCompatibilityScore();
+  bc.auditLog.unshift({ title: 'Auditoria de navegador executada', result: `${bc.score}/100`, note: `${env.isIOS ? 'iOS' : env.isAndroid ? 'Android' : 'Desktop'} • ${env.width}×${env.height} • PWA ${env.standalone ? 'instalado' : 'browser'}`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  bc.auditLog = bc.auditLog.slice(0,20);
+  addLog(`Compatibilidade v${BUILD_INFO.version}: auditoria ${bc.score}/100.`);
+  saveState(state); renderBrowserCompatibility();
+};
+
+window.applyInstallSafePreset = () => {
+  const bc = ensureBrowserCompatibilitySystem();
+  state.mobileUX ||= { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] };
+  state.mobileUX.mode = 'comfort';
+  state.mobileUX.matchFocus = true;
+  state.mobileUX.reduceMotion = true;
+  state.performanceDelivery ||= { score: 91, mode: 'balanced', liteMode: false, auditLog: [] };
+  state.performanceDelivery.mode = 'install-safe';
+  state.releaseHardening ||= { score: 90, recoveryMode: 'guarded', auditLog: [] };
+  state.releaseHardening.recoveryMode = 'guarded';
+  bc.installMode = 'safe';
+  bc.auditLog.unshift({ title: 'Preset instalação segura aplicado', result: 'ON', note: 'Redução de movimento, foco mobile, asset delivery seguro e recuperação guardada ativados.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  bc.auditLog = bc.auditLog.slice(0,20);
+  applyMobileUXRuntime();
+  addLog('Preset de instalação segura aplicado para teste em PWA/mobile.');
+  saveState(state); render();
+};
+
+window.clearOldPwaCaches = async () => {
+  const bc = ensureBrowserCompatibilitySystem();
+  let removed = 0;
+  try {
+    if ('caches' in window) {
+      const current = `vale-tennis-v${BUILD_INFO.version}-${BUILD_INFO.build}`;
+      const keys = await caches.keys();
+      await Promise.all(keys.filter(key => key.startsWith('vale-tennis-') && key !== current).map(key => { removed++; return caches.delete(key); }));
+      bc.auditLog.unshift({ title: 'Caches antigos limpos', result: `${removed}`, note: removed ? 'Caches de builds anteriores removidos. Reabra o app instalado para validar.' : 'Nenhum cache antigo encontrado.', at: new Date().toISOString(), build: BUILD_INFO.build });
+    } else {
+      bc.auditLog.unshift({ title: 'Cache API indisponível', result: 'Atenção', note: 'Este navegador não expõe caches para limpeza interna.', at: new Date().toISOString(), build: BUILD_INFO.build });
+    }
+  } catch (error) {
+    bc.auditLog.unshift({ title: 'Falha ao limpar caches', result: 'Risco', note: error?.message || 'Erro desconhecido na limpeza de cache.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  }
+  bc.auditLog = bc.auditLog.slice(0,20);
+  saveState(state); renderBrowserCompatibility();
+};
+
+window.exportCompatibilityReport = () => {
+  const bc = ensureBrowserCompatibilitySystem();
+  const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, generatedAt: new Date().toISOString(), score: calculateBrowserCompatibilityScore(), environment: browserEnvironmentSnapshot(), matrix: bc.compatibilityMatrix, installDiagnostics: bc.installDiagnostics, auditLog: bc.auditLog };
+  bc.auditLog.unshift({ title: 'Relatório de compatibilidade gerado', result: 'JSON', note: 'Arquivo local preparado para anexar em teste público.', at: payload.generatedAt, build: BUILD_INFO.build });
+  try {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = `vale-tennis-compat-${BUILD_INFO.version}-${BUILD_INFO.build}.json`;
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+  } catch (error) { console.info('Compatibility report fallback', payload, error); }
+  saveState(state); renderBrowserCompatibility();
+};
+
+
+function ensureInputReliabilitySystem() {
+  state.inputReliability ||= { score: 94, lastAuditToken: null, auditLog: [], gestureDiagnostics: [], keyboardDiagnostics: [], scrollDiagnostics: [], safePreset: false, environment: { touch: true, pointer: 'coarse', viewportLocked: true, scrollUnlocked: true, keyboardSafe: true, passiveListeners: true }, flags: { stickyScrollGuard: true, tapTargetGuard: true, keyboardGuard: true, orientationGuard: true } };
+  const ir = state.inputReliability;
+  ir.auditLog ||= [];
+  ir.gestureDiagnostics ||= [];
+  ir.keyboardDiagnostics ||= [];
+  ir.scrollDiagnostics ||= [];
+  ir.environment ||= { touch: true, pointer: 'coarse', viewportLocked: true, scrollUnlocked: true, keyboardSafe: true, passiveListeners: true };
+  ir.flags ||= { stickyScrollGuard: true, tapTargetGuard: true, keyboardGuard: true, orientationGuard: true };
+  ir.score ??= 94;
+  ir.safePreset ??= false;
+  return ir;
+}
+
+function inputEnvironmentSnapshot() {
+  const vv = window.visualViewport;
+  const root = document.documentElement;
+  const body = document.body;
+  const activePanel = document.querySelector('.tab-panel.active');
+  const touch = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0 || window.matchMedia?.('(pointer: coarse)').matches;
+  const pointer = window.matchMedia?.('(pointer: coarse)').matches ? 'coarse' : window.matchMedia?.('(pointer: fine)').matches ? 'fine' : 'mixed';
+  const scrollUnlocked = !!activePanel && getComputedStyle(activePanel).overflowY !== 'hidden' && getComputedStyle(body).overflowY !== 'hidden';
+  const keyboardDelta = vv ? Math.max(0, Math.round((window.innerHeight || 0) - vv.height)) : 0;
+  const tapTargets = [...document.querySelectorAll('button, .dock-btn, .mobile-quick-btn, select, input, a.btn-ghost')].slice(0, 80);
+  const smallTargets = tapTargets.filter(el => {
+    const r = el.getBoundingClientRect?.();
+    return r && r.width > 0 && r.height > 0 && (r.width < 38 || r.height < 38);
+  }).length;
+  const viewportLocked = !!getComputedStyle(root).getPropertyValue('--app-vh').trim() && window.innerWidth >= 300 && window.innerHeight >= 420;
+  return {
+    touch: !!touch,
+    pointer,
+    width: Math.round(window.innerWidth || root.clientWidth || 390),
+    height: Math.round(window.innerHeight || root.clientHeight || 720),
+    visualViewportHeight: vv ? Math.round(vv.height) : null,
+    keyboardDelta,
+    keyboardSafe: keyboardDelta < 180 || document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'SELECT' || document.activeElement?.tagName === 'TEXTAREA',
+    scrollUnlocked,
+    viewportLocked,
+    passiveListeners: true,
+    smallTargets,
+    activeTab: state?.ui?.currentTab || 'dashboard',
+    reducedMotion: !!state?.mobileUX?.reduceMotion,
+    at: new Date().toISOString()
+  };
+}
+
+function calculateInputReliabilityScore() {
+  const ir = ensureInputReliabilitySystem();
+  const env = ir.environment || inputEnvironmentSnapshot();
+  let score = 100;
+  if (!env.viewportLocked) score -= 12;
+  if (!env.scrollUnlocked) score -= 16;
+  if (!env.keyboardSafe) score -= 8;
+  if ((env.smallTargets || 0) > 0) score -= Math.min(14, env.smallTargets * 2);
+  if (env.pointer === 'coarse' || env.touch) score += 2;
+  if (ir.safePreset) score += 3;
+  return clamp(Math.round(score), 0, 100);
+}
+
+function applyInputReliabilityRuntime() {
+  if (!document?.body) return;
+  const ir = ensureInputReliabilitySystem();
+  const env = inputEnvironmentSnapshot();
+  ir.environment = { touch: env.touch, pointer: env.pointer, viewportLocked: env.viewportLocked, scrollUnlocked: env.scrollUnlocked, keyboardSafe: env.keyboardSafe, passiveListeners: true, smallTargets: env.smallTargets, width: env.width, height: env.height, keyboardDelta: env.keyboardDelta };
+  ir.score = calculateInputReliabilityScore();
+  document.body.classList.toggle('input-safe-ui', !!ir.safePreset);
+  document.body.classList.toggle('keyboard-open-ui', env.keyboardDelta > 160);
+  document.documentElement.dataset.pointer = env.pointer;
+  document.documentElement.style.setProperty('--keyboard-offset', `${Math.min(260, env.keyboardDelta)}px`);
+}
+
+function installInputReliabilityRuntime() {
+  const run = () => { try { applyInputReliabilityRuntime(); renderInputReliability(); } catch (error) { console.warn('Input reliability fallback', error); } };
+  window.addEventListener('resize', run, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(run, 180), { passive: true });
+  window.visualViewport?.addEventListener('resize', run, { passive: true });
+  document.addEventListener('focusin', event => {
+    if (event.target?.matches?.('input, textarea, select')) setTimeout(() => event.target.scrollIntoView?.({ block: 'center', behavior: state?.mobileUX?.reduceMotion ? 'auto' : 'smooth' }), 120);
+    run();
+  }, { passive: true });
+  document.addEventListener('pointerdown', event => {
+    const ir = ensureInputReliabilitySystem();
+    ir.lastPointer = { type: event.pointerType || 'unknown', x: Math.round(event.clientX || 0), y: Math.round(event.clientY || 0), at: new Date().toISOString(), tab: state?.ui?.currentTab || 'dashboard' };
+  }, { passive: true });
+  document.addEventListener('touchmove', () => {}, { passive: true });
+  run();
+}
+
+function renderInputReliability() {
+  const host = $('#inputReliabilityHub');
+  if (!host || !state) return;
+  const ir = ensureInputReliabilitySystem();
+  const env = inputEnvironmentSnapshot();
+  ir.environment = { touch: env.touch, pointer: env.pointer, viewportLocked: env.viewportLocked, scrollUnlocked: env.scrollUnlocked, keyboardSafe: env.keyboardSafe, passiveListeners: true, smallTargets: env.smallTargets, width: env.width, height: env.height, keyboardDelta: env.keyboardDelta };
+  ir.score = calculateInputReliabilityScore();
+  const status = ir.score >= 92 ? 'Confiável' : ir.score >= 78 ? 'Atenção' : 'Risco';
+  const checks = [
+    { title: 'Toque e botões', status: env.smallTargets === 0 ? 'OK' : 'Atenção', note: env.smallTargets === 0 ? 'Alvos de toque principais estão protegidos.' : `${env.smallTargets} alvos pequenos detectados.` },
+    { title: 'Rolagem ativa', status: env.scrollUnlocked ? 'OK' : 'Risco', note: env.scrollUnlocked ? 'Painel ativo e body permitem rolagem.' : 'Algum container pode estar prendendo a rolagem.' },
+    { title: 'Teclado mobile', status: env.keyboardSafe ? 'OK' : 'Atenção', note: env.keyboardDelta ? `Viewport visual reduziu ${env.keyboardDelta}px.` : 'Sem teclado aberto detectado.' },
+    { title: 'Viewport real', status: env.viewportLocked ? 'OK' : 'Atenção', note: `${env.width}×${env.height} • ${env.pointer}` },
+    { title: 'Listeners passivos', status: 'OK', note: 'touchmove/orientation/resize configurados para não travar scroll.' }
+  ];
+  const checklist = checks.map(item => `<article class="release-check ${item.status === 'OK' ? 'ok' : 'pending'}"><span>${item.status === 'OK' ? '✓' : '!'}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.note)}</small></div><b>${escapeHtml(item.status)}</b></article>`).join('');
+  const logs = (ir.auditLog || []).slice(0,8).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note)}</div></div><b>${escapeHtml(item.result)}</b></div>`).join('') || '<div class="list-item"><span>Execute o diagnóstico de toque e rolagem.</span><strong>Pendente</strong></div>';
+  host.innerHTML = `
+    <section class="quality-hero input-hero ${ir.score >= 92 ? 'ok' : ir.score >= 78 ? 'warn' : 'danger'}">
+      <div><p class="eyebrow">v${BUILD_INFO.version} • Input Reliability</p><h2>Toque, rolagem e teclado confiáveis no celular</h2><p>Central para detectar problemas reais de mobile: scroll preso, botão pequeno, teclado cobrindo campo, viewport instável e gesto que não responde.</p></div>
+      <div class="release-score"><span>Input Score</span><strong>${ir.score}</strong><small>${status}</small></div>
+    </section>
+    <div class="cards-grid release-kpis"><article class="stat-card"><span>Viewport</span><strong>${env.width}×${env.height}</strong></article><article class="stat-card"><span>Ponteiro</span><strong>${env.pointer}</strong></article><article class="stat-card"><span>Teclado</span><strong>${env.keyboardDelta}px</strong></article><article class="stat-card"><span>Safe preset</span><strong>${ir.safePreset ? 'ON' : 'OFF'}</strong></article></div>
+    <div class="release-actions"><button class="btn-primary" onclick="window.runInputReliabilityAudit()">Auditar toque/rolagem</button><button class="btn-secondary" onclick="window.applyInputSafePreset()">Aplicar preset seguro</button><button class="btn-secondary" onclick="window.unlockScrollNow()">Destravar rolagem</button><button class="btn-ghost" onclick="window.exportInputReport()">Exportar relatório</button></div>
+    <section class="release-grid"><div><h4>Checklist de gestos</h4><div class="release-checklist">${checklist}</div></div><div><h4>Logs recentes</h4><div class="list-stack">${logs}</div></div></section>`;
+}
+
+window.runInputReliabilityAudit = () => {
+  const ir = ensureInputReliabilitySystem();
+  const env = inputEnvironmentSnapshot();
+  ir.gestureDiagnostics.unshift({ title: 'Gestos', status: env.touch ? 'OK' : 'Desktop', note: `${env.pointer} • ${env.smallTargets} alvos pequenos`, at: env.at });
+  ir.keyboardDiagnostics.unshift({ title: 'Teclado', status: env.keyboardSafe ? 'OK' : 'Atenção', note: `Delta visual ${env.keyboardDelta}px`, at: env.at });
+  ir.scrollDiagnostics.unshift({ title: 'Rolagem', status: env.scrollUnlocked ? 'OK' : 'Risco', note: `Aba ${env.activeTab}`, at: env.at });
+  ir.gestureDiagnostics = ir.gestureDiagnostics.slice(0,12);
+  ir.keyboardDiagnostics = ir.keyboardDiagnostics.slice(0,12);
+  ir.scrollDiagnostics = ir.scrollDiagnostics.slice(0,12);
+  ir.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  ir.environment = { touch: env.touch, pointer: env.pointer, viewportLocked: env.viewportLocked, scrollUnlocked: env.scrollUnlocked, keyboardSafe: env.keyboardSafe, passiveListeners: true, smallTargets: env.smallTargets, width: env.width, height: env.height, keyboardDelta: env.keyboardDelta };
+  ir.score = calculateInputReliabilityScore();
+  ir.auditLog.unshift({ title: 'Auditoria de toque/rolagem executada', result: `${ir.score}/100`, note: `${env.width}×${env.height} • ${env.pointer} • scroll ${env.scrollUnlocked ? 'livre' : 'preso'}`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  ir.auditLog = ir.auditLog.slice(0,20);
+  addLog(`Input Reliability v${BUILD_INFO.version}: auditoria ${ir.score}/100.`);
+  saveState(state); renderInputReliability();
+};
+
+window.applyInputSafePreset = () => {
+  const ir = ensureInputReliabilitySystem();
+  ir.safePreset = true;
+  ir.flags = { stickyScrollGuard: true, tapTargetGuard: true, keyboardGuard: true, orientationGuard: true };
+  state.mobileUX ||= { mode: 'auto', compact: false, oneHand: false, matchFocus: true, reduceMotion: false, lastViewport: null, auditLog: [] };
+  state.mobileUX.mode = 'comfort';
+  state.mobileUX.oneHand = true;
+  state.mobileUX.matchFocus = true;
+  state.mobileUX.reduceMotion = true;
+  applyMobileUXRuntime();
+  applyInputReliabilityRuntime();
+  ir.auditLog.unshift({ title: 'Preset seguro de input aplicado', result: 'ON', note: 'Conforto, uma mão, foco no match, redução de movimento e rolagem protegida.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  ir.auditLog = ir.auditLog.slice(0,20);
+  addLog('Preset seguro de toque e rolagem aplicado.');
+  saveState(state); render();
+};
+
+window.unlockScrollNow = () => {
+  const ir = ensureInputReliabilitySystem();
+  document.documentElement.style.overflowY = 'auto';
+  document.body.style.overflowY = 'auto';
+  document.querySelectorAll('.tab-panel, .content-stack, .modal, .bottom-sheet').forEach(el => { el.style.overscrollBehavior = 'contain'; el.style.webkitOverflowScrolling = 'touch'; });
+  scrollToAppTop(true);
+  ir.auditLog.unshift({ title: 'Comando de destravar rolagem aplicado', result: 'OK', note: 'Overflow do body/root restaurado e painéis preparados para touch scroll.', at: new Date().toISOString(), build: BUILD_INFO.build });
+  ir.auditLog = ir.auditLog.slice(0,20);
+  saveState(state); renderInputReliability();
+};
+
+window.exportInputReport = () => {
+  const ir = ensureInputReliabilitySystem();
+  const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, generatedAt: new Date().toISOString(), score: calculateInputReliabilityScore(), environment: inputEnvironmentSnapshot(), gestureDiagnostics: ir.gestureDiagnostics, keyboardDiagnostics: ir.keyboardDiagnostics, scrollDiagnostics: ir.scrollDiagnostics, auditLog: ir.auditLog };
+  ir.auditLog.unshift({ title: 'Relatório de input gerado', result: 'JSON', note: 'Arquivo local preparado para teste em celulares.', at: payload.generatedAt, build: BUILD_INFO.build });
+  try {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = `vale-tennis-input-${BUILD_INFO.version}-${BUILD_INFO.build}.json`;
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+  } catch (error) { console.info('Input report fallback', payload, error); }
+  saveState(state); renderInputReliability();
 };
 
 function renderNextEvents() {

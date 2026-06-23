@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vale-tennis-v4.0.4-20260622-190941';
+const CACHE_NAME = 'vale-tennis-v4.0.6-20260623-102045';
 const CORE_ASSETS = ['./','./index.html','./css/styles.css','./js/main.js','./js/build.js','./build/build-info.json','./manifest.webmanifest','./assets/icons/icon.svg'];
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE_ASSETS)).finally(() => self.skipWaiting())); });
 self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))).then(() => self.clients.claim())); });

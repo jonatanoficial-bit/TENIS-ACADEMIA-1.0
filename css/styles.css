@@ -1165,3 +1165,46 @@ body[data-current-tab="qa"] .hero-card { background-image: linear-gradient(135de
   .qa-automation-hub .quality-hero h2 { font-size: 1.3rem; }
   .qa-automation-hub .release-kpis { grid-template-columns: 1fr 1fr; }
 }
+
+
+/* v4.0.5 Browser Compatibility & Install QA Hotfix */
+.browser-compat-panel { position: relative; overflow: hidden; }
+.browser-compat-hub { display: grid; gap: 1rem; }
+.compat-hero { background: linear-gradient(135deg, rgba(112,246,201,.18), rgba(91,214,255,.16), rgba(152,132,255,.08)), rgba(8,15,31,.86); }
+body[data-current-tab="compat"] .hero-card { background-image: linear-gradient(135deg, rgba(112,246,201,.18), rgba(31,41,75,.86)); }
+.browser-compat-hub .release-actions { flex-wrap: wrap; }
+.browser-compat-hub .release-checklist { max-height: 400px; overflow: auto; -webkit-overflow-scrolling: touch; }
+.browser-compat-hub .release-check b { margin-left: auto; font-size: .78rem; color: rgba(236,244,255,.78); }
+.browser-compat-hub .list-stack { display: grid; gap: .65rem; }
+@media (max-width: 780px) {
+  .browser-compat-hub .release-actions { display: grid; grid-template-columns: 1fr; }
+  .browser-compat-hub .quality-hero { grid-template-columns: 1fr; }
+  .browser-compat-hub .release-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 360px) {
+  .browser-compat-hub .quality-hero h2 { font-size: 1.28rem; }
+  .browser-compat-hub .release-kpis { grid-template-columns: 1fr 1fr; }
+}
+
+
+/* v4.0.6 Input, Touch & Scroll Reliability Hotfix */
+html { overscroll-behavior-y: none; scroll-behavior: smooth; }
+body { touch-action: manipulation; -webkit-tap-highlight-color: rgba(255,255,255,0.12); }
+button, a, input, select, textarea, .tab-btn, .dock-btn, .mobile-quick-btn { touch-action: manipulation; }
+.tab-panel { scroll-margin-top: 18px; }
+.content-stack, .tab-panel, .list-block, .list-stack, .market-grid, .roster-grid, .calendar-grid, .training-plan-grid { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.input-reliability-panel .input-hero { background: radial-gradient(circle at top left, rgba(75, 229, 255, .22), rgba(8, 16, 29, .82)); }
+.input-reliability-hub .release-actions { gap: .65rem; flex-wrap: wrap; }
+.input-safe-ui button, .input-safe-ui .dock-btn, .input-safe-ui .mobile-quick-btn, .input-safe-ui select, .input-safe-ui input { min-height: 46px; }
+.input-safe-ui .tab-btn { min-height: 44px; padding-inline: 1rem; }
+.keyboard-open-ui .mobile-dock, .keyboard-open-ui .mobile-quick-bar { transform: translateY(calc(-1 * var(--keyboard-offset, 0px))); }
+.keyboard-open-ui .content-stack { padding-bottom: calc(110px + var(--keyboard-offset, 0px)); }
+@media (max-width: 760px) {
+  body { overflow-y: auto; }
+  .shell, .content-stack { min-height: calc(var(--app-vh, 1vh) * 100); }
+  .tab-panel.active { display: block; overflow: visible; }
+  .input-reliability-hub .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .input-reliability-hub .release-grid { grid-template-columns: 1fr; }
+  .input-reliability-hub .release-actions > button { width: 100%; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
