@@ -1,11 +1,24 @@
+# Changelog
 
-## v4.1.4 — Mandatory New Career Gate & Empty Save Repair (20260624-103102)
+## v4.1.5 — Forced Onboarding Launcher & Invalid Career Block — 20260624-104720
+
+- Bloqueio total de Dashboard inválido: sem perfil completo ou base jogável, o jogo redireciona para o Gate Inicial.
+- Criação de carreira passa a ser launcher obrigatório em tela cheia, acima do dock e da barra rápida mobile.
+- Validação estrita: treinador, avatar, país, cidade, nome da academia, elenco, ranking, calendário e caixa inicial.
+- Botões Configurar/Configurar agora acionam diretamente o launcher obrigatório.
+- Save vazio/parcial recebe backup local antes do reparo.
+- Service Worker, manifest, CSS/JS/JSON com cache-busting de build.
+- Schema atualizado para 35.
+- Documentos adicionados: `AUDIT_v4.1.5.md` e `FORCED_ONBOARDING_CHECKLIST_v4.1.5.md`.
+
+
+## v4.1.5 — Forced Onboarding Launcher & Invalid Career Block (20260624-104720)
 
 - Gate inicial obrigatório antes de liberar gameplay.
 - Bloqueio contra Dashboard vazio sem treinador/avatar/academia.
 - Aba Gate Inicial com auditoria, reparo e exportação local.
 - Navegação para gameplay é redirecionada para criação se a carreira não estiver completa.
-- Schema 34.
+- Schema 35.
 
 
 

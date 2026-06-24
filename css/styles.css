@@ -1371,3 +1371,21 @@ body.setup-open .mobile-dock, body.setup-open .mobile-quickbar { display: none !
   #tab-initialgate .onboarding-actions { grid-template-columns: 1fr; }
   #tab-initialgate .release-grid { grid-template-columns: 1fr; }
 }
+
+/* v4.1.5 — Forced Onboarding Launcher & Invalid Career Block */
+.forced-onboarding-hub{margin-top:14px;}
+.forced-onboarding-hero{border-color:rgba(255,209,102,.36);background:linear-gradient(135deg,rgba(255,209,102,.13),rgba(97,235,255,.08),rgba(255,255,255,.035));}
+.forced-setup-alert{padding:12px 14px;border-radius:16px;border:1px solid rgba(255,209,102,.38);background:rgba(255,209,102,.10);color:#ffe5a5;font-weight:800;line-height:1.35;}
+body.forced-onboarding-active #ownerSetupModal{z-index:9998!important;display:flex!important;visibility:visible!important;pointer-events:auto!important;}
+body.forced-onboarding-active #ownerSetupModal .setup-backdrop{background:rgba(0,4,12,.92)!important;backdrop-filter:blur(16px)!important;}
+body.forced-onboarding-active #ownerSetupModal .setup-card{box-shadow:0 30px 110px rgba(0,0,0,.72),0 0 0 1px rgba(154,255,129,.18);}
+body.forced-onboarding-active .mobile-dock,
+body.forced-onboarding-active .mobile-quick-bar,
+body.forced-onboarding-active .runtime-build-stamp,
+body.forced-onboarding-active .build-overlay{display:none!important;}
+body[data-current-tab="initialgate"] .hub-btn[data-jump-tab="dashboard"]{opacity:.72;}
+#openSetupBtn.recovery-primary,#openSetupBannerBtn{box-shadow:0 0 0 1px rgba(154,255,129,.22),0 12px 28px rgba(154,255,129,.12);}
+@media(max-width:760px){
+  .forced-setup-alert{font-size:13px;padding:10px 12px;}
+  body.forced-onboarding-active #ownerSetupModal .setup-card{width:100%;height:calc(var(--app-vh,1vh)*100);max-height:calc(var(--app-vh,1vh)*100);border-radius:0;padding-bottom:calc(116px + env(safe-area-inset-bottom));}
+}

@@ -1,19 +1,39 @@
-# Vale Games Tennis Manager — v4.1.4
+# Vale Games Tennis Manager — v4.1.5
 
-Build `20260624-103102` — **Mandatory New Career Gate & Empty Save Repair**.
+Build `20260624-104720` — **Forced Onboarding Launcher & Invalid Career Block**.
+
+Esta build corrige o problema visto nos prints: o jogo não deve abrir no Dashboard quando ainda não existe carreira válida. Agora, se faltar treinador, avatar, país, cidade, nome da academia, atleta ativo, ranking, calendário ou caixa inicial, o gameplay é bloqueado e a criação de carreira abre em tela cheia.
+
+Schema do save: 35.
+
+## Correções principais da v4.1.5
+
+- Dashboard inválido bloqueado antes de renderizar gameplay.
+- Botões **Configurar** e **Configurar agora** acionam o launcher obrigatório.
+- Modal de criação fica acima de tudo no mobile, escondendo dock e barra rápida.
+- Save vazio/parcial/corrompido é reparado com backup local.
+- Validação estrita de nome, avatar, país, cidade e academia.
+- Cache/PWA atualizado com versionamento v4.1.5.
+- Documentos adicionados: `AUDIT_v4.1.5.md` e `FORCED_ONBOARDING_CHECKLIST_v4.1.5.md`.
+
+---
+
+# Vale Games Tennis Manager — v4.1.5
+
+Build `20260624-104720` — **Forced Onboarding Launcher & Invalid Career Block**.
 
 Esta build bloqueia completamente o caso visto no celular: Dashboard aberto sem carreira criada, sem avatar, sem atletas e com botões parecendo travados. Antes de liberar Atletas, Treino, Partida, Calendário ou Ranking, o jogo confirma nome do treinador, país, avatar, cidade, nome da academia e base jogável. Se houver save vazio/corrompido, a aba **Gate Inicial** permite reparar com backup local.
 
-Schema do save: 34.
+Schema do save: 35.
 
 
-## v4.1.4 — Mandatory New Career Gate & Empty Save Repair (20260624-103102)
+## v4.1.5 — Forced Onboarding Launcher & Invalid Career Block (20260624-104720)
 
 - Gate inicial obrigatório antes de liberar gameplay.
 - Bloqueio contra Dashboard vazio sem treinador/avatar/academia.
 - Aba Gate Inicial com auditoria, reparo e exportação local.
 - Navegação para gameplay é redirecionada para criação se a carreira não estiver completa.
-- Schema 34.
+- Schema 35.
 
 
 

@@ -1,7 +1,7 @@
 {
   "name": "Vale Games Tennis Manager",
   "short_name": "Vale Tennis",
-  "start_url": "./index.html",
+  "start_url": "./index.html?v=4.1.5-20260624-104720",
   "display": "standalone",
   "background_color": "#08101d",
   "theme_color": "#08101d",
@@ -14,7 +14,7 @@
     }
   ],
   "id": "vale-games-tennis-manager",
-  "description": "Simulador mobile-first de gestão de tênis com carreira, torneios, economia, QA interno, criação de carreira obrigatória e reparo de save vazio.",
+  "description": "Simulador mobile-first de gestão de tênis com criação de carreira obrigatória, avatar, academia, torneios, economia e proteção contra Dashboard vazio.",
   "shortcuts": [
     {
       "name": "Abrir Partida",
@@ -87,6 +87,12 @@
       "short_name": "Gate",
       "url": "./index.html#initialgate",
       "description": "Verificar criação obrigatória, base jogável e bloqueio de Dashboard vazio"
+    },
+    {
+      "name": "Launcher Obrigatório de Carreira",
+      "short_name": "Criar",
+      "url": "./index.html#initialgate",
+      "description": "Forçar criação de carreira, avatar, nome da academia e reparo de save inválido"
     }
   ]
 }

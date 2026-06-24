@@ -338,7 +338,7 @@ function closeTournamentIdentity() {
   const modal = document.querySelector('#tournamentIdentityModal');
   if (!modal) return;
   modal.classList.add('hidden');
-  document.body.classList.remove('setup-open','setup-focus-mode');
+  document.body.classList.remove('setup-open','setup-focus-mode','forced-onboarding-active');
 }
 
 function assetCandidates(src='') {
@@ -604,7 +604,7 @@ function withMatchGuard(label, fn) {
 
 
 const OWNER_AVATARS = PLAYER_AVATARS;
-const SETUP_SAFE_TABS = new Set(['dashboard','setupverify','initialgate','onboarding','cacheguard','input','a11y','helpcenter','diagnostics','compat','qa','polish','delivery','release','localization','adminhint','mobileux']);
+const SETUP_SAFE_TABS = new Set(['setupverify','initialgate','onboarding','cacheguard','input','a11y','helpcenter','diagnostics','compat','qa','polish','delivery','release','localization','adminhint','mobileux']);
 
 const CRITICAL_ONBOARDING_BUTTONS = [
   'openSetupBtn','openSetupBannerBtn','saveOwnerSetupBtn','repairStartBtn','recoverCareerBtn','resetBtn','advanceWeekBtn','saveBtn','mobileQuickSave','mobileQuickTop','forceSetupModalBtn','testCareerSaveBtn','activateFirstAvatarBtn','freshSetupBtn'
@@ -941,7 +941,7 @@ function closeDrawModal() {
   const modal = document.querySelector('#drawModal');
   if (!modal) return;
   modal.classList.add('hidden');
-  document.body.classList.remove('setup-open','setup-focus-mode');
+  document.body.classList.remove('setup-open','setup-focus-mode','forced-onboarding-active');
 }
 function pickOpponent(round, player) {
   const event = state.calendar.find(e => e.week === state.academy.week) || state.activeTournament?.event || {};
@@ -990,7 +990,7 @@ function openOwnerSetup(force=false) {
   }
   modal.style.display = 'flex';
   modal.classList.remove('hidden');
-  document.body.classList.add('setup-open','setup-focus-mode');
+  document.body.classList.add('setup-open','setup-focus-mode','forced-onboarding-active');
   modal.setAttribute('aria-hidden','false');
   renderOwnerChoices(state.careerCreationUX?.lastSelectedAvatar || owner.avatar || PLAYER_AVATARS[0]);
   updateCareerPreview();
@@ -1004,10 +1004,15 @@ function openOwnerSetup(force=false) {
 function closeOwnerSetup() {
   const modal = $('#ownerSetupModal');
   if (!modal) return;
+  if (!setupIsComplete(state)) {
+    showSystemError('Complete nome, avatar, país, cidade e academia antes de entrar no jogo.');
+    openOwnerSetup(true);
+    return;
+  }
   modal.classList.add('hidden');
   modal.setAttribute('aria-hidden','true');
   modal.style.display = 'none';
-  document.body.classList.remove('setup-open','setup-focus-mode');
+  document.body.classList.remove('setup-open','setup-focus-mode','forced-onboarding-active');
 }
 function renderOwnerChoices(active) {
   const host = $('#ownerAvatarChoices');
@@ -1077,7 +1082,7 @@ function saveOwnerSetup() {
     state.flags ||= {}; state.flags.ownerSetupComplete = true; state.flags.safeMode = false;
     ensureCareerCreationUXSystem();
     state.careerCreationUX.firstRunVerified = true;
-    state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.locked = false; state.mandatoryCareerGate.firstRunGatePassed = true;
+    state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.locked = false; state.mandatoryCareerGate.firstRunGatePassed = true; ensureForcedOnboardingGateSystem().hardLock = false; state.forcedOnboardingGate.firstRunConfirmed = true;
     state.careerCreationUX.lastSelectedAvatar = avatar;
     state.careerCreationUX.auditLog.unshift({ title:'Carreira criada', result:'OK', note:`${ownerName} • ${academyName}`, at:new Date().toISOString(), build:BUILD_INFO.build });
     state.careerCreationUX.auditLog = state.careerCreationUX.auditLog.slice(0,18);
@@ -1123,8 +1128,31 @@ function playableCoreIssues(candidate = state) {
 function hasPlayableCareer(candidate = state) {
   return playableCoreIssues(candidate).length === 0;
 }
+function ownerProfileIssues(candidate = state) {
+  const issues = [];
+  const owner = candidate?.academy?.owner || {};
+  const profile = candidate?.academy?.careerProfile || {};
+  const academyName = String(candidate?.academy?.name || '').trim();
+  const ownerName = String(owner.name || '').trim();
+  const avatar = String(owner.avatar || '').trim();
+  const country = String(owner.country || '').trim();
+  const city = String(profile.city || '').trim();
+  if (!candidate?.flags?.ownerSetupComplete) issues.push('criação de carreira não confirmada');
+  if (!ownerName || ownerName === 'Seu nome' || ownerName.length < 2) issues.push('nome do treinador ausente');
+  if (!avatar) issues.push('avatar ausente');
+  if (!country || country.length < 2) issues.push('país ausente');
+  if (!academyName || academyName === 'Ace Academy' || academyName.length < 3) issues.push('nome da academia ausente');
+  if (!city || city.length < 2) issues.push('cidade ausente');
+  return issues;
+}
 function setupIsComplete(candidate = state) {
-  return !!candidate?.flags?.ownerSetupComplete && !!candidate?.academy?.owner && !!candidate?.academy?.careerProfile;
+  return ownerProfileIssues(candidate).length === 0;
+}
+function invalidCareerIssues(candidate = state) {
+  return [...playableCoreIssues(candidate), ...ownerProfileIssues(candidate)];
+}
+function careerIsPlayableAndConfigured(candidate = state) {
+  return invalidCareerIssues(candidate).length === 0;
 }
 
 function ensureMandatoryCareerGateSystem() {
@@ -1143,17 +1171,118 @@ function ensureMandatoryCareerGateSystem() {
   gate.flags.preserveBackupBeforeRepair ??= true;
   return gate;
 }
+
+function ensureForcedOnboardingGateSystem() {
+  state.forcedOnboardingGate ||= { score: 100, hardLock: true, lastAuditToken: null, auditLog: [], forcedLaunches: 0, invalidDashboardBlocks: 0, lastInvalidReason: null, firstRunConfirmed: false, lastRepairAt: null, flags: { forceFullScreenSetup: true, blockDashboardWhenInvalid: true, validateBeforeRender: true, autoRepairEmptySave: true, cacheAwareLaunch: true } };
+  const gate = state.forcedOnboardingGate;
+  gate.auditLog ||= [];
+  gate.forcedLaunches ??= 0;
+  gate.invalidDashboardBlocks ??= 0;
+  gate.lastInvalidReason ??= null;
+  gate.firstRunConfirmed ??= false;
+  gate.lastRepairAt ??= null;
+  gate.flags ||= { forceFullScreenSetup: true, blockDashboardWhenInvalid: true, validateBeforeRender: true, autoRepairEmptySave: true, cacheAwareLaunch: true };
+  gate.flags.forceFullScreenSetup ??= true;
+  gate.flags.blockDashboardWhenInvalid ??= true;
+  gate.flags.validateBeforeRender ??= true;
+  gate.flags.autoRepairEmptySave ??= true;
+  gate.flags.cacheAwareLaunch ??= true;
+  return gate;
+}
+function forcedOnboardingSnapshot() {
+  const issues = invalidCareerIssues(state);
+  return {
+    at: new Date().toISOString(), build: BUILD_INFO.build, version: BUILD_INFO.version,
+    hardLock: issues.length > 0, issues,
+    setupComplete: setupIsComplete(state), playableCore: hasPlayableCareer(state),
+    currentTab: state?.ui?.currentTab || 'dashboard', modalVisible: ownerSetupModalVisible(),
+    roster: state?.roster?.length || 0, ranking: state?.ranking?.length || 0,
+    academyName: state?.academy?.name || '', ownerName: state?.academy?.owner?.name || '',
+    avatar: state?.academy?.owner?.avatar || '', money: Number(state?.academy?.money || 0)
+  };
+}
+function calculateForcedOnboardingScore(snapshot = forcedOnboardingSnapshot()) {
+  let score = 100;
+  score -= Math.min(60, snapshot.issues.length * 9);
+  if (snapshot.hardLock && !snapshot.modalVisible) score -= 18;
+  if (snapshot.currentTab === 'dashboard' && snapshot.hardLock) score -= 22;
+  return clamp(Math.round(score), 0, 100);
+}
+function logForcedOnboarding(title, result, note, snapshot = forcedOnboardingSnapshot()) {
+  const gate = ensureForcedOnboardingGateSystem();
+  gate.hardLock = snapshot.hardLock;
+  gate.score = calculateForcedOnboardingScore(snapshot);
+  gate.lastInvalidReason = snapshot.issues.join(', ') || null;
+  gate.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  gate.auditLog.unshift({ title, result, note, score: gate.score, at: new Date().toISOString(), build: BUILD_INFO.build, snapshot });
+  gate.auditLog = gate.auditLog.slice(0, 20);
+  saveState(state);
+  return gate.score;
+}
+function forceOnboardingLauncher(reason='criação obrigatória') {
+  ensurePlayableStart();
+  const gate = ensureForcedOnboardingGateSystem();
+  gate.forcedLaunches = (gate.forcedLaunches || 0) + 1;
+  gate.hardLock = true;
+  gate.lastInvalidReason = reason;
+  state.flags ||= {};
+  state.flags.ownerSetupComplete = false;
+  state.ui ||= {};
+  state.ui.currentTab = 'initialgate';
+  state.ui.lastStableTab = 'initialgate';
+  saveState(state);
+  switchTab('initialgate');
+  openOwnerSetup(true);
+  logForcedOnboarding('Launcher obrigatório acionado', 'FORCED', reason);
+  setTimeout(() => {
+    if (!ownerSetupModalVisible()) openOwnerSetup(true);
+  }, 160);
+  return true;
+}
+function renderForcedOnboardingGate() {
+  const host = $('#forcedOnboardingGateHub');
+  if (!host || !state) return;
+  const gate = ensureForcedOnboardingGateSystem();
+  const snap = forcedOnboardingSnapshot();
+  gate.score = calculateForcedOnboardingScore(snap);
+  gate.hardLock = snap.hardLock;
+  const checks = [
+    ['Dashboard bloqueado se inválido', !(snap.currentTab === 'dashboard' && snap.hardLock), snap.hardLock ? 'Gameplay redirecionado para criação' : 'Carreira válida'],
+    ['Perfil completo', snap.setupComplete, snap.setupComplete ? 'Nome, avatar, país, cidade e academia OK' : snap.issues.join(', ')],
+    ['Base jogável', snap.playableCore, `${snap.roster} atletas • ${snap.ranking} ranking`],
+    ['Modal obrigatório', snap.setupComplete || snap.modalVisible, snap.modalVisible ? 'Aberto em tela cheia' : 'Será forçado no próximo clique/boot'],
+    ['Build atual', true, BUILD_LABEL]
+  ];
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.1.5')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
+}
+window.forceOnboardingLauncher = forceOnboardingLauncher;
+window.forceRepairInvalidCareer = () => {
+  rebuildPlayableCareer('reparo forçado pelo launcher v4.1.5');
+  ensureForcedOnboardingGateSystem().lastRepairAt = new Date().toISOString();
+  saveState(state);
+  render();
+  forceOnboardingLauncher('base recriada pelo launcher v4.1.5');
+};
+window.auditForcedOnboardingGate = () => {
+  const snap = forcedOnboardingSnapshot();
+  const score = logForcedOnboarding('Auditoria do launcher obrigatório', snap.hardLock ? 'BLOQUEADO' : 'OK', snap.issues.join(', ') || 'Carreira válida.', snap);
+  addLog(`Launcher obrigatório auditado: ${score}/100.`);
+  renderForcedOnboardingGate();
+};
+window.exportForcedOnboardingReport = () => {
+  const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, schema: BUILD_INFO.schemaVersion, generatedAt: new Date().toISOString(), snapshot: forcedOnboardingSnapshot(), forcedOnboardingGate: state.forcedOnboardingGate, privacy: 'Relatório local. Não envia dados para servidor.' };
+  const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vale-tennis-forced-onboarding-${BUILD_INFO.build}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 function mandatoryCareerGateSnapshot() {
   const coreIssues = playableCoreIssues(state);
-  const owner = state?.academy?.owner || {};
-  const profile = state?.academy?.careerProfile || {};
-  const ownerIssues = [];
-  if (!setupIsComplete(state)) ownerIssues.push('setup não concluído');
-  if (!owner.name || owner.name === 'Seu nome') ownerIssues.push('nome do treinador ausente');
-  if (!owner.avatar) ownerIssues.push('avatar ausente');
-  if (!owner.country) ownerIssues.push('país ausente');
-  if (!state?.academy?.name || state.academy.name === 'Ace Academy') ownerIssues.push('nome da academia ausente');
-  if (!profile.city) ownerIssues.push('cidade ausente');
+  const ownerIssues = ownerProfileIssues(state);
   const locked = coreIssues.length > 0 || ownerIssues.length > 0;
   const safeTabs = [...SETUP_SAFE_TABS];
   const snap = {
@@ -1184,7 +1313,7 @@ function logMandatoryCareerGate(title, result, note, snapshot = mandatoryCareerG
   return gate.score;
 }
 function blockGameplayUntilCareerReady(tab='dashboard', reason='fluxo protegido') {
-  if (!state || setupIsComplete(state)) return false;
+  if (!state || careerIsPlayableAndConfigured(state)) return false;
   const gate = ensureMandatoryCareerGateSystem();
   gate.blockedTabs = (gate.blockedTabs || 0) + 1;
   gate.locked = true;
@@ -1193,7 +1322,7 @@ function blockGameplayUntilCareerReady(tab='dashboard', reason='fluxo protegido'
   state.flags.ownerSetupComplete = false;
   state.ui ||= {};
   state.ui.currentTab = 'initialgate';
-  setTimeout(() => enforceOwnerSetupFlow(`gate obrigatório: ${reason}`), 30);
+  setTimeout(() => forceOnboardingLauncher(`gate obrigatório: ${reason}`), 30);
   return true;
 }
 function renderMandatoryCareerGate() {
@@ -1228,12 +1357,12 @@ window.openMandatoryCareerSetup = () => {
   if (!hasPlayableCareer(state)) rebuildPlayableCareer('gate obrigatório abriu criação com base segura');
   state.flags ||= {}; state.flags.ownerSetupComplete = false;
   ensureMandatoryCareerGateSystem().locked = true;
-  saveState(state); render(); enforceOwnerSetupFlow('abertura manual pelo Gate Inicial');
+  saveState(state); render(); forceOnboardingLauncher('abertura manual pelo Gate Inicial');
 };
 window.repairMandatoryEmptySave = () => {
   ensureMandatoryCareerGateSystem().repairCount = (ensureMandatoryCareerGateSystem().repairCount || 0) + 1;
-  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.1.4');
-  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.1.4';
+  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.1.5');
+  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.1.5';
   saveState(state); render(); openOwnerSetup(true);
 };
 window.auditMandatoryCareerGate = () => {
@@ -1255,7 +1384,7 @@ window.exportMandatoryGateReport = () => {
 
 function preserveRuntimePreferences(fresh, previous) {
   if (!fresh || !previous) return fresh;
-  const preserve = ['mobileUX','inputReliability','accessibilityReadability','localizationStore','releaseNotesHelp','onboardingReliability','careerCreationUX','qualityPolish','releaseHardening','performanceDelivery','qaAutomation','browserCompatibility','mandatoryCareerGate'];
+  const preserve = ['mobileUX','inputReliability','accessibilityReadability','localizationStore','releaseNotesHelp','onboardingReliability','careerCreationUX','qualityPolish','releaseHardening','performanceDelivery','qaAutomation','browserCompatibility','mandatoryCareerGate','forcedOnboardingGate'];
   preserve.forEach(key => { if (previous[key]) fresh[key] = structuredClone(previous[key]); });
   fresh.ui = { currentTab: 'dashboard', lastStableTab: 'dashboard' };
   fresh.flags ||= {};
@@ -1292,21 +1421,30 @@ function rebuildPlayableCareer(reason='base inicial incompleta') {
   return true;
 }
 function ensurePlayableStart() {
-  const issues = playableCoreIssues(state);
-  if (issues.length) {
-    rebuildPlayableCareer(issues.join(', '));
-    return 'rebuilt';
+  const coreIssues = playableCoreIssues(state);
+  if (coreIssues.length) {
+    rebuildPlayableCareer(coreIssues.join(', '));
   }
   state.flags ||= {};
-  if (!setupIsComplete(state)) {
+  const issues = invalidCareerIssues(state);
+  if (issues.length) {
     state.flags.ownerSetupComplete = false;
     ensureMandatoryCareerGateSystem().locked = true;
+    const forced = ensureForcedOnboardingGateSystem();
+    forced.hardLock = true;
+    forced.lastInvalidReason = issues.join(', ');
+    forced.invalidDashboardBlocks = (forced.invalidDashboardBlocks || 0) + 1;
+    state.ui ||= {};
+    state.ui.currentTab = 'initialgate';
+    state.ui.lastStableTab = 'initialgate';
     state.onboardingReliability ||= { score: 98, lastAuditToken: null, auditLog: [], buttonProbe: [], forcedOpens: 0, lastForcedReason: null, safeStartLocks: 0, modalVisibilityChecks: [], checklist: { setupModal: true, avatarChoices: true, ownerSaveButton: true, tabDelegation: true, dockDelegation: true, dashboardRecovery: true }, flags: { mandatorySetupGuard: true, eventDelegationFallback: true, hashRouter: true, modalRetry: true, buttonProbe: true } };
-  state.careerSetupRecovery ||= { lastReason: null, repairedAt: null, forcedSetup: false, snapshots: [], bootGuard: true };
+    state.careerSetupRecovery ||= { lastReason: null, repairedAt: null, forcedSetup: false, snapshots: [], bootGuard: true };
     state.careerSetupRecovery.forcedSetup = true;
     saveState(state);
-    return 'setup';
+    return coreIssues.length ? 'rebuilt' : 'setup';
   }
+  ensureForcedOnboardingGateSystem().hardLock = false;
+  ensureMandatoryCareerGateSystem().locked = false;
   return 'ok';
 }
 function ensureCoreBeforeCareerSave() {
@@ -1410,7 +1548,7 @@ function enforceOwnerSetupFlow(reason='setup pendente') {
   state.careerSetupRecovery.lastReason = reason;
   const attempt = (slot='imediato') => {
     if (setupIsComplete(state)) return;
-    openOwnerSetup(false);
+    openOwnerSetup(true);
     const visible = ownerSetupModalVisible();
     ob.modalVisibilityChecks.unshift({ slot, visible, at: new Date().toISOString(), build: BUILD_INFO.build });
     ob.modalVisibilityChecks = ob.modalVisibilityChecks.slice(0, 12);
@@ -1439,10 +1577,10 @@ function installCriticalButtonDelegation() {
     if (tab && document.getElementById(`tab-${tab}`)) {
       setTimeout(() => {
         if (state?.ui?.currentTab !== tab) switchTab(tab);
-        if (!setupIsComplete(state) && ['roster','career','training','match','calendar'].includes(tab)) enforceOwnerSetupFlow(`aba ${tab} tocada antes da configuração`);
+        if (!careerIsPlayableAndConfigured(state) && ['dashboard','roster','career','training','match','calendar','ranking'].includes(tab)) forceOnboardingLauncher(`aba ${tab} tocada antes da configuração`);
       }, 0);
     }
-    if (['openSetupBtn','openSetupBannerBtn'].includes(btn.id)) setTimeout(() => enforceOwnerSetupFlow(`botão ${btn.id}`), 0);
+    if (['openSetupBtn','openSetupBannerBtn'].includes(btn.id)) setTimeout(() => forceOnboardingLauncher(`botão ${btn.id}`), 0);
     if (btn.id === 'saveOwnerSetupBtn') setTimeout(() => {
       if (!setupIsComplete(state) && ownerSetupModalVisible()) validateCareerSetup();
     }, 40);
@@ -1452,7 +1590,7 @@ function installCriticalButtonDelegation() {
 function handleStartupHash() {
   const hash = (location.hash || '').replace('#','').trim();
   if (!hash) return;
-  if (hash === 'setup') return enforceOwnerSetupFlow('atalho #setup');
+  if (hash === 'setup') return forceOnboardingLauncher('atalho #setup');
   if (document.getElementById(`tab-${hash}`)) switchTab(hash);
 }
 function renderOnboardingReliabilityHub() {
@@ -1490,7 +1628,7 @@ window.forceCareerSetupFlow = () => {
   ensureOnboardingReliabilitySystem().lastForcedReason = 'forçado manualmente';
   saveState(state);
   render();
-  enforceOwnerSetupFlow('forçado manualmente pela aba Fluxo Inicial');
+  forceOnboardingLauncher('forçado manualmente pela aba Fluxo Inicial');
 };
 window.auditOnboardingFlow = () => {
   const snap = onboardingFlowSnapshot();
@@ -1604,10 +1742,10 @@ function renderCareerCreationUXHub() {
     <section class="release-grid"><article class="panel-card"><h4>Valores atuais do formulário</h4><div class="list-block"><div class="list-item"><span>Treinador</span><strong>${escapeHtml(snap.values.name || '—')}</strong></div><div class="list-item"><span>Academia</span><strong>${escapeHtml(snap.values.academy || '—')}</strong></div><div class="list-item"><span>País</span><strong>${escapeHtml(snap.values.country || '—')}</strong></div><div class="list-item"><span>Cidade</span><strong>${escapeHtml(snap.values.city || '—')}</strong></div></div></article><article class="panel-card"><h4>Últimas verificações</h4><div class="list-block">${(ux.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum teste executado nesta build.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.forceSetupModalNow = () => {
-  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.1.4');
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.1.5');
   state.flags ||= {}; state.flags.ownerSetupComplete = false;
   ensureCareerCreationUXSystem().firstRunVerified = false;
-  saveState(state); render(); enforceOwnerSetupFlow('abertura manual pela aba Criação');
+  saveState(state); render(); forceOnboardingLauncher('abertura manual pela aba Criação');
 };
 window.activateFirstOwnerAvatar = () => {
   openOwnerSetup(false);
@@ -1619,7 +1757,7 @@ window.auditCareerCreationUX = () => {
   renderCareerCreationUXHub(); addLog(`Auditoria de criação de carreira: ${score}/100.`);
 };
 window.startFreshSetupSafely = () => {
-  backupBrokenCareer('reset guiado v4.1.4 solicitado pelo usuário');
+  backupBrokenCareer('reset guiado v4.1.5 solicitado pelo usuário');
   clearState();
   state = buildInitialState(content);
   migrateState();
@@ -1860,7 +1998,7 @@ async function boot() {
   render();
   hydrateAssetImages();
   handleStartupHash();
-  if (startupStatus !== 'ok' || !setupIsComplete(state)) enforceOwnerSetupFlow(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
+  if (startupStatus !== 'ok' || !careerIsPlayableAndConfigured(state)) forceOnboardingLauncher(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
 }
 
 function applyAdminOverrides(content) {
@@ -2101,8 +2239,8 @@ function bindUI() {
   $$('#mainTabs .tab-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   $$('.dock-btn').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   $$('.hub-btn[data-jump-tab]').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.jumpTab)));
-  $('#openSetupBtn')?.addEventListener('click', () => openOwnerSetup(false));
-  $('#openSetupBannerBtn')?.addEventListener('click', () => openOwnerSetup(false));
+  $('#openSetupBtn')?.addEventListener('click', () => forceOnboardingLauncher('botão Configurar do Dashboard'));
+  $('#openSetupBannerBtn')?.addEventListener('click', () => forceOnboardingLauncher('banner Configurar agora'));
   $('#repairStartBtn')?.addEventListener('click', () => { rebuildPlayableCareer('correção manual pelo banner'); render(); openOwnerSetup(true); });
   $('#recoverCareerBtn')?.addEventListener('click', () => { rebuildPlayableCareer('correção manual pelo painel'); render(); openOwnerSetup(true); });
   ensureDrawModal();
@@ -2148,7 +2286,7 @@ function bindUI() {
 }
 
 function switchTab(tab) {
-  if (state && !setupIsComplete(state) && !SETUP_SAFE_TABS.has(tab)) {
+  if (state && !careerIsPlayableAndConfigured(state) && !SETUP_SAFE_TABS.has(tab)) {
     blockGameplayUntilCareerReady(tab, `tentativa de abrir ${tab} antes da criação completa`);
     tab = 'initialgate';
   }
@@ -2253,6 +2391,11 @@ window.openVisualScene = (sceneKey='office') => {
 
 
 function render() {
+  if (!careerIsPlayableAndConfigured(state) && !SETUP_SAFE_TABS.has(state.ui?.currentTab || 'dashboard')) {
+    state.ui ||= {};
+    state.ui.currentTab = 'initialgate';
+    state.ui.lastStableTab = 'initialgate';
+  }
   $('#seasonLabel').textContent = state.academy.season;
   $('#weekLabel').textContent = state.academy.week;
   $('#moneyLabel').textContent = money(state.academy.money);
@@ -2294,6 +2437,8 @@ function render() {
   renderOnboardingReliabilityHub();
   renderCareerCreationUXHub();
   renderCacheUpdateGuard();
+  renderMandatoryCareerGate();
+  renderForcedOnboardingGate();
   renderMarket();
   renderStaff();
   updateRanking();
@@ -4043,7 +4188,7 @@ function ensureHelpCenterSystem() {
 function helpCenterSnapshot() {
   const help = ensureHelpCenterSystem();
   const tabs = [...document.querySelectorAll('.tab-panel')].map(p=>p.id.replace('tab-',''));
-  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md'];
+  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md'];
   const checklist = help.onboardingChecklist || {};
   const done = Object.values(checklist).filter(Boolean).length;
   const total = Math.max(1, Object.keys(checklist).length);
