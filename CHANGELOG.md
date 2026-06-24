@@ -1,16 +1,16 @@
 # Changelog
 
-## v4.1.8 — Hard Reset Route & Standalone Onboarding Shield Hotfix — 20260624-142131
+## v4.2.0 — Full Start Screen Rebuild & Career Creator 2.0 — 20260624-145253
 
 - Nova aba `Início Limpo` para resolver cache/PWA preso, build antiga e primeiro acesso quebrado.
-- Novo sistema persistente `cleanStartWizard`, schema 38.
+- Novo sistema persistente `cleanStartWizard`, schema 39.
 - Verificação direta de build visível no topo, Service Worker, Cache API, save local e base jogável.
 - Botão **Início limpo guiado** com backup local antes de limpar/recriar o primeiro acesso.
 - Botão **Limpar cache e recarregar** para remover caches `vale-tennis-*` e abrir a build atual com cache-busting.
 - Botão **Abrir criação** integrado ao launcher obrigatório.
 - Exportação local de diagnóstico clean start em JSON.
 - Atalho PWA para `#cleanstart`.
-- Documentos adicionados: `AUDIT_v4.1.8.md` e `CLEAN_START_DEPLOY_CHECKLIST_v4.1.8.md`.
+- Documentos adicionados: `AUDIT_v4.2.0.md` e `CLEAN_START_DEPLOY_CHECKLIST_v4.2.0.md`.
 
 
 ## v4.1.6 — Onboarding Runtime Test & Mobile Proof Hotfix — 20260624-114913
@@ -369,7 +369,7 @@ Build: 20260620-121454 • Data/hora visível: 20/06/2026 12:14:54
 - Conteúdo JSON agora recebe cache-busting por build.
 - Ajustado espaço inferior mobile para evitar que dock/barra rápida cubram botões.
 
-## v4.1.8 — Hard Reset Route & Standalone Onboarding Shield Hotfix
+## v4.2.0 — Full Start Screen Rebuild & Career Creator 2.0
 
 - Adicionada aba **Reset/Onboarding**.
 - Adicionado sistema persistente `emergencyStartControl`.
@@ -378,5 +378,5 @@ Build: 20260620-121454 • Data/hora visível: 20/06/2026 12:14:54
 - Adicionado **Hard reset com backup** para limpar save parcial e reabrir criação de carreira.
 - Adicionado botão **Limpar cache + rota nova** para celular/PWA preso em build antiga.
 - Adicionada exportação local de diagnóstico emergencial.
-- Save migrado para schema 38.
+- Save migrado para schema 39.
 

@@ -1,12 +1,12 @@
-# Vale Games Tennis Manager — v4.1.8
+# Vale Games Tennis Manager — v4.2.0
 
-Build `20260624-142131` — **Hard Reset Route & Standalone Onboarding Shield Hotfix**.
+Build `20260624-145253` — **Full Start Screen Rebuild & Career Creator 2.0**.
 
 Esta build adiciona uma central de **Início Limpo** para resolver o problema prático de navegador/PWA preso em versão antiga ou save parcial. Ela verifica se a build exibida no topo bate com o JavaScript carregado, testa save local, Service Worker, cache e força a criação de carreira quando o Dashboard vazio ainda aparece.
 
 Schema do save: 37.
 
-## Correções principais da v4.1.8
+## Correções principais da v4.2.0
 
 - Nova aba **Início Limpo**.
 - Novo sistema `cleanStartWizard` no save.
@@ -175,7 +175,7 @@ Esta versão corrige o problema em que saves antigos ou incompletos podiam abrir
 - Reabertura automática do modal de carreira quando nome, avatar, país ou academia ainda não estiverem configurados.
 - Exportação local de relatório de onboarding sem envio de dados.
 
-### v4.1.8 — Hard Reset Route & Standalone Onboarding Shield Hotfix
+### v4.2.0 — Full Start Screen Rebuild & Career Creator 2.0
 
 Esta build adiciona um caminho de emergência para quando o navegador/PWA insistir em abrir Dashboard vazio ou save parcial:
 

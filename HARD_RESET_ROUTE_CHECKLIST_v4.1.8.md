@@ -1,4 +1,4 @@
-# HARD RESET ROUTE CHECKLIST v4.1.8
+# HARD RESET ROUTE CHECKLIST v4.2.0
 
 - [x] Abrir `#emergencystart`.
 - [x] Usar `?hardreset=1` para forçar início limpo.

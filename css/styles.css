@@ -1408,7 +1408,7 @@ body.runtime-onboarding-locked:not(.setup-open) .content-stack{filter:blur(1.5px
   #tab-runtimeproof .onboarding-actions{grid-template-columns:1fr;}
 }
 
-/* v4.1.8 Hard Reset Route & Standalone Onboarding Shield */
+/* v4.2.0 Hard Reset Route & Standalone Onboarding Shield */
 .emergency-start-panel .onboarding-actions,
 .emergency-start-control-hub .onboarding-actions { gap: 10px; flex-wrap: wrap; }
 .emergency-start-hero { border-color: rgba(80, 255, 196, .28); box-shadow: 0 0 28px rgba(80,255,196,.08); }
@@ -1426,4 +1426,48 @@ body.runtime-onboarding-locked:not(.setup-open) .content-stack{filter:blur(1.5px
   .emergency-shield-card { padding: 18px; }
   .emergency-reset-strip { align-items: stretch; }
   .emergency-reset-strip button { width: 100%; }
+}
+
+/* v4.2.0 — Full Start Screen Rebuild & Career Creator 2.0 */
+.start-screen-v2{
+  position:fixed; inset:0; z-index:99997; display:flex; align-items:center; justify-content:center;
+  padding:calc(18px + env(safe-area-inset-top)) 18px calc(22px + env(safe-area-inset-bottom));
+  background:radial-gradient(circle at 18% 12%, rgba(80,210,255,.26), transparent 34%), radial-gradient(circle at 82% 18%, rgba(120,255,180,.18), transparent 32%), linear-gradient(135deg, #07111f 0%, #101a2b 55%, #07111a 100%);
+}
+.start-screen-v2.hidden{display:none!important}
+.start-v2-bg{position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size:42px 42px; opacity:.38; pointer-events:none}
+.start-v2-shell{position:relative; width:min(1080px,100%); max-height:calc(100vh - 34px); overflow:auto; border-radius:30px; padding:26px; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.8fr); gap:22px; box-shadow:0 28px 90px rgba(0,0,0,.46)}
+.start-v2-copy h1{font-size:clamp(2rem,5.2vw,4.6rem); line-height:.95; margin:8px 0 14px; letter-spacing:-.06em}
+.start-v2-copy p{font-size:clamp(1rem,2.3vw,1.25rem); color:var(--muted); max-width:720px}
+.start-v2-badges{display:flex; flex-wrap:wrap; gap:8px; margin:20px 0}
+.start-v2-badges span{border:1px solid rgba(255,255,255,.14); border-radius:999px; padding:8px 10px; background:rgba(255,255,255,.06); color:#dff6ff; font-size:.86rem; font-weight:700}
+.start-v2-actions{display:flex; flex-wrap:wrap; gap:10px; margin:20px 0 8px}
+.start-v2-actions button{min-height:48px; font-weight:900}
+.start-v2-actions button:disabled{opacity:.42; filter:grayscale(1); cursor:not-allowed}
+.start-v2-main{font-size:1.05rem; padding-inline:22px}
+.start-v2-note{display:block; color:var(--muted); margin-top:12px}
+.start-v2-status{display:grid; gap:14px}
+.start-v2-card{border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.055); border-radius:22px; padding:16px}
+.start-v2-card h3{margin:0 0 12px}
+.start-v2-card.warn{border-color:rgba(255,204,102,.28); background:rgba(255,204,102,.07)}
+.start-v2-card.ok{border-color:rgba(120,255,180,.28); background:rgba(120,255,180,.07)}
+.start-v2-card ul{margin:0; padding-left:18px; color:#ffdba0}
+.start-v2-list{display:grid; gap:10px}
+.start-v2-list div{display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid rgba(255,255,255,.08); padding-bottom:8px}
+.start-v2-list span{color:var(--muted)}
+.start-v2-list strong{text-align:right}
+body.start-screen-open .app-shell{filter:blur(4px); pointer-events:none; user-select:none}
+body.start-screen-open .mobile-dock, body.start-screen-open .mobile-quick-bar, body.start-screen-open .runtime-build-stamp{display:none!important}
+.creator-v2-rail{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0 12px}
+.creator-v2-rail span{border-radius:999px; padding:8px 10px; text-align:center; color:#dff6ff; background:rgba(79,209,255,.10); border:1px solid rgba(79,209,255,.24); font-size:.78rem; font-weight:900}
+.creator-v2-guidance{border:1px solid rgba(120,255,180,.22); background:rgba(120,255,180,.075); color:#d7ffe7; border-radius:16px; padding:11px 13px; margin-bottom:12px; font-weight:700}
+.start-screen-v2-panel .onboarding-hero h2{letter-spacing:-.04em}
+@media (max-width:760px){
+  .start-screen-v2{padding:10px 10px calc(14px + env(safe-area-inset-bottom)); align-items:stretch}
+  .start-v2-shell{grid-template-columns:1fr; max-height:100%; border-radius:24px; padding:18px; gap:14px}
+  .start-v2-actions{display:grid; grid-template-columns:1fr; gap:10px}
+  .start-v2-actions button{width:100%; min-height:52px}
+  .start-v2-status{grid-template-columns:1fr}
+  .creator-v2-rail{grid-template-columns:1fr 1fr}
+  .setup-card{max-height:calc(100vh - 12px)!important}
 }
