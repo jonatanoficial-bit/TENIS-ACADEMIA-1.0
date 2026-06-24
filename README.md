@@ -1,8 +1,23 @@
-# Vale Games Tennis Manager — v4.5.0
 
-Build `20260624-154349` — Real Season Objectives & Board Pressure.
 
-## Destaques v4.5.0
+## v4.6.0 — Scouting World Map & Youth Recruitment
+
+Build `20260624-161159` • Schema 43.
+
+- Nova aba **Scouting**.
+- Mapa mundial de olheiros com regiões, custos e perfis por superfície.
+- Orçamentos Econômico/Equilibrado/Premium.
+- Focos de busca: equilibrado, potencial oculto, baixo risco e pronto para competir.
+- Jovens promessas com OVR, potencial percebido, potencial oculto, risco, fit, custo e salário.
+- Contratação integrada ao elenco, caixa, inbox e ranking.
+- Custo semanal de scouting integrado às finanças.
+- Exportação local do relatório de scouting em JSON.
+
+# Vale Games Tennis Manager — v4.6.0
+
+Build `20260624-161159` — Scouting World Map & Youth Recruitment.
+
+## Destaques v4.6.0
 - Nova aba **Temporada**.
 - Metas reais por ambição: Sobrevivência, Profissional, Agressivo e Elite mundial.
 - Diretoria avalia ranking, caixa, reputação, títulos e fluxo semanal.

@@ -1,12 +1,27 @@
-## v4.5.0 — Real Season Objectives & Board Pressure
 
-Build `20260624-154349` • 24/06/2026 15:43:49 BRT • schema 42.
+
+## v4.6.0 — Scouting World Map & Youth Recruitment
+
+Build `20260624-161159` • Schema 43.
+
+- Nova aba **Scouting**.
+- Mapa mundial de olheiros com regiões, custos e perfis por superfície.
+- Orçamentos Econômico/Equilibrado/Premium.
+- Focos de busca: equilibrado, potencial oculto, baixo risco e pronto para competir.
+- Jovens promessas com OVR, potencial percebido, potencial oculto, risco, fit, custo e salário.
+- Contratação integrada ao elenco, caixa, inbox e ranking.
+- Custo semanal de scouting integrado às finanças.
+- Exportação local do relatório de scouting em JSON.
+
+## v4.6.0 — Scouting World Map & Youth Recruitment
+
+Build `20260624-161159` • 24/06/2026 16:11:59 BRT • schema 43.
 
 - Adicionada aba **Temporada** com metas da diretoria e cobrança semanal.
 - Criado sistema `seasonBoardPressure` com score, confiança, pressão, ambição e histórico de revisões.
 - Metas passam a considerar melhor ranking, caixa mínimo, reputação, títulos e fluxo semanal.
 - Avançar semana processa avaliação da diretoria e gera alertas no inbox quando necessário.
-- Incluído relatório JSON local e checklist de auditoria v4.5.0.
+- Incluído relatório JSON local e checklist de auditoria v4.6.0.
 
 
 ## v4.4.0 — Academy Facilities Expansion (20260624-152754)

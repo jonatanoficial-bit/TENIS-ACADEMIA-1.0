@@ -1482,15 +1482,15 @@ function renderForcedOnboardingGate() {
     ['Modal obrigatório', snap.setupComplete || snap.modalVisible, snap.modalVisible ? 'Aberto em tela cheia' : 'Será forçado no próximo clique/boot'],
     ['Build atual', true, BUILD_LABEL]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.5.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.6.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
 }
 window.forceOnboardingLauncher = forceOnboardingLauncher;
 window.forceRepairInvalidCareer = () => {
-  rebuildPlayableCareer('reparo forçado pelo launcher v4.5.0');
+  rebuildPlayableCareer('reparo forçado pelo launcher v4.6.0');
   ensureForcedOnboardingGateSystem().lastRepairAt = new Date().toISOString();
   saveState(state);
   render();
-  forceOnboardingLauncher('base recriada pelo launcher v4.5.0');
+  forceOnboardingLauncher('base recriada pelo launcher v4.6.0');
 };
 window.auditForcedOnboardingGate = () => {
   const snap = forcedOnboardingSnapshot();
@@ -1587,13 +1587,13 @@ function renderOnboardingRuntimeProof() {
     ['Perfil obrigatório', !snap.issues.some(x => /nome|avatar|país|academia|cidade|criação/.test(x)), snap.issues.join(', ') || 'Nome, avatar, país, cidade e academia OK'],
     ['Overlay de bloqueio', !snap.invalid || snap.lockVisible || snap.modalVisible, snap.lockVisible ? 'Ativo' : (snap.modalVisible ? 'Modal cobre a tela' : 'Inativo')]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.5.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.6.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
 }
 window.runOnboardingRuntimeProof = () => {
   const before = onboardingRuntimeProofSnapshot();
   if (before.invalid) {
     syncOnboardingRuntimeLock('prova manual');
-    forceOnboardingLauncher('prova runtime v4.5.0');
+    forceOnboardingLauncher('prova runtime v4.6.0');
   }
   setTimeout(() => {
     const after = onboardingRuntimeProofSnapshot();
@@ -1698,7 +1698,7 @@ function renderCleanStartWizard() {
     ['Criação aparece quando precisa', !snap.invalidCareer || snap.modalVisible || SETUP_SAFE_TABS.has(snap.currentTab), snap.modalVisible ? 'Modal visível' : `Tab atual: ${snap.currentTab}`],
     ['Base jogável', snap.roster > 0 && snap.ranking >= 5 && snap.calendar >= 4 && snap.money > 0, `${snap.roster} atletas • ${snap.ranking} ranking • ${snap.calendar} eventos • caixa ${money(snap.money)}`]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.5.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.6.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
 }
 window.runCleanStartAudit = () => {
   const snap = cleanStartWizardSnapshot();
@@ -1728,7 +1728,7 @@ window.guidedCleanFirstRun = () => {
   saveState(state);
   addLog('Início limpo guiado aplicado. A criação de carreira foi aberta novamente.');
   render();
-  forceOnboardingLauncher('início limpo guiado v4.5.0');
+  forceOnboardingLauncher('início limpo guiado v4.6.0');
 };
 window.cleanOldCachesAndReload = async () => {
   const wizard = ensureCleanStartWizardSystem();
@@ -1824,7 +1824,7 @@ function showStandaloneStartupShield(reason='carreira inválida') {
     document.body.appendChild(shield);
   }
   const issues = invalidCareerIssues(state);
-  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.5.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.5.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
+  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.6.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.6.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
   shield.classList.remove('hidden');
   ensureEmergencyStartControlSystem().startupShieldVisible = true;
   saveState(state);
@@ -1843,7 +1843,7 @@ function applyEmergencyStartRoute() {
     return;
   }
   if (!careerIsPlayableAndConfigured(state)) {
-    setTimeout(() => { launchStartScreenV2('boot v4.5.0 detectou carreira incompleta'); }, 320);
+    setTimeout(() => { launchStartScreenV2('boot v4.6.0 detectou carreira incompleta'); }, 320);
   }
 }
 function renderEmergencyStartControl() {
@@ -1860,7 +1860,7 @@ function renderEmergencyStartControl() {
     ['Dados da academia', !!(snap.owner && snap.academy && snap.city && snap.avatar), `${snap.owner || 'sem treinador'} • ${snap.academy || 'sem academia'} • ${snap.city || 'sem cidade'}`],
     ['Armazenamento local', snap.storageWritable, snap.storageWritable ? 'localStorage OK' : 'Navegador bloqueou save local.']
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.5.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.5.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.6.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.6.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.hardResetFirstRun = async (reason='hard reset guiado') => {
   const esc = ensureEmergencyStartControlSystem();
@@ -1989,8 +1989,8 @@ window.openMandatoryCareerSetup = () => {
 };
 window.repairMandatoryEmptySave = () => {
   ensureMandatoryCareerGateSystem().repairCount = (ensureMandatoryCareerGateSystem().repairCount || 0) + 1;
-  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.5.0');
-  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.5.0';
+  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.6.0');
+  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.6.0';
   saveState(state); render(); openOwnerSetup(true);
 };
 window.auditMandatoryCareerGate = () => {
@@ -2371,7 +2371,7 @@ function renderCareerCreationUXHub() {
     <section class="release-grid"><article class="panel-card"><h4>Valores atuais do formulário</h4><div class="list-block"><div class="list-item"><span>Treinador</span><strong>${escapeHtml(snap.values.name || '—')}</strong></div><div class="list-item"><span>Academia</span><strong>${escapeHtml(snap.values.academy || '—')}</strong></div><div class="list-item"><span>País</span><strong>${escapeHtml(snap.values.country || '—')}</strong></div><div class="list-item"><span>Cidade</span><strong>${escapeHtml(snap.values.city || '—')}</strong></div></div></article><article class="panel-card"><h4>Últimas verificações</h4><div class="list-block">${(ux.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum teste executado nesta build.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.forceSetupModalNow = () => {
-  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.5.0');
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.6.0');
   state.flags ||= {}; state.flags.ownerSetupComplete = false;
   ensureCareerCreationUXSystem().firstRunVerified = false;
   saveState(state); render(); forceOnboardingLauncher('abertura manual pela aba Criação');
@@ -2386,7 +2386,7 @@ window.auditCareerCreationUX = () => {
   renderCareerCreationUXHub(); addLog(`Auditoria de criação de carreira: ${score}/100.`);
 };
 window.startFreshSetupSafely = () => {
-  backupBrokenCareer('reset guiado v4.5.0 solicitado pelo usuário');
+  backupBrokenCareer('reset guiado v4.6.0 solicitado pelo usuário');
   clearState();
   state = buildInitialState(content);
   migrateState();
@@ -2631,7 +2631,7 @@ async function boot() {
   handleStartupHash();
   if (startupStatus !== 'ok' || !careerIsPlayableAndConfigured(state)) launchStartScreenV2(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
   setTimeout(() => window.runOnboardingRuntimeProof?.(), 380);
-  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.5.0'); }, 1800);
+  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.6.0'); }, 1800);
 }
 
 function applyAdminOverrides(content) {
@@ -2943,7 +2943,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', broadcast2d: 'broadcast', seasonboard: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', scoutingworld: 'market', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', broadcast2d: 'broadcast', seasonboard: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -3062,6 +3062,7 @@ function render() {
   renderMobileUX();
   renderCommercialCareer();
   renderSeasonBoardPressure();
+  renderGlobalScoutingWorld();
   renderLongCareer();
   renderReleaseCandidate();
   renderQualityPolish();
@@ -6566,6 +6567,7 @@ function advanceWeek() {
   maybeCreateSponsorOffer();
   evaluateObjectives();
   processBoardPressureWeek(weeklyIncome, weeklyCosts);
+  processGlobalScoutingWeek();
   if (state.academy.week > 52) {
     state.academy.week = 1;
     state.academy.season += 1;
@@ -6681,7 +6683,8 @@ function calculateWeeklyCosts() {
   const financeCut = getStaffBonus('Financeiro', 'costs');
   const investorFee = investorPressure() * 220;
   const facilityMaintenance = facilityWeeklyMaintenance();
-  return Math.round((state.academy.weeklyCosts + salaries + investorFee + facilityMaintenance) * (1 - Math.abs(Math.min(0, financeCut)) / 100));
+  const scoutingCost = globalScoutingWeeklyCost();
+  return Math.round((state.academy.weeklyCosts + salaries + investorFee + facilityMaintenance + scoutingCost) * (1 - Math.abs(Math.min(0, financeCut)) / 100));
 }
 function getStaffBonus(role, key) { const member = state.staff[role]; return member?.effects?.[key] || 0; }
 function getDepartmentBonus(key) { return Object.values(state.staff || {}).filter(Boolean).reduce((sum,m)=>sum+(m.effects?.[key]||0),0); }
@@ -6833,7 +6836,7 @@ function drawCourt(lastWinner = null) {
 
 
 
-// v4.5.0 — Real Season Objectives & Board Pressure
+// v4.6.0 — Real Season Objectives & Board Pressure
 const BOARD_AMBITIONS = {
   survival: { label: 'Sobrevivência', desc: 'Manter caixa positivo e entrar no Top 150 sem quebrar a academia.', rank: 150, cash: 0, reputation: 32, titles: 0, risk: 0.82 },
   balanced: { label: 'Profissional', desc: 'Top 120, reputação crescente e caixa saudável.', rank: 120, cash: 25000, reputation: 42, titles: 0, risk: 1 },
@@ -6954,6 +6957,144 @@ window.exportBoardReport = () => {
   sb.reviewLog.unshift({ title:'Relatório da diretoria exportado', result:'JSON', note:'Diagnóstico local de metas e pressão gerado.', at:payload.generatedAt, build:BUILD_INFO.build });
   saveState(state); renderSeasonBoardPressure();
 };
+
+
+// v4.6.0 — Scouting World Map & Youth Recruitment
+const SCOUTING_REGIONS = {
+  southAmerica: { label: 'América do Sul', icon: '🌎', desc: 'Brasil, Argentina, Chile e Uruguai. Bom custo e talentos de saibro.', countries: ['Brasil','Argentina','Chile','Uruguai','Colômbia'], surface: 'Saibro', cost: 4200, potential: 7, risk: 4, styleBias: ['Contra-atacador','Defensivo','Agressivo de fundo'] },
+  europeWest: { label: 'Europa Ocidental', icon: '🇪🇺', desc: 'Espanha, França, Itália e Alemanha. Base técnica forte e custo alto.', countries: ['Espanha','França','Itália','Alemanha','Portugal'], surface: 'Saibro', cost: 7200, potential: 9, risk: 5, styleBias: ['All-court','Agressivo de fundo','Defensivo'] },
+  europeEast: { label: 'Leste Europeu', icon: '🏟️', desc: 'Sérvia, Croácia, Polônia e Rep. Tcheca. Físico e mental competitivo.', countries: ['Sérvia','Croácia','Polônia','Rep. Tcheca','Romênia'], surface: 'Dura', cost: 6100, potential: 8, risk: 6, styleBias: ['Agressivo de fundo','All-court','Saque dominante'] },
+  northAmerica: { label: 'América do Norte', icon: '🇺🇸', desc: 'Estados Unidos, Canadá e México. Saque, quadra dura e mercado comercial.', countries: ['Estados Unidos','Canadá','México'], surface: 'Dura', cost: 7600, potential: 8, risk: 5, styleBias: ['Saque dominante','Agressivo de fundo','All-court'] },
+  asiaPacific: { label: 'Ásia-Pacífico', icon: '🌏', desc: 'Japão, Coreia, China e Austrália. Disciplina, velocidade e potencial global.', countries: ['Japão','Coreia do Sul','China','Austrália','Tailândia'], surface: 'Dura', cost: 6800, potential: 8, risk: 4, styleBias: ['Contra-atacador','All-court','Defensivo'] },
+  africaMiddleEast: { label: 'África / Oriente Médio', icon: '🌍', desc: 'Mercado emergente com custo menor, risco maior e achados raros.', countries: ['Marrocos','África do Sul','Tunísia','Egito','Emirados Árabes'], surface: 'Dura', cost: 3900, potential: 6, risk: 7, styleBias: ['Saque dominante','Defensivo','All-court'] }
+};
+const SCOUTING_BUDGETS = {
+  economy: { label: 'Econômico', mult: .68, accuracy: -8, reports: 1, desc: 'Baixo custo, poucos relatórios e maior incerteza.' },
+  balanced: { label: 'Equilibrado', mult: 1, accuracy: 0, reports: 2, desc: 'Boa relação custo/precisão para academias em crescimento.' },
+  premium: { label: 'Premium', mult: 1.55, accuracy: 9, reports: 3, desc: 'Mais caro, porém revela potencial e risco com maior precisão.' }
+};
+const SCOUTING_FOCUS = {
+  balanced: { label: 'Equilibrado', desc: 'Busca geral de talentos completos.', potential: 0, risk: 0 },
+  potential: { label: 'Potencial oculto', desc: 'Prioriza teto alto, aceitando mais risco.', potential: 5, risk: 3 },
+  lowRisk: { label: 'Baixo risco', desc: 'Procura adaptação cultural e disciplina.', potential: -1, risk: -4 },
+  immediate: { label: 'Pronto para competir', desc: 'Prospectos mais velhos e com overall maior.', potential: -2, risk: 1, overall: 5 }
+};
+const SCOUT_FIRST_NAMES = ['Mateo','Lucas','Rafael','Nicolas','Enzo','Hugo','Martin','Ivan','Mika','Noah','Kenji','Akira','Leo','Theo','Davi','Bruno','Samuel','Lorenzo'];
+const SCOUT_LAST_NAMES = ['Silva','Pereira','Costa','Alvarez','Rossi','Dubois','Kovac','Novak','Tanaka','Kim','Miller','Johnson','Santos','Ferreira','Bianchi','Garcia','Petrov','Mendes'];
+function ensureGlobalScoutingWorld() {
+  state.globalScouting ||= { score: 74, activeRegion: 'southAmerica', budgetMode: 'balanced', scoutingFocus: 'balanced', reports: [], prospects: [], watchlist: [], signedHistory: [], lastProcessedToken: null, lastAuditToken: null, auditLog: [], flags: { worldMap: true, hiddenPotential: true, riskModel: true, youthPipeline: true, weeklyReports: true } };
+  const gs = state.globalScouting;
+  gs.score ??= 74; gs.activeRegion ||= 'southAmerica'; gs.budgetMode ||= 'balanced'; gs.scoutingFocus ||= 'balanced'; gs.reports ||= []; gs.prospects ||= []; gs.watchlist ||= []; gs.signedHistory ||= []; gs.auditLog ||= []; gs.flags ||= { worldMap:true, hiddenPotential:true, riskModel:true, youthPipeline:true, weeklyReports:true };
+  gs.lastProcessedToken ??= null; gs.lastAuditToken ??= null;
+  return gs;
+}
+function globalScoutingWeeklyCost() {
+  const gs = ensureGlobalScoutingWorld();
+  const region = SCOUTING_REGIONS[gs.activeRegion] || SCOUTING_REGIONS.southAmerica;
+  const budget = SCOUTING_BUDGETS[gs.budgetMode] || SCOUTING_BUDGETS.balanced;
+  const staffDiscount = getStaffBonus('Scouting','costs') || 0;
+  const facility = facilityLevel('scouting') || 1;
+  return Math.max(0, Math.round(region.cost * budget.mult * (1 - Math.min(18, Math.max(0, staffDiscount + facility * 1.2)) / 100)));
+}
+function scoutingAccuracy() {
+  const gs = ensureGlobalScoutingWorld();
+  const budget = SCOUTING_BUDGETS[gs.budgetMode] || SCOUTING_BUDGETS.balanced;
+  return clamp(56 + budget.accuracy + facilityLevel('scouting') * 4 + getStaffBonus('Scouting','scouting') * .8 + facilityLevel('analytics') * 2, 35, 96);
+}
+function globalScoutingScore() {
+  const gs = ensureGlobalScoutingWorld();
+  const depth = Math.min(24, gs.prospects.length * 4 + gs.reports.length * 1.5);
+  const infra = facilityLevel('scouting') * 8 + facilityLevel('analytics') * 4;
+  const hires = Math.min(18, gs.signedHistory.length * 4);
+  return clamp(Math.round(40 + depth + infra + hires + (scoutingAccuracy() - 56) * .5), 0, 100);
+}
+function generateScoutingProspect(regionKey = ensureGlobalScoutingWorld().activeRegion, seedText = '') {
+  const gs = ensureGlobalScoutingWorld();
+  const region = SCOUTING_REGIONS[regionKey] || SCOUTING_REGIONS.southAmerica;
+  const focus = SCOUTING_FOCUS[gs.scoutingFocus] || SCOUTING_FOCUS.balanced;
+  const seed = stableNumber(`${BUILD_INFO.build}-${state.academy.season}-${state.academy.week}-${regionKey}-${seedText}-${gs.prospects.length}-${gs.reports.length}`);
+  const age = clamp(15 + (seed % 5) + (focus.overall ? 1 : 0), 15, 21);
+  const overall = clamp(44 + (seed % 20) + (focus.overall || 0) + Math.round(facilityLevel('scouting') * .6), 42, 78);
+  const hiddenPotential = clamp(overall + 14 + region.potential + (seed % 19) + focus.potential, 58, 96);
+  const perceivedPotential = clamp(hiddenPotential + Math.round((scoutingAccuracy() - 70) / 5) + ((seed % 9) - 4), 55, 96);
+  const risk = clamp(22 + region.risk * 5 + (seed % 27) + focus.risk - facilityLevel('analytics') * 2 - getStaffBonus('Scouting','scouting') * .3, 5, 92);
+  const country = region.countries[seed % region.countries.length];
+  const first = SCOUT_FIRST_NAMES[seed % SCOUT_FIRST_NAMES.length];
+  const last = SCOUT_LAST_NAMES[Math.floor(seed / 11) % SCOUT_LAST_NAMES.length];
+  const style = region.styleBias[seed % region.styleBias.length];
+  const id = `scout-${state.academy.season}-${state.academy.week}-${regionKey}-${seed}`;
+  const signingFee = Math.round(9500 + perceivedPotential * 650 + overall * 240 + (100 - risk) * 80);
+  const salary = Math.round(850 + overall * 38 + perceivedPotential * 12);
+  const avatar = PLAYER_AVATARS[seed % PLAYER_AVATARS.length];
+  const base = enrichPlayer({ id, name: `${first} ${last}`, country, age, overall, potential: perceivedPotential, style, preferredSurface: region.surface, rankingPoints: Math.max(0, Math.round((overall - 45) * 4)), avatar });
+  return { ...base, hiddenPotential, perceivedPotential, scoutRisk: risk, regionKey, regionLabel: region.label, signingFee, signingCost: signingFee, salary, discoveryWeek: state.academy.week, discoverySeason: state.academy.season, reportQuality: scoutingAccuracy(), fit: clamp(Math.round((perceivedPotential * .45) + (overall * .35) + ((100-risk) * .20)), 0, 100), status: 'scouted' };
+}
+function runScoutingMission(regionKey = null, manual = true) {
+  const gs = ensureGlobalScoutingWorld();
+  if (regionKey && SCOUTING_REGIONS[regionKey]) gs.activeRegion = regionKey;
+  const region = SCOUTING_REGIONS[gs.activeRegion] || SCOUTING_REGIONS.southAmerica;
+  const budget = SCOUTING_BUDGETS[gs.budgetMode] || SCOUTING_BUDGETS.balanced;
+  const cost = globalScoutingWeeklyCost();
+  if (manual && state.academy.money < cost) {
+    showSystemError(`Caixa insuficiente para missão em ${region.label}. Custo ${money(cost)}.`);
+    return null;
+  }
+  if (manual) state.academy.money -= cost;
+  const count = budget.reports + (manual ? 1 : 0);
+  const found = [];
+  for (let i=0;i<count;i++) {
+    const p = generateScoutingProspect(gs.activeRegion, `${manual?'manual':'week'}-${i}`);
+    if (!gs.prospects.some(x => x.id === p.id || x.name === p.name)) {
+      gs.prospects.unshift(p);
+      found.push(p);
+    }
+  }
+  gs.prospects = gs.prospects.slice(0, 24);
+  const top = found.sort((a,b)=>b.fit-a.fit)[0];
+  const report = { title: `Missão ${region.label}`, result: found.length ? `${found.length} relatório(s)` : 'Sem achados', note: top ? `Destaque: ${top.name} • POT ${Math.round(top.perceivedPotential)} • risco ${Math.round(top.scoutRisk)}.` : 'A rede não encontrou nome relevante nesta rodada.', region: gs.activeRegion, cost, week: state.academy.week, season: state.academy.season, at: new Date().toISOString(), build: BUILD_INFO.build };
+  gs.reports.unshift(report); gs.auditLog.unshift(report); gs.reports = gs.reports.slice(0, 36); gs.auditLog = gs.auditLog.slice(0, 36);
+  gs.score = globalScoutingScore(); gs.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  addLog(`Scouting: ${report.title} gerou ${report.result}.`);
+  saveState(state); renderGlobalScoutingWorld(); render();
+  return report;
+}
+function processGlobalScoutingWeek() {
+  const gs = ensureGlobalScoutingWorld();
+  const token = `${state.academy.season}-${state.academy.week}`;
+  if (gs.lastProcessedToken === token) return;
+  gs.lastProcessedToken = token;
+  if (state.academy.week % 4 === 0 || gs.prospects.length < 4) runScoutingMission(gs.activeRegion, false);
+  gs.score = globalScoutingScore();
+}
+function prospectGrade(p) { return p.perceivedPotential >= 88 ? 'A+' : p.perceivedPotential >= 82 ? 'A' : p.perceivedPotential >= 76 ? 'B' : 'C'; }
+function prospectRiskClass(p) { return p.scoutRisk >= 68 ? 'danger' : p.scoutRisk >= 44 ? 'warn' : 'ok'; }
+function renderGlobalScoutingWorld() {
+  const host = $('#globalScoutingHub');
+  if (!host) return;
+  const gs = ensureGlobalScoutingWorld();
+  gs.score = globalScoutingScore();
+  const active = SCOUTING_REGIONS[gs.activeRegion] || SCOUTING_REGIONS.southAmerica;
+  const regionCards = Object.entries(SCOUTING_REGIONS).map(([key, r]) => `<button class="scouting-region-card ${gs.activeRegion===key?'active':''}" onclick="window.setScoutingRegion('${key}')"><span>${r.icon}</span><strong>${r.label}</strong><small>${r.desc}</small><em>${r.surface} • ${money(r.cost)}/sem</em></button>`).join('');
+  const prospects = (gs.prospects || []).slice(0, 8).map(p => `<article class="panel-card scouting-prospect ${prospectRiskClass(p)}"><div class="player-card-head">${avatarImg(p.avatar || avatarForPlayer(p.name),'avatar-img',p.name)}<div><h4>${escapeHtml(p.name)}</h4><p class="muted">${escapeHtml(p.country)} • ${p.age} anos • ${escapeHtml(p.style)} • ${escapeHtml(p.regionLabel)}</p></div><span class="risk-chip ${prospectRiskClass(p)}">${prospectGrade(p)}</span></div><div class="profile-badges"><span>OVR ${Math.round(p.overall)}</span><span>POT ${Math.round(p.perceivedPotential)}</span><span>Risco ${Math.round(p.scoutRisk)}</span><span>Fit ${Math.round(p.fit)}</span></div><div class="commercial-contract-line"><span>Custo ${money(p.signingFee)}</span><span>Salário ${money(p.salary)}/sem</span></div><div class="tag-row"><button class="mini-btn" onclick="window.toggleProspectWatch('${p.id}')">${gs.watchlist.includes(p.id)?'Na lista':'Observar'}</button><button class="mini-btn" onclick="window.signScoutingProspect('${p.id}')">Contratar</button></div></article>`).join('') || '<article class="panel-card"><p class="muted">Nenhum jovem no radar. Execute uma missão de scouting.</p></article>';
+  const reports = (gs.reports || []).slice(0, 7).map(r => `<div class="list-item"><div><strong>${escapeHtml(r.title)}</strong><div class="small">${escapeHtml(r.note)}</div></div><b>${escapeHtml(r.result)}</b></div>`).join('') || '<div class="list-item"><span>Sem relatórios ainda.</span><strong>—</strong></div>';
+  host.innerHTML = `<section class="release-score-grid scouting-score-grid"><article class="release-score ${gs.score>=78?'ok':'pending'}"><span>Rede global</span><strong>${gs.score}</strong><small>score</small></article><article class="release-score ok"><span>Precisão</span><strong>${Math.round(scoutingAccuracy())}</strong><small>relatório</small></article><article class="release-score pending"><span>Custo semanal</span><strong>${money(globalScoutingWeeklyCost())}</strong><small>${(SCOUTING_BUDGETS[gs.budgetMode]||SCOUTING_BUDGETS.balanced).label}</small></article><article class="release-score ok"><span>Radar</span><strong>${gs.prospects.length}</strong><small>prospectos</small></article></section><section class="panel-card scouting-hero-card"><div><p class="eyebrow">${active.icon} ${active.label}</p><h2>Mapa mundial de olheiros</h2><p class="muted">${active.desc} Foco atual: ${(SCOUTING_FOCUS[gs.scoutingFocus]||SCOUTING_FOCUS.balanced).label}. Custo real entra no fluxo semanal da academia.</p></div><div class="tag-row"><button class="btn-primary" onclick="window.runScoutingMission()">Executar missão</button><button class="btn-secondary" onclick="window.exportGlobalScoutingReport()">Exportar relatório</button><button class="btn-ghost" onclick="window.switchScoutingToMarket()">Ver mercado</button></div></section><section class="scouting-world-map">${regionCards}</section><section class="release-grid"><article class="panel-card"><h4>Orçamento</h4><div class="tag-row">${Object.entries(SCOUTING_BUDGETS).map(([k,v])=>`<button class="mini-btn ${gs.budgetMode===k?'active':''}" onclick="window.setScoutingBudget('${k}')">${v.label}</button>`).join('')}</div><p class="muted">${(SCOUTING_BUDGETS[gs.budgetMode]||SCOUTING_BUDGETS.balanced).desc}</p></article><article class="panel-card"><h4>Foco de observação</h4><div class="tag-row">${Object.entries(SCOUTING_FOCUS).map(([k,v])=>`<button class="mini-btn ${gs.scoutingFocus===k?'active':''}" onclick="window.setScoutingFocus('${k}')">${v.label}</button>`).join('')}</div><p class="muted">${(SCOUTING_FOCUS[gs.scoutingFocus]||SCOUTING_FOCUS.balanced).desc}</p></article></section><section class="release-grid scouting-prospect-grid">${prospects}</section><section class="release-grid"><article class="panel-card"><h4>Relatórios recentes</h4><div class="list-block">${reports}</div></article><article class="panel-card"><h4>Lista de desejos</h4><p class="muted">${gs.watchlist.length ? `${gs.watchlist.length} jovem(ns) marcados para monitoramento.` : 'Nenhum prospecto marcado.'}</p><p class="muted">Contratar jovens de alto potencial alimenta o Legado/Next Gen e reduz dependência do mercado caro.</p></article></section>`;
+}
+window.setScoutingRegion = (key) => { const gs = ensureGlobalScoutingWorld(); if (!SCOUTING_REGIONS[key]) return; gs.activeRegion = key; gs.auditLog.unshift({ title:'Região alterada', result:SCOUTING_REGIONS[key].label, note:SCOUTING_REGIONS[key].desc, at:new Date().toISOString(), build:BUILD_INFO.build }); saveState(state); renderGlobalScoutingWorld(); };
+window.setScoutingBudget = (key) => { const gs = ensureGlobalScoutingWorld(); if (!SCOUTING_BUDGETS[key]) return; gs.budgetMode = key; gs.auditLog.unshift({ title:'Orçamento de scouting alterado', result:SCOUTING_BUDGETS[key].label, note:SCOUTING_BUDGETS[key].desc, at:new Date().toISOString(), build:BUILD_INFO.build }); saveState(state); renderGlobalScoutingWorld(); render(); };
+window.setScoutingFocus = (key) => { const gs = ensureGlobalScoutingWorld(); if (!SCOUTING_FOCUS[key]) return; gs.scoutingFocus = key; gs.auditLog.unshift({ title:'Foco de scouting alterado', result:SCOUTING_FOCUS[key].label, note:SCOUTING_FOCUS[key].desc, at:new Date().toISOString(), build:BUILD_INFO.build }); saveState(state); renderGlobalScoutingWorld(); };
+window.runScoutingMission = (regionKey=null) => runScoutingMission(regionKey, true);
+window.toggleProspectWatch = (id) => { const gs = ensureGlobalScoutingWorld(); gs.watchlist = gs.watchlist.includes(id) ? gs.watchlist.filter(x=>x!==id) : [id, ...gs.watchlist].slice(0,12); saveState(state); renderGlobalScoutingWorld(); };
+window.signScoutingProspect = (id) => {
+  const gs = ensureGlobalScoutingWorld(); const p = gs.prospects.find(x=>x.id===id); if (!p) return;
+  if (state.academy.money < p.signingFee) { showSystemError(`Caixa insuficiente para contratar ${p.name}. Custo ${money(p.signingFee)}.`); return; }
+  state.academy.money -= p.signingFee;
+  const player = enrichPlayer({ ...p, potential: p.hiddenPotential || p.perceivedPotential, isUser:true, morale:76, fatigue:10, injuries:0, health:100, injuredWeeks:0, lastResult:'Contratado via scouting mundial', rankingPoints:Math.max(8,p.rankingPoints||0), debutSeason:state.academy.season, yearsPro:0, careerTitles:0, grandSlamTitles:0, bestRank:999, peakOverall:p.overall, careerPhase:'prospect', relationship:70, pressure:30, confidence:63, happiness:74, careerEvents:[], conversationHistory:[] });
+  state.roster.push(player); gs.prospects = gs.prospects.filter(x=>x.id!==id); gs.watchlist = gs.watchlist.filter(x=>x!==id); gs.signedHistory.unshift({ id:p.id, name:p.name, country:p.country, fee:p.signingFee, potential:player.potential, week:state.academy.week, season:state.academy.season, at:new Date().toISOString(), build:BUILD_INFO.build });
+  state.inbox.unshift({ title:`Scouting contratou ${p.name}`, body:`${p.country}, ${p.age} anos, OVR ${Math.round(p.overall)} e potencial real ${Math.round(player.potential)}. Custo ${money(p.signingFee)}.`, week:state.academy.week });
+  addLog(`Scouting mundial: ${p.name} contratado por ${money(p.signingFee)}.`); updateRanking(); saveState(state); render();
+};
+window.switchScoutingToMarket = () => switchTab('market');
+window.exportGlobalScoutingReport = () => { const gs = ensureGlobalScoutingWorld(); const payload = { app:BUILD_INFO.appName, version:BUILD_INFO.version, build:BUILD_INFO.build, schema:BUILD_INFO.schemaVersion, generatedAt:new Date().toISOString(), score:globalScoutingScore(), activeRegion:gs.activeRegion, budgetMode:gs.budgetMode, focus:gs.scoutingFocus, weeklyCost:globalScoutingWeeklyCost(), accuracy:scoutingAccuracy(), prospects:gs.prospects, watchlist:gs.watchlist, signedHistory:gs.signedHistory, reports:gs.reports, privacy:'Relatório local. Nenhum dado é enviado para servidor.' }; try { const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href=url; link.download=`vale-tennis-scouting-${BUILD_INFO.version}-${BUILD_INFO.build}.json`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); } catch(error) { console.info('Scouting report', payload, error); } gs.auditLog.unshift({ title:'Relatório de scouting exportado', result:'JSON', note:'Diagnóstico local do mapa mundial gerado.', at:payload.generatedAt, build:BUILD_INFO.build }); saveState(state); renderGlobalScoutingWorld(); };
 
 
 function getEconomySummary(){
