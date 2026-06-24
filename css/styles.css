@@ -1515,3 +1515,19 @@ body.start-screen-open .mobile-dock, body.start-screen-open .mobile-quick-bar, b
 .scouting-hero-card { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
 .scouting-score-grid .release-score strong { font-size: clamp(1.6rem, 6vw, 2.25rem); }
 @media (max-width: 640px) { .scouting-world-map { grid-template-columns: 1fr; } .scouting-hero-card .tag-row { width: 100%; } .scouting-hero-card .tag-row button { flex: 1 1 100%; } }
+
+
+/* v4.7.0 — Rivalries, Drama & Player Relationships */
+.player-relationships-hub{display:flex;flex-direction:column;gap:18px}
+.relationship-score-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.relationship-hero-card{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;background:linear-gradient(135deg,rgba(111,76,255,.24),rgba(18,29,50,.86));border:1px solid rgba(180,150,255,.32)}
+.relationship-pair-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.relationship-pair-card{position:relative;overflow:hidden}
+.relationship-pair-card.ok{border-color:rgba(72,214,138,.34)}
+.relationship-pair-card.warn{border-color:rgba(255,204,102,.42)}
+.relationship-pair-card.danger{border-color:rgba(255,90,110,.48)}
+.avatar-duo{display:flex;align-items:center;min-width:76px}
+.avatar-duo .avatar-img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.24);background:#10182a}
+.avatar-duo .avatar-img + .avatar-img{margin-left:-14px}
+.profile-badges .ok{color:#79f0ad}.profile-badges .warn{color:#ffd166}.profile-badges .danger{color:#ff8ba0}
+@media(max-width:720px){.relationship-hero-card{flex-direction:column}.relationship-pair-grid{grid-template-columns:1fr}.avatar-duo .avatar-img{width:40px;height:40px}}

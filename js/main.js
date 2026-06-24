@@ -1482,15 +1482,15 @@ function renderForcedOnboardingGate() {
     ['Modal obrigatório', snap.setupComplete || snap.modalVisible, snap.modalVisible ? 'Aberto em tela cheia' : 'Será forçado no próximo clique/boot'],
     ['Build atual', true, BUILD_LABEL]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.6.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.7.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
 }
 window.forceOnboardingLauncher = forceOnboardingLauncher;
 window.forceRepairInvalidCareer = () => {
-  rebuildPlayableCareer('reparo forçado pelo launcher v4.6.0');
+  rebuildPlayableCareer('reparo forçado pelo launcher v4.7.0');
   ensureForcedOnboardingGateSystem().lastRepairAt = new Date().toISOString();
   saveState(state);
   render();
-  forceOnboardingLauncher('base recriada pelo launcher v4.6.0');
+  forceOnboardingLauncher('base recriada pelo launcher v4.7.0');
 };
 window.auditForcedOnboardingGate = () => {
   const snap = forcedOnboardingSnapshot();
@@ -1587,13 +1587,13 @@ function renderOnboardingRuntimeProof() {
     ['Perfil obrigatório', !snap.issues.some(x => /nome|avatar|país|academia|cidade|criação/.test(x)), snap.issues.join(', ') || 'Nome, avatar, país, cidade e academia OK'],
     ['Overlay de bloqueio', !snap.invalid || snap.lockVisible || snap.modalVisible, snap.lockVisible ? 'Ativo' : (snap.modalVisible ? 'Modal cobre a tela' : 'Inativo')]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.6.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.7.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
 }
 window.runOnboardingRuntimeProof = () => {
   const before = onboardingRuntimeProofSnapshot();
   if (before.invalid) {
     syncOnboardingRuntimeLock('prova manual');
-    forceOnboardingLauncher('prova runtime v4.6.0');
+    forceOnboardingLauncher('prova runtime v4.7.0');
   }
   setTimeout(() => {
     const after = onboardingRuntimeProofSnapshot();
@@ -1698,7 +1698,7 @@ function renderCleanStartWizard() {
     ['Criação aparece quando precisa', !snap.invalidCareer || snap.modalVisible || SETUP_SAFE_TABS.has(snap.currentTab), snap.modalVisible ? 'Modal visível' : `Tab atual: ${snap.currentTab}`],
     ['Base jogável', snap.roster > 0 && snap.ranking >= 5 && snap.calendar >= 4 && snap.money > 0, `${snap.roster} atletas • ${snap.ranking} ranking • ${snap.calendar} eventos • caixa ${money(snap.money)}`]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.6.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.7.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
 }
 window.runCleanStartAudit = () => {
   const snap = cleanStartWizardSnapshot();
@@ -1728,7 +1728,7 @@ window.guidedCleanFirstRun = () => {
   saveState(state);
   addLog('Início limpo guiado aplicado. A criação de carreira foi aberta novamente.');
   render();
-  forceOnboardingLauncher('início limpo guiado v4.6.0');
+  forceOnboardingLauncher('início limpo guiado v4.7.0');
 };
 window.cleanOldCachesAndReload = async () => {
   const wizard = ensureCleanStartWizardSystem();
@@ -1824,7 +1824,7 @@ function showStandaloneStartupShield(reason='carreira inválida') {
     document.body.appendChild(shield);
   }
   const issues = invalidCareerIssues(state);
-  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.6.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.6.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
+  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.7.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.7.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
   shield.classList.remove('hidden');
   ensureEmergencyStartControlSystem().startupShieldVisible = true;
   saveState(state);
@@ -1843,7 +1843,7 @@ function applyEmergencyStartRoute() {
     return;
   }
   if (!careerIsPlayableAndConfigured(state)) {
-    setTimeout(() => { launchStartScreenV2('boot v4.6.0 detectou carreira incompleta'); }, 320);
+    setTimeout(() => { launchStartScreenV2('boot v4.7.0 detectou carreira incompleta'); }, 320);
   }
 }
 function renderEmergencyStartControl() {
@@ -1860,7 +1860,7 @@ function renderEmergencyStartControl() {
     ['Dados da academia', !!(snap.owner && snap.academy && snap.city && snap.avatar), `${snap.owner || 'sem treinador'} • ${snap.academy || 'sem academia'} • ${snap.city || 'sem cidade'}`],
     ['Armazenamento local', snap.storageWritable, snap.storageWritable ? 'localStorage OK' : 'Navegador bloqueou save local.']
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.6.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.6.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.7.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.7.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.hardResetFirstRun = async (reason='hard reset guiado') => {
   const esc = ensureEmergencyStartControlSystem();
@@ -1989,8 +1989,8 @@ window.openMandatoryCareerSetup = () => {
 };
 window.repairMandatoryEmptySave = () => {
   ensureMandatoryCareerGateSystem().repairCount = (ensureMandatoryCareerGateSystem().repairCount || 0) + 1;
-  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.6.0');
-  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.6.0';
+  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.7.0');
+  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.7.0';
   saveState(state); render(); openOwnerSetup(true);
 };
 window.auditMandatoryCareerGate = () => {
@@ -2371,7 +2371,7 @@ function renderCareerCreationUXHub() {
     <section class="release-grid"><article class="panel-card"><h4>Valores atuais do formulário</h4><div class="list-block"><div class="list-item"><span>Treinador</span><strong>${escapeHtml(snap.values.name || '—')}</strong></div><div class="list-item"><span>Academia</span><strong>${escapeHtml(snap.values.academy || '—')}</strong></div><div class="list-item"><span>País</span><strong>${escapeHtml(snap.values.country || '—')}</strong></div><div class="list-item"><span>Cidade</span><strong>${escapeHtml(snap.values.city || '—')}</strong></div></div></article><article class="panel-card"><h4>Últimas verificações</h4><div class="list-block">${(ux.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum teste executado nesta build.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.forceSetupModalNow = () => {
-  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.6.0');
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.7.0');
   state.flags ||= {}; state.flags.ownerSetupComplete = false;
   ensureCareerCreationUXSystem().firstRunVerified = false;
   saveState(state); render(); forceOnboardingLauncher('abertura manual pela aba Criação');
@@ -2386,7 +2386,7 @@ window.auditCareerCreationUX = () => {
   renderCareerCreationUXHub(); addLog(`Auditoria de criação de carreira: ${score}/100.`);
 };
 window.startFreshSetupSafely = () => {
-  backupBrokenCareer('reset guiado v4.6.0 solicitado pelo usuário');
+  backupBrokenCareer('reset guiado v4.7.0 solicitado pelo usuário');
   clearState();
   state = buildInitialState(content);
   migrateState();
@@ -2631,7 +2631,7 @@ async function boot() {
   handleStartupHash();
   if (startupStatus !== 'ok' || !careerIsPlayableAndConfigured(state)) launchStartScreenV2(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
   setTimeout(() => window.runOnboardingRuntimeProof?.(), 380);
-  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.6.0'); }, 1800);
+  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.7.0'); }, 1800);
 }
 
 function applyAdminOverrides(content) {
@@ -2943,7 +2943,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', scoutingworld: 'market', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', broadcast2d: 'broadcast', seasonboard: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', scoutingworld: 'market', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', broadcast2d: 'broadcast', seasonboard: 'office', relationships: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -3063,6 +3063,7 @@ function render() {
   renderCommercialCareer();
   renderSeasonBoardPressure();
   renderGlobalScoutingWorld();
+  renderPlayerRelationships();
   renderLongCareer();
   renderReleaseCandidate();
   renderQualityPolish();
@@ -6568,6 +6569,7 @@ function advanceWeek() {
   evaluateObjectives();
   processBoardPressureWeek(weeklyIncome, weeklyCosts);
   processGlobalScoutingWeek();
+  processRelationshipDramaWeek();
   if (state.academy.week > 52) {
     state.academy.week = 1;
     state.academy.season += 1;
@@ -6836,7 +6838,7 @@ function drawCourt(lastWinner = null) {
 
 
 
-// v4.6.0 — Real Season Objectives & Board Pressure
+// v4.7.0 — Real Season Objectives & Board Pressure
 const BOARD_AMBITIONS = {
   survival: { label: 'Sobrevivência', desc: 'Manter caixa positivo e entrar no Top 150 sem quebrar a academia.', rank: 150, cash: 0, reputation: 32, titles: 0, risk: 0.82 },
   balanced: { label: 'Profissional', desc: 'Top 120, reputação crescente e caixa saudável.', rank: 120, cash: 25000, reputation: 42, titles: 0, risk: 1 },
@@ -6959,7 +6961,7 @@ window.exportBoardReport = () => {
 };
 
 
-// v4.6.0 — Scouting World Map & Youth Recruitment
+// v4.7.0 — Scouting World Map & Youth Recruitment
 const SCOUTING_REGIONS = {
   southAmerica: { label: 'América do Sul', icon: '🌎', desc: 'Brasil, Argentina, Chile e Uruguai. Bom custo e talentos de saibro.', countries: ['Brasil','Argentina','Chile','Uruguai','Colômbia'], surface: 'Saibro', cost: 4200, potential: 7, risk: 4, styleBias: ['Contra-atacador','Defensivo','Agressivo de fundo'] },
   europeWest: { label: 'Europa Ocidental', icon: '🇪🇺', desc: 'Espanha, França, Itália e Alemanha. Base técnica forte e custo alto.', countries: ['Espanha','França','Itália','Alemanha','Portugal'], surface: 'Saibro', cost: 7200, potential: 9, risk: 5, styleBias: ['All-court','Agressivo de fundo','Defensivo'] },
@@ -7095,6 +7097,168 @@ window.signScoutingProspect = (id) => {
 };
 window.switchScoutingToMarket = () => switchTab('market');
 window.exportGlobalScoutingReport = () => { const gs = ensureGlobalScoutingWorld(); const payload = { app:BUILD_INFO.appName, version:BUILD_INFO.version, build:BUILD_INFO.build, schema:BUILD_INFO.schemaVersion, generatedAt:new Date().toISOString(), score:globalScoutingScore(), activeRegion:gs.activeRegion, budgetMode:gs.budgetMode, focus:gs.scoutingFocus, weeklyCost:globalScoutingWeeklyCost(), accuracy:scoutingAccuracy(), prospects:gs.prospects, watchlist:gs.watchlist, signedHistory:gs.signedHistory, reports:gs.reports, privacy:'Relatório local. Nenhum dado é enviado para servidor.' }; try { const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href=url; link.download=`vale-tennis-scouting-${BUILD_INFO.version}-${BUILD_INFO.build}.json`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); } catch(error) { console.info('Scouting report', payload, error); } gs.auditLog.unshift({ title:'Relatório de scouting exportado', result:'JSON', note:'Diagnóstico local do mapa mundial gerado.', at:payload.generatedAt, build:BUILD_INFO.build }); saveState(state); renderGlobalScoutingWorld(); };
+
+
+const RELATIONSHIP_CULTURES = {
+  balanced: { label: 'Equilibrado', desc: 'Rivalidade competitiva sem destruir o clima interno.', morale: 0, pressure: 0, rivalry: 0, chemistry: 0 },
+  family: { label: 'Família', desc: 'Protege moral e reduz conflitos, mas pode baixar a cobrança competitiva.', morale: 3, pressure: -5, rivalry: -6, chemistry: 7 },
+  elite: { label: 'Elite exigente', desc: 'Aumenta ambição e pressão por resultado, com risco de atrito.', morale: -1, pressure: 7, rivalry: 7, chemistry: -2 },
+  youth: { label: 'Formação humana', desc: 'Foco em jovens, mentoria e proteção emocional.', morale: 4, pressure: -3, rivalry: -3, chemistry: 6 }
+};
+const RIVALRY_POLICIES = {
+  competitive: { label: 'Competição saudável', desc: 'Deixa a disputa gerar treino forte, mas intervém em excesso de tensão.', rivalry: 3, chemistry: 1 },
+  mediate: { label: 'Mediação ativa', desc: 'Reduz tensão e prioriza confiança entre atletas.', rivalry: -8, chemistry: 6 },
+  star: { label: 'Priorizar estrela', desc: 'Protege o atleta mais forte, mas pode gerar ciúme interno.', rivalry: 9, chemistry: -5 },
+  academy: { label: 'Academia acima de todos', desc: 'Pressiona todos por padrão coletivo e meritocracia.', rivalry: 5, chemistry: 3 }
+};
+const RELATIONSHIP_EVENT_TEMPLATES = [
+  { type:'rivalry', title:'Rivalidade ganhou manchete', heat:8, chemistry:-4, morale:-1, press:5, body:'A imprensa percebeu tensão competitiva entre dois atletas da academia.' },
+  { type:'mentor', title:'Mentoria fortaleceu o grupo', heat:-3, chemistry:9, morale:4, press:1, body:'Um atleta experiente ajudou um jovem a lidar com pressão e rotina.' },
+  { type:'conflict', title:'Discussão no treino', heat:11, chemistry:-8, morale:-4, press:3, body:'Treino intenso gerou atrito e exigiu presença do treinador.' },
+  { type:'unity', title:'Elenco reagiu como equipe', heat:-5, chemistry:8, morale:5, press:2, body:'O grupo mostrou unidade depois de uma semana difícil.' },
+  { type:'jealousy', title:'Ciúme por calendário', heat:10, chemistry:-6, morale:-3, press:4, body:'Um atleta sentiu que outro recebeu prioridade em torneios e atenção técnica.' }
+];
+
+function ensureRelationshipPlayerFields(player) {
+  player.relationship ??= 68;
+  player.pressure ??= 40;
+  player.confidence ??= player.morale ?? 70;
+  player.happiness ??= 66;
+  player.rivalryProfile ||= { temperament: (stableNumber(player.id || player.name) % 100), leadership: clamp(Math.round((player.composure || player.mental || player.overall || 60) + ((stableNumber(player.name) % 23)-11)), 25, 98), ego: clamp(Math.round((player.overall || 60) * .6 + (stableNumber(`${player.name}-ego`) % 42)), 20, 98) };
+  player.chemistryTags ||= [];
+  player.relationshipHistory ||= [];
+  return player;
+}
+function relationshipPairId(a,b) { return [a.id || a.name, b.id || b.name].sort().join('__'); }
+function initialPairChemistry(a,b) {
+  const sameCountry = a.country && b.country && a.country === b.country ? 9 : 0;
+  const sameStyle = a.style && b.style && a.style === b.style ? -3 : 3;
+  const ageGap = Math.abs((a.age || 22) - (b.age || 22));
+  const leadership = ((a.rivalryProfile?.leadership || 60) + (b.rivalryProfile?.leadership || 60)) / 2;
+  const egoDiff = Math.abs((a.rivalryProfile?.ego || 55) - (b.rivalryProfile?.ego || 55));
+  return clamp(Math.round(58 + sameCountry + sameStyle + Math.min(ageGap, 10) * 0.7 + leadership * 0.05 - egoDiff * 0.2), 18, 96);
+}
+function initialRivalryHeat(a,b) {
+  const rankGap = Math.abs(getPlayerRank(a.id) - getPlayerRank(b.id));
+  const ovrGap = Math.abs((a.overall || 50) - (b.overall || 50));
+  const egoAvg = ((a.rivalryProfile?.ego || 55) + (b.rivalryProfile?.ego || 55)) / 2;
+  return clamp(Math.round(22 + Math.max(0, 18-rankGap) * .8 + Math.max(0, 10-ovrGap) * 1.2 + egoAvg * .18), 5, 92);
+}
+function pairLabel(pair) {
+  const a = state.roster.find(p => (p.id || p.name) === pair.aId) || { name:'Atleta A' };
+  const b = state.roster.find(p => (p.id || p.name) === pair.bId) || { name:'Atleta B' };
+  return `${a.name} × ${b.name}`;
+}
+function ensurePlayerRelationships() {
+  state.playerRelationships ||= { score: 76, cultureMode: 'balanced', rivalryPolicy: 'competitive', mentorMode: 'auto', pairings: [], dramaLog: [], mediationLog: [], pressLog: [], lastProcessedToken: null, lastAuditToken: null, flags: { rivalryModel: true, chemistryImpact: true, weeklyDrama: true, mentoring: true, pressNarrative: true } };
+  const rel = state.playerRelationships;
+  rel.cultureMode ||= 'balanced'; rel.rivalryPolicy ||= 'competitive'; rel.mentorMode ||= 'auto';
+  rel.pairings ||= []; rel.dramaLog ||= []; rel.mediationLog ||= []; rel.pressLog ||= [];
+  state.roster.forEach(ensureRelationshipPlayerFields);
+  const validIds = new Set(state.roster.map(p => p.id || p.name));
+  rel.pairings = rel.pairings.filter(p => validIds.has(p.aId) && validIds.has(p.bId));
+  for (let i=0;i<state.roster.length;i++) {
+    for (let j=i+1;j<state.roster.length;j++) {
+      const a = state.roster[i], b = state.roster[j];
+      const id = relationshipPairId(a,b);
+      if (!rel.pairings.some(p => p.id === id)) {
+        rel.pairings.push({ id, aId:a.id || a.name, bId:b.id || b.name, chemistry: initialPairChemistry(a,b), rivalryHeat: initialRivalryHeat(a,b), trust: 62, story:'Relação nova em observação.', lastEventWeek:null, mentor:false });
+      }
+    }
+  }
+  rel.score = relationshipScore();
+  return rel;
+}
+function avgRosterField(field, fallback=60) { return Math.round(state.roster.reduce((s,p)=>s+(Number.isFinite(p[field])?p[field]:fallback),0) / Math.max(1,state.roster.length)); }
+function relationshipScore() {
+  const rel = state.playerRelationships || {};
+  const pairs = rel.pairings || [];
+  const avgChem = pairs.length ? pairs.reduce((s,p)=>s+(p.chemistry||55),0)/pairs.length : 68;
+  const avgHeat = pairs.length ? pairs.reduce((s,p)=>s+(p.rivalryHeat||30),0)/pairs.length : 28;
+  const morale = avgRosterField('morale',70);
+  const pressure = avgRosterField('pressure',40);
+  return Math.round(clamp(42 + avgChem*.35 + morale*.22 - avgHeat*.18 - pressure*.08 + (state.academy.reputation||0)*.05, 0, 100));
+}
+function relationshipRiskClass(v) { return v >= 72 ? 'danger' : v >= 48 ? 'warn' : 'ok'; }
+function chemistryClass(v) { return v >= 72 ? 'ok' : v >= 48 ? 'warn' : 'danger'; }
+function teamHarmonySnapshot() {
+  const rel = ensurePlayerRelationships();
+  const pairs = rel.pairings || [];
+  const avgChem = Math.round(pairs.length ? pairs.reduce((s,p)=>s+(p.chemistry||55),0)/pairs.length : 68);
+  const avgHeat = Math.round(pairs.length ? pairs.reduce((s,p)=>s+(p.rivalryHeat||30),0)/pairs.length : 28);
+  const morale = avgRosterField('morale',70);
+  const pressure = avgRosterField('pressure',40);
+  const conflicts = pairs.filter(p => (p.rivalryHeat||0) > 68 || (p.chemistry||100) < 38).length;
+  return { score: relationshipScore(), avgChem, avgHeat, morale, pressure, conflicts, pairs:pairs.length };
+}
+function strongestRelationshipPairs() { return [...ensurePlayerRelationships().pairings].sort((a,b)=>((b.rivalryHeat||0)-(a.rivalryHeat||0)) || ((a.chemistry||0)-(b.chemistry||0))).slice(0,8); }
+function applyPairEffects(pair, effects={}) {
+  pair.rivalryHeat = clamp((pair.rivalryHeat ?? 25) + (effects.heat || 0), 0, 100);
+  pair.chemistry = clamp((pair.chemistry ?? 55) + (effects.chemistry || 0), 0, 100);
+  pair.trust = clamp((pair.trust ?? 62) + (effects.trust || Math.round((effects.chemistry||0)/2)), 0, 100);
+  [pair.aId, pair.bId].forEach(id => {
+    const p = state.roster.find(x => (x.id || x.name) === id);
+    if (!p) return;
+    p.morale = clamp((p.morale || 70) + (effects.morale || 0), 25, 100);
+    p.pressure = clamp((p.pressure || 40) + (effects.pressure || 0), 0, 100);
+    p.relationship = clamp((p.relationship || 68) + Math.round((effects.chemistry || 0) * .3), 0, 100);
+    p.happiness = clamp((p.happiness || 66) + Math.round((effects.morale || 0) * .5), 0, 100);
+    p.relationshipHistory ||= [];
+    p.relationshipHistory.unshift({ title: effects.title || 'Relação ajustada', note: effects.note || '', week: state.academy.week, season: state.academy.season, build: BUILD_INFO.build, at:new Date().toISOString() });
+    p.relationshipHistory = p.relationshipHistory.slice(0,12);
+  });
+}
+function processRelationshipDramaWeek() {
+  const rel = ensurePlayerRelationships();
+  const token = `${state.academy.season}-${state.academy.week}`;
+  if (rel.lastProcessedToken === token) return;
+  rel.lastProcessedToken = token;
+  const culture = RELATIONSHIP_CULTURES[rel.cultureMode] || RELATIONSHIP_CULTURES.balanced;
+  const policy = RIVALRY_POLICIES[rel.rivalryPolicy] || RIVALRY_POLICIES.competitive;
+  rel.pairings.forEach(pair => {
+    const seed = stableNumber(`${token}-${pair.id}-${rel.cultureMode}-${rel.rivalryPolicy}`);
+    const driftHeat = ((seed % 9)-4) + (culture.rivalry||0)*.2 + (policy.rivalry||0)*.25;
+    const driftChem = (((seed >> 3) % 7)-3) + (culture.chemistry||0)*.22 + (policy.chemistry||0)*.2;
+    pair.rivalryHeat = clamp((pair.rivalryHeat||25) + driftHeat, 0, 100);
+    pair.chemistry = clamp((pair.chemistry||55) + driftChem, 0, 100);
+  });
+  const critical = strongestRelationshipPairs()[0];
+  if (critical && (critical.rivalryHeat > 66 || critical.chemistry < 42 || state.academy.week % 5 === 0)) {
+    const seed = stableNumber(`${token}-${critical.id}-event`);
+    const template = RELATIONSHIP_EVENT_TEMPLATES[seed % RELATIONSHIP_EVENT_TEMPLATES.length];
+    applyPairEffects(critical, { heat:template.heat, chemistry:template.chemistry, morale:template.morale, pressure: Math.round(template.press/2), title:template.title, note:template.body });
+    const entry = { title:template.title, pair:pairLabel(critical), type:template.type, note:template.body, heat:Math.round(critical.rivalryHeat), chemistry:Math.round(critical.chemistry), week:state.academy.week, season:state.academy.season, at:new Date().toISOString(), build:BUILD_INFO.build };
+    rel.dramaLog.unshift(entry); rel.dramaLog = rel.dramaLog.slice(0,40);
+    if (template.press >= 3) rel.pressLog.unshift(entry);
+    state.inbox.unshift({ title:`Clima interno: ${template.title}`, body:`${entry.pair}. ${template.body}`, week:state.academy.week });
+    addLog(`Relações: ${template.title} — ${entry.pair}.`);
+  }
+  rel.score = relationshipScore();
+}
+function renderPlayerRelationships() {
+  const host = $('#playerRelationshipsHub');
+  if (!host) return;
+  const rel = ensurePlayerRelationships();
+  const snap = teamHarmonySnapshot();
+  const culture = RELATIONSHIP_CULTURES[rel.cultureMode] || RELATIONSHIP_CULTURES.balanced;
+  const policy = RIVALRY_POLICIES[rel.rivalryPolicy] || RIVALRY_POLICIES.competitive;
+  const pairs = strongestRelationshipPairs().map(pair => {
+    const a = state.roster.find(p => (p.id || p.name) === pair.aId) || { name:'Atleta A' };
+    const b = state.roster.find(p => (p.id || p.name) === pair.bId) || { name:'Atleta B' };
+    return `<article class="panel-card relationship-pair-card ${relationshipRiskClass(pair.rivalryHeat)}"><div class="player-card-head"><div class="avatar-duo">${avatarImg(a.avatar || avatarForPlayer(a.name),'avatar-img',a.name)}${avatarImg(b.avatar || avatarForPlayer(b.name),'avatar-img',b.name)}</div><div><h4>${escapeHtml(a.name)} × ${escapeHtml(b.name)}</h4><p class="muted">${escapeHtml(a.country || '—')} / ${escapeHtml(b.country || '—')} • ${escapeHtml(pair.story || 'Relação em observação')}</p></div></div><div class="profile-badges"><span class="${chemistryClass(pair.chemistry)}">Química ${Math.round(pair.chemistry)}</span><span class="${relationshipRiskClass(pair.rivalryHeat)}">Rivalidade ${Math.round(pair.rivalryHeat)}</span><span>Confiança ${Math.round(pair.trust || 60)}</span></div><div class="tag-row"><button class="mini-btn" onclick="window.mediateRelationship('${pair.id}')">Mediar</button><button class="mini-btn" onclick="window.createMentorPair('${pair.id}')">Mentoria</button><button class="mini-btn" onclick="window.feedHealthyRivalry('${pair.id}')">Rivalidade saudável</button></div></article>`;
+  }).join('') || '<article class="panel-card"><p class="muted">Contrate pelo menos dois atletas para gerar relações internas.</p></article>';
+  const drama = (rel.dramaLog||[]).slice(0,7).map(e=>`<div class="list-item"><div><strong>${escapeHtml(e.title)}</strong><div class="small">${escapeHtml(e.pair)} • ${escapeHtml(e.note)}</div></div><b>${e.heat || '—'}</b></div>`).join('') || '<div class="list-item"><span>Nenhum drama relevante nesta fase.</span><strong>OK</strong></div>';
+  host.innerHTML = `<section class="release-score-grid relationship-score-grid"><article class="release-score ${snap.score>=75?'ok':'pending'}"><span>Clima</span><strong>${snap.score}</strong><small>score</small></article><article class="release-score ${chemistryClass(snap.avgChem)}"><span>Química</span><strong>${snap.avgChem}</strong><small>média</small></article><article class="release-score ${relationshipRiskClass(snap.avgHeat)}"><span>Rivalidade</span><strong>${snap.avgHeat}</strong><small>calor</small></article><article class="release-score ${snap.conflicts ? 'pending':'ok'}"><span>Conflitos</span><strong>${snap.conflicts}</strong><small>pares críticos</small></article></section><section class="panel-card relationship-hero-card"><div><p class="eyebrow">Relações • ${BUILD_LABEL}</p><h2>Rivalidades, drama e vestiário da academia</h2><p class="muted">Cultura atual: ${culture.label}. Política: ${policy.label}. O clima interno afeta moral, pressão, confiança, imprensa e estabilidade do elenco.</p></div><div class="tag-row"><button class="btn-primary" onclick="window.runRelationshipWeekNow()">Simular semana social</button><button class="btn-secondary" onclick="window.exportRelationshipReport()">Exportar relatório</button><button class="btn-ghost" onclick="window.switchRelationshipsToCareer()">Ver carreira</button></div></section><section class="release-grid"><article class="panel-card"><h4>Cultura da academia</h4><div class="tag-row">${Object.entries(RELATIONSHIP_CULTURES).map(([k,v])=>`<button class="mini-btn ${rel.cultureMode===k?'active':''}" onclick="window.setRelationshipCulture('${k}')">${v.label}</button>`).join('')}</div><p class="muted">${culture.desc}</p></article><article class="panel-card"><h4>Política de rivalidade</h4><div class="tag-row">${Object.entries(RIVALRY_POLICIES).map(([k,v])=>`<button class="mini-btn ${rel.rivalryPolicy===k?'active':''}" onclick="window.setRivalryPolicy('${k}')">${v.label}</button>`).join('')}</div><p class="muted">${policy.desc}</p></article></section><section class="release-grid relationship-pair-grid">${pairs}</section><section class="release-grid"><article class="panel-card"><h4>Drama recente</h4><div class="list-block">${drama}</div></article><article class="panel-card"><h4>Leitura do treinador</h4><p class="muted">Moral média ${snap.morale}, pressão média ${snap.pressure}. Relações boas aceleram evolução; tensão alta pode derrubar confiança antes de partidas grandes.</p><p class="muted">Use mediação para reduzir conflito, mentoria para proteger jovens e rivalidade saudável quando o grupo precisa competir mais.</p></article></section>`;
+  hydrateAssetImages();
+}
+window.setRelationshipCulture = (key) => { const rel = ensurePlayerRelationships(); if (!RELATIONSHIP_CULTURES[key]) return; rel.cultureMode = key; rel.auditLog ||= []; rel.auditLog.unshift({ title:'Cultura alterada', result:RELATIONSHIP_CULTURES[key].label, at:new Date().toISOString(), build:BUILD_INFO.build }); saveState(state); render(); };
+window.setRivalryPolicy = (key) => { const rel = ensurePlayerRelationships(); if (!RIVALRY_POLICIES[key]) return; rel.rivalryPolicy = key; rel.auditLog ||= []; rel.auditLog.unshift({ title:'Política de rivalidade alterada', result:RIVALRY_POLICIES[key].label, at:new Date().toISOString(), build:BUILD_INFO.build }); saveState(state); render(); };
+window.mediateRelationship = (id) => { const rel = ensurePlayerRelationships(); const pair = rel.pairings.find(p=>p.id===id); if (!pair) return; applyPairEffects(pair, { heat:-16, chemistry:8, morale:3, pressure:-5, title:'Mediação do treinador', note:'Conversa privada reduziu tensão e restaurou confiança.' }); pair.story='Mediação recente restaurou comunicação.'; rel.mediationLog.unshift({ title:'Mediação realizada', pair:pairLabel(pair), week:state.academy.week, season:state.academy.season, at:new Date().toISOString(), build:BUILD_INFO.build }); state.inbox.unshift({ title:'Mediação concluída', body:`${pairLabel(pair)}: tensão reduzida e química melhorou.`, week:state.academy.week }); saveState(state); render(); };
+window.createMentorPair = (id) => { const rel = ensurePlayerRelationships(); const pair = rel.pairings.find(p=>p.id===id); if (!pair) return; pair.mentor=true; pair.story='Dupla em mentoria ativa.'; applyPairEffects(pair, { heat:-6, chemistry:14, morale:5, pressure:-3, title:'Mentoria ativada', note:'Relação transformada em apoio técnico e emocional.' }); saveState(state); render(); };
+window.feedHealthyRivalry = (id) => { const rel = ensurePlayerRelationships(); const pair = rel.pairings.find(p=>p.id===id); if (!pair) return; pair.story='Rivalidade saudável direcionada para treino.'; applyPairEffects(pair, { heat:8, chemistry:4, morale:2, pressure:4, title:'Rivalidade saudável', note:'A disputa foi convertida em competitividade no treino.' }); saveState(state); render(); };
+window.runRelationshipWeekNow = () => { const rel = ensurePlayerRelationships(); rel.lastProcessedToken = null; processRelationshipDramaWeek(); saveState(state); render(); };
+window.switchRelationshipsToCareer = () => switchTab('career');
+window.exportRelationshipReport = () => { const rel = ensurePlayerRelationships(); const payload = { app:BUILD_INFO.appName, version:BUILD_INFO.version, build:BUILD_INFO.build, schema:BUILD_INFO.schemaVersion, generatedAt:new Date().toISOString(), snapshot:teamHarmonySnapshot(), cultureMode:rel.cultureMode, rivalryPolicy:rel.rivalryPolicy, pairings:rel.pairings, dramaLog:rel.dramaLog, mediationLog:rel.mediationLog, pressLog:rel.pressLog, roster:state.roster.map(p=>({ id:p.id, name:p.name, morale:p.morale, pressure:p.pressure, confidence:p.confidence, relationship:p.relationship, happiness:p.happiness })), privacy:'Relatório local. Nenhum dado é enviado para servidor.' }; try { const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href=url; link.download=`vale-tennis-relationships-${BUILD_INFO.version}-${BUILD_INFO.build}.json`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); } catch(error) { console.info('Relationship report', payload, error); } rel.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`; rel.auditLog ||= []; rel.auditLog.unshift({ title:'Relatório de relações exportado', result:'JSON', at:payload.generatedAt, build:BUILD_INFO.build }); saveState(state); renderPlayerRelationships(); };
 
 
 function getEconomySummary(){

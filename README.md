@@ -1,3 +1,16 @@
+# Vale Games Tennis Manager v4.7.0
+
+Build `20260624-163326` — Rivalries, Drama & Player Relationships.
+
+## Destaques v4.7.0
+
+- Nova aba **Relações**.
+- Rivalidades entre atletas, química, confiança, mentoria e conflitos.
+- Cultura da academia: Equilibrado, Família, Elite exigente e Formação humana.
+- Política de rivalidade: competição saudável, mediação ativa, priorizar estrela e academia acima de todos.
+- Drama semanal integrado ao inbox, moral, pressão, confiança e reputação.
+- Exportação local de relatório JSON de clima interno.
+
 
 
 ## v4.6.0 — Scouting World Map & Youth Recruitment

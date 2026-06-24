@@ -1,7 +1,7 @@
 {
   "name": "Vale Games Tennis Manager",
   "short_name": "Vale Tennis",
-  "start_url": "./index.html?v=4.6.0-20260624-161159#start",
+  "start_url": "./index.html?v=4.7.0-20260624-163326#start",
   "display": "standalone",
   "background_color": "#08101d",
   "theme_color": "#08101d",
@@ -14,7 +14,7 @@
     }
   ],
   "id": "vale-games-tennis-manager",
-  "description": "Simulador mobile-first de gestão de tênis com tela inicial premium, instalações avançadas, Broadcast 2D, metas reais e scouting mundial de jovens promessas.",
+  "description": "Simulador mobile-first de gestão de tênis com tela inicial premium, instalações avançadas, Broadcast 2D, metas reais, scouting mundial e relações dramáticas entre atletas.",
   "shortcuts": [
     {
       "name": "Tela Inicial Premium",
@@ -45,6 +45,12 @@
       "short_name": "Scouting",
       "url": "./index.html#scoutingworld",
       "description": "Abrir mapa mundial de olheiros, regiões, jovens promessas e recrutamento"
+    },
+    {
+      "name": "Rivalidades e Relações",
+      "short_name": "Relações",
+      "url": "./index.html#relationships",
+      "description": "Abrir rivalidades, clima do elenco, mentorias e gestão de conflitos"
     },
     {
       "name": "Abrir Partida",

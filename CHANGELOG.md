@@ -1,3 +1,13 @@
+# v4.7.0 — Rivalries, Drama & Player Relationships
+
+Build `20260624-163326` — 24/06/2026 16:33:26 São Paulo.
+
+- Adicionada aba **Relações** com rivalidades, química de dupla, confiança e clima interno.
+- Novo sistema `playerRelationships` com schema 44.
+- Processamento semanal de drama interno integrado ao inbox e logs.
+- Ações: mediação, mentoria e rivalidade saudável.
+- Exportação local JSON de relatório de clima interno.
+
 
 
 ## v4.6.0 — Scouting World Map & Youth Recruitment

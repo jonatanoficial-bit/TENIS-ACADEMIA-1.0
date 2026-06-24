@@ -8,26 +8,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1220" />
   <title>Vale Games Tennis Manager</title>
-  <link rel="manifest" href="manifest.webmanifest?v=4.6.0-20260624-161159" />
+  <link rel="manifest" href="manifest.webmanifest?v=4.7.0-20260624-163326" />
   <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=4.6.0-20260624-161159" />
+  <link rel="stylesheet" href="css/styles.css?v=4.7.0-20260624-163326" />
 </head>
 <body>
   <div id="startScreenV2" class="start-screen-v2 hidden" role="dialog" aria-modal="true" aria-label="Tela inicial premium"></div>
 
   <div id="onboardingRuntimeLock" class="runtime-onboarding-lock hidden" role="alertdialog" aria-live="assertive">
     <div class="runtime-lock-card glass">
-      <p class="eyebrow">Início protegido • v4.6.0</p>
+      <p class="eyebrow">Início protegido • v4.7.0</p>
       <h2>Crie sua carreira para liberar o jogo</h2>
       <p id="runtimeLockText">O Dashboard está bloqueado porque falta nome, avatar, país, cidade, academia ou base jogável.</p>
       <div class="runtime-lock-actions">
-        <button class="btn-primary" type="button" onclick="window.forceOnboardingLauncher?.('bloqueio visual v4.6.0')">Abrir criação agora</button>
+        <button class="btn-primary" type="button" onclick="window.forceOnboardingLauncher?.('bloqueio visual v4.7.0')">Abrir criação agora</button>
         <button class="btn-secondary" type="button" onclick="window.runOnboardingRuntimeProof?.()">Testar abertura</button>
         <button class="btn-ghost" type="button" onclick="window.forceRepairInvalidCareer?.()">Reparar base</button>
       </div>
     </div>
   </div>
-  <div id="buildOverlay" class="build-overlay">v4.6.0 • 24/06/2026 • 16:11:59</div>
+  <div id="buildOverlay" class="build-overlay">v4.7.0 • 24/06/2026 • 16:33:26</div>
   <div class="app-shell">
     <header class="topbar glass">
       <div>
@@ -35,7 +35,7 @@
         <h1>Vale Games Tennis Manager</h1>
       </div>
       <div class="hud-row hud-scroll">
-        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v4.6.0 • 24/06/2026 • 16:11:59</strong></div>
+        <div class="pill build-pill"><span>Build</span><strong id="buildPill">v4.7.0 • 24/06/2026 • 16:33:26</strong></div>
         <div class="pill"><span>Temporada</span><strong id="seasonLabel">2026</strong></div>
         <div class="pill"><span>Semana</span><strong id="weekLabel">1</strong></div>
         <div class="pill"><span>Caixa</span><strong id="moneyLabel">$0</strong></div>
@@ -93,13 +93,14 @@
           <button class="tab-btn" data-tab="broadcast2d">Broadcast 2D</button>
           <button class="tab-btn" data-tab="seasonboard">Temporada</button>
           <button class="tab-btn" data-tab="scoutingworld">Scouting</button>
+          <button class="tab-btn" data-tab="relationships">Relações</button>
           <button class="tab-btn" data-tab="market">Mercado</button>
           <button class="tab-btn" data-tab="staff">Staff</button>
           <button class="tab-btn" data-tab="ranking">Ranking</button>
           <button class="tab-btn" data-tab="adminhint">Admin</button>
         </nav>
 
-        <div id="mobileBuildBadge" class="mobile-build-badge glass">v4.6.0 • 24/06/2026 • 16:11:59</div>
+        <div id="mobileBuildBadge" class="mobile-build-badge glass">v4.7.0 • 24/06/2026 • 16:33:26</div>
         <section class="sidebar-actions">
           <button id="advanceWeekBtn" class="btn-primary">Avançar Semana</button>
           <button id="saveBtn" class="btn-secondary">Salvar</button>
@@ -180,7 +181,7 @@
         <section class="tab-panel glass start-screen-v2-panel" id="tab-startscreen">
           <div class="section-head">
             <div><p class="eyebrow">Start Screen 2.0</p><h3>Tela inicial premium e Career Creator 2.0</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="startScreenV2Hub" class="onboarding-reliability-hub start-screen-v2-hub"></div>
         </section>
@@ -188,7 +189,7 @@
         <section class="tab-panel glass premium-visual-panel" id="tab-visual">
           <div class="section-head visual-head">
             <div><p class="eyebrow">Premium Visual Academy</p><h3>Ambientes da Academia</h3></div>
-            <div class="training-build">Visual AAA • schema 43</div>
+            <div class="training-build">Visual AAA • schema 44</div>
           </div>
           <div id="visualAcademyHub" class="visual-academy-hub"></div>
         </section>
@@ -196,7 +197,7 @@
         <section class="tab-panel glass facilities-pro-panel" id="tab-facilitiespro">
           <div class="section-head facilities-pro-head">
             <div><p class="eyebrow">Academy Facilities Expansion</p><h3>Instalações, quadras e infraestrutura</h3></div>
-            <div class="training-build">Facilities Pro • schema 43</div>
+            <div class="training-build">Facilities Pro • schema 44</div>
           </div>
           <div id="academyFacilitiesProHub" class="facilities-pro-hub"></div>
         </section>
@@ -209,7 +210,7 @@
         <section class="tab-panel glass" id="tab-career">
           <div class="section-head">
             <div><p class="eyebrow">Carreira humana</p><h3>Player Personality & Real Careers</h3></div>
-            <div class="training-build">Relação, pressão e moral • schema 43</div>
+            <div class="training-build">Relação, pressão e moral • schema 44</div>
           </div>
           <div id="careerHub" class="career-hub-grid"></div>
         </section>
@@ -217,7 +218,7 @@
 
 
         <section class="tab-panel glass" id="tab-training">
-          <div class="section-head"><div><p class="eyebrow">Performance semanal</p><h3>Training Lab</h3></div><div class="training-build">Plano protegido • schema 43</div></div>
+          <div class="section-head"><div><p class="eyebrow">Performance semanal</p><h3>Training Lab</h3></div><div class="training-build">Plano protegido • schema 44</div></div>
           <div class="training-summary-grid">
             <article class="stat-card"><span>Ciclo da academia</span><strong id="trainingCycleLabel">Equilibrado</strong></article>
             <article class="stat-card"><span>Carga média</span><strong id="trainingLoadLabel">Moderada</strong></article>
@@ -242,7 +243,7 @@
         <section class="tab-panel glass newsroom-panel" id="tab-newsroom">
           <div class="section-head newsroom-head">
             <div><p class="eyebrow">Global Tennis Newsroom</p><h3>Imprensa, notícias e narrativa do circuito</h3></div>
-            <div class="training-build">Newsroom vivo • schema 43</div>
+            <div class="training-build">Newsroom vivo • schema 44</div>
           </div>
           <div id="newsroomHub" class="newsroom-hub"></div>
         </section>
@@ -252,7 +253,7 @@
         <section class="tab-panel glass mobile-ux-panel" id="tab-mobileux">
           <div class="section-head mobile-ux-head">
             <div><p class="eyebrow">Mobile Premium UX</p><h3>Central de Experiência Mobile</h3></div>
-            <div class="training-build">Navegação, rolagem e toque • schema 43</div>
+            <div class="training-build">Navegação, rolagem e toque • schema 44</div>
           </div>
           <div id="mobileUXHub" class="mobile-ux-hub"></div>
         </section>
@@ -260,7 +261,7 @@
                 <section class="tab-panel glass" id="tab-delivery">
           <div class="section-head">
             <div><p class="eyebrow">Performance & Asset Delivery</p><h3>Entrega de assets e carregamento mobile</h3></div>
-            <div class="training-build">Asset delivery • schema 43</div>
+            <div class="training-build">Asset delivery • schema 44</div>
           </div>
           <div id="performanceDeliveryHub" class="performance-delivery-hub"></div>
         </section>
@@ -269,7 +270,7 @@
         <section class="tab-panel glass qa-automation-panel" id="tab-qa">
           <div class="section-head release-head">
             <div><p class="eyebrow">Final QA Automation & Public Test Tools</p><h3>QA final, smoke test e teste público</h3></div>
-            <div class="training-build">Automação QA • schema 43</div>
+            <div class="training-build">Automação QA • schema 44</div>
           </div>
           <div id="qaAutomationHub" class="qa-automation-hub"></div>
         </section>
@@ -279,7 +280,7 @@
         <section class="tab-panel glass browser-compat-panel" id="tab-compat">
           <div class="section-head release-head">
             <div><p class="eyebrow">Browser Compatibility & Install QA</p><h3>Compatibilidade mobile, PWA e instalação</h3></div>
-            <div class="training-build">Compatibilidade • schema 43</div>
+            <div class="training-build">Compatibilidade • schema 44</div>
           </div>
           <div id="browserCompatibilityHub" class="browser-compat-hub"></div>
         </section>
@@ -287,7 +288,7 @@
         <section class="tab-panel glass input-reliability-panel" id="tab-input">
           <div class="section-head release-head">
             <div><p class="eyebrow">Input, Touch & Scroll Reliability</p><h3>Toque, rolagem, teclado e viewport mobile</h3></div>
-            <div class="training-build">Input Reliability • schema 43</div>
+            <div class="training-build">Input Reliability • schema 44</div>
           </div>
           <div id="inputReliabilityHub" class="input-reliability-hub"></div>
         </section>
@@ -295,7 +296,7 @@
         <section class="tab-panel glass accessibility-readability-panel" id="tab-a11y">
           <div class="section-head release-head">
             <div><p class="eyebrow">Accessibility, Readability & Text Scaling</p><h3>Acessibilidade, contraste e leitura mobile</h3></div>
-            <div class="training-build">A11y/Readability • schema 43</div>
+            <div class="training-build">A11y/Readability • schema 44</div>
           </div>
           <div id="accessibilityReadabilityHub" class="accessibility-readability-hub"></div>
         </section>
@@ -303,7 +304,7 @@
         <section class="tab-panel glass localization-store-panel" id="tab-localization">
           <div class="section-head release-head">
             <div><p class="eyebrow">Localization & Store Readiness</p><h3>Idioma, loja e prontidão internacional</h3></div>
-            <div class="training-build">PT/EN/ES • schema 43</div>
+            <div class="training-build">PT/EN/ES • schema 44</div>
           </div>
           <div id="localizationStoreHub" class="localization-store-hub"></div>
         </section>
@@ -313,7 +314,7 @@
         <section class="tab-panel glass help-center-panel" id="tab-helpcenter">
           <div class="section-head release-head">
             <div><p class="eyebrow">Career Setup Recovery & Safe Start Hotfix</p><h3>Ajuda, guia inicial e notas de versão</h3></div>
-            <span class="metric-build">v4.6.0</span>
+            <span class="metric-build">v4.7.0</span>
           </div>
           <div id="helpCenterHub" class="help-center-hub"></div>
         </section>
@@ -326,7 +327,7 @@
               <div class="score-card mobile-priority">
                 <div class="score-row"><span id="matchPlayerName">Seu atleta</span><strong id="scorePlayer">0</strong></div>
                 <div class="score-row"><span id="matchOpponentName">Adversário</span><strong id="scoreOpponent">0</strong></div>
-                <div class="score-meta"><span id="matchBuildInline" class="metric-build">v4.6.0 • 24/06/2026 • 16:11:59</span><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
+                <div class="score-meta"><span id="matchBuildInline" class="metric-build">v4.7.0 • 24/06/2026 • 16:33:26</span><span id="setLabel">Set 1</span><span id="pointLabel">0-0</span></div>
                 <div class="score-meta secondary-meta"><span id="roundLabel">Rodada -</span><span id="tournamentLabel">Nenhum torneio</span></div>
               </div>
               <canvas id="matchCanvas" width="960" height="540"></canvas>
@@ -341,7 +342,7 @@
                 <button class="action-btn" data-strategy="control">Controlar</button>
               </div>
               <article class="panel-card tactical-intelligence-card">
-                <div class="panel-title-row"><div><p class="eyebrow">Tactical Intelligence</p><h4>Plano de jogo v4.0</h4></div><span class="metric-build">schema 43</span></div>
+                <div class="panel-title-row"><div><p class="eyebrow">Tactical Intelligence</p><h4>Plano de jogo v4.0</h4></div><span class="metric-build">schema 44</span></div>
                 <div id="tacticalIntelligencePanel" class="tactical-intelligence-panel"></div>
               </article>
               <div class="match-actions touch-actions">
@@ -380,7 +381,7 @@
         <section class="tab-panel glass broadcast2d-panel" id="tab-broadcast2d">
           <div class="section-head release-head">
             <div><p class="eyebrow">Match Visual 2D Broadcast Upgrade</p><h3>Transmissão 2D, heatmap e leitura tática</h3></div>
-            <span class="metric-build">schema 43</span>
+            <span class="metric-build">schema 44</span>
           </div>
           <div id="matchVisual2DHub" class="match-visual-2d-hub"></div>
         </section>
@@ -391,7 +392,7 @@
         <section class="tab-panel glass season-board-panel" id="tab-seasonboard">
           <div class="section-head release-head">
             <div><p class="eyebrow">Real Season Objectives & Board Pressure</p><h3>Metas da temporada, diretoria e pressão por resultados</h3></div>
-            <span class="metric-build">schema 43</span>
+            <span class="metric-build">schema 44</span>
           </div>
           <div id="seasonBoardPressureHub" class="season-board-hub"></div>
         </section>
@@ -400,16 +401,25 @@
         <section class="tab-panel glass scouting-world-panel" id="tab-scoutingworld">
           <div class="section-head release-head">
             <div><p class="eyebrow">Scouting World Map & Youth Recruitment</p><h3>Mapa mundial de olheiros e jovens promessas</h3></div>
-            <span class="metric-build">schema 43</span>
+            <span class="metric-build">schema 44</span>
           </div>
           <div id="globalScoutingHub" class="global-scouting-hub"></div>
+        </section>
+
+
+        <section class="tab-panel glass relationships-panel" id="tab-relationships">
+          <div class="section-head release-head">
+            <div><p class="eyebrow">Rivalries, Drama & Player Relationships</p><h3>Rivalidades, clima interno e relações do elenco</h3></div>
+            <span class="metric-build">schema 44</span>
+          </div>
+          <div id="playerRelationshipsHub" class="player-relationships-hub"></div>
         </section>
 
 
         <section class="tab-panel glass commercial-career-panel" id="tab-economy">
           <div class="section-head commercial-head">
             <div><p class="eyebrow">Economy, Sponsors & Commercial Career</p><h3>Diretoria Financeira</h3></div>
-            <div class="training-build">Patrocínios, caixa e investidores • schema 43</div>
+            <div class="training-build">Patrocínios, caixa e investidores • schema 44</div>
           </div>
           <div id="commercialCareerHub" class="commercial-career-hub"></div>
         </section>
@@ -419,7 +429,7 @@
         <section class="tab-panel glass long-career-panel" id="tab-legacy">
           <div class="section-head long-career-head">
             <div><p class="eyebrow">Long Career Simulation</p><h3>Legado, gerações e Hall da Fama</h3></div>
-            <div class="training-build">Décadas de carreira • schema 43</div>
+            <div class="training-build">Décadas de carreira • schema 44</div>
           </div>
           <div id="longCareerHub" class="long-career-hub"></div>
         </section>
@@ -428,7 +438,7 @@
         <section class="tab-panel glass release-candidate-panel" id="tab-release">
           <div class="section-head release-head">
             <div><p class="eyebrow">Release Polish & Stability Hotfix</p><h3>Release, auditoria e loja</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="releaseCandidateHub" class="release-candidate-hub"></div>
         </section>
@@ -436,7 +446,7 @@
         <section class="tab-panel glass quality-polish-panel" id="tab-polish">
           <div class="section-head release-head">
             <div><p class="eyebrow">Release Polish & Stability Hotfix</p><h3>Polimento, estabilidade e homologação mobile</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="qualityPolishHub" class="quality-polish-hub"></div>
         </section>
@@ -446,7 +456,7 @@
         <section class="tab-panel glass release-hardening-panel" id="tab-diagnostics">
           <div class="section-head release-head">
             <div><p class="eyebrow">Release Hardening & Diagnostics</p><h3>Diagnóstico, cache e estabilidade</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="releaseHardeningHub" class="release-hardening-hub"></div>
         </section>
@@ -455,7 +465,7 @@
         <section class="tab-panel glass" id="tab-onboarding">
           <div class="section-head">
             <div><p class="eyebrow">Onboarding Flow & Button Reliability</p><h3>Fluxo inicial e botões críticos</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="onboardingReliabilityHub" class="onboarding-reliability-hub"></div>
         </section>
@@ -463,7 +473,7 @@
         <section class="tab-panel glass" id="tab-setupverify">
           <div class="section-head">
             <div><p class="eyebrow">Career Creation UX</p><h3>Criação, avatar e primeiro acesso</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="careerCreationUXHub" class="onboarding-reliability-hub"></div>
         </section>
@@ -474,7 +484,7 @@
         <section class="tab-panel glass" id="tab-initialgate">
           <div class="section-head">
             <div><p class="eyebrow">Mandatory Career Gate</p><h3>Gate inicial obrigatório</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="mandatoryCareerGateHub" class="onboarding-reliability-hub"></div>
           <div id="forcedOnboardingGateHub" class="onboarding-reliability-hub forced-onboarding-hub"></div>
@@ -483,7 +493,7 @@
         <section class="tab-panel glass" id="tab-runtimeproof">
           <div class="section-head">
             <div><p class="eyebrow">Runtime Proof</p><h3>Prova real de abertura do onboarding</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="onboardingRuntimeProofHub" class="onboarding-reliability-hub runtime-proof-hub"></div>
         </section>
@@ -492,7 +502,7 @@
         <section class="tab-panel glass clean-start-panel" id="tab-cleanstart">
           <div class="section-head">
             <div><p class="eyebrow">Clean Start Wizard</p><h3>Início limpo, deploy e cache</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="cleanStartWizardHub" class="onboarding-reliability-hub clean-start-wizard-hub"></div>
         </section>
@@ -502,7 +512,7 @@
         <section class="tab-panel glass emergency-start-panel" id="tab-emergencystart">
           <div class="section-head">
             <div><p class="eyebrow">Hard Reset Route</p><h3>Reset seguro, rota sem cache e onboarding obrigatório</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="emergencyStartControlHub" class="onboarding-reliability-hub emergency-start-control-hub"></div>
         </section>
@@ -510,7 +520,7 @@
         <section class="tab-panel glass cache-update-panel" id="tab-cacheguard">
           <div class="section-head">
             <div><p class="eyebrow">Cache/PWA Update Guard</p><h3>Atualização, cache e primeiro acesso</h3></div>
-            <div class="training-build">v4.6.0 • schema 43</div>
+            <div class="training-build">v4.7.0 • schema 44</div>
           </div>
           <div id="cacheUpdateGuardHub" class="cache-update-guard-hub"></div>
         </section>
@@ -544,13 +554,13 @@
     <div id="ownerSetupModal" class="setup-modal hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="careerSetupTitle">
       <div class="setup-backdrop"></div>
       <div class="setup-card glass">
-        <div class="setup-progress"><span>1</span><div><strong>Career Creator 2.0</strong><small>Obrigatório: avatar, nome, país, cidade e academia</small></div><b>v4.6.0</b></div>
+        <div class="setup-progress"><span>1</span><div><strong>Career Creator 2.0</strong><small>Obrigatório: avatar, nome, país, cidade e academia</small></div><b>v4.7.0</b></div>
         <div class="creator-v2-rail" aria-label="Etapas da criação"><span>1 Treinador</span><span>2 Academia</span><span>3 Avatar</span><span>4 Revisão</span></div>
         <div class="creator-v2-guidance">Preencha os dados em ordem. O botão final só libera o Dashboard quando tudo estiver válido.</div>
         <div class="section-head"><div><p class="eyebrow">Career Genesis</p><h3 id="careerSetupTitle">Construa sua identidade no circuito</h3></div></div>
         <div id="setupValidation" class="setup-validation hidden" role="alert"></div>
         <div class="forced-setup-alert" id="forcedSetupAlert">Complete estes dados para liberar o Dashboard. Sem avatar, nome da academia e elenco válido, o jogo fica bloqueado por segurança.</div>
-        <div class="emergency-reset-strip" id="emergencyResetStrip"><strong>Travou ou voltou para Dashboard vazio?</strong><button type="button" onclick="window.hardResetFirstRun?.('botão dentro da criação v4.6.0')">Resetar início com backup</button></div>
+        <div class="emergency-reset-strip" id="emergencyResetStrip"><strong>Travou ou voltou para Dashboard vazio?</strong><button type="button" onclick="window.hardResetFirstRun?.('botão dentro da criação v4.7.0')">Resetar início com backup</button></div>
         <div class="form-grid setup-grid">
           <label>Nome do treinador<input id="ownerNameInput" type="text" maxlength="28" placeholder="Jonatan Vale" autocomplete="name" /></label>
           <label>Nacionalidade<input id="ownerCountryInput" type="text" maxlength="3" placeholder="BRA" inputmode="text" autocomplete="country" autocapitalize="characters" /></label>
@@ -581,7 +591,7 @@
   <strong>Falha recuperável</strong><span id="systemErrorText">O jogo encontrou um problema.</span>
   <button id="dismissErrorBtn" type="button">Fechar</button>
 </div>
-<div class="runtime-build-stamp" id="runtimeBuildStamp" title="Identificação técnica da versão">v4.6.0 • 24/06/2026 • 16:11:59</div>
+<div class="runtime-build-stamp" id="runtimeBuildStamp" title="Identificação técnica da versão">v4.7.0 • 24/06/2026 • 16:33:26</div>
 
 
 <div class="mobile-quick-bar glass" id="mobileQuickBar" aria-label="Comandos rápidos mobile">
@@ -601,6 +611,7 @@
       <button class="dock-btn" data-tab="match">Partida</button>
       <button class="dock-btn" data-tab="broadcast2d">2D</button>
       <button class="dock-btn" data-tab="seasonboard">Metas</button>
+      <button class="dock-btn" data-tab="relationships">Relações</button>
       <button class="dock-btn" data-tab="ranking">Ranking</button>
       <button class="dock-btn" data-tab="calendar">Agenda</button>
       <button class="dock-btn" data-tab="newsroom">News</button>
@@ -625,6 +636,6 @@
     </nav>
   </div>
 
-  <script type="module" src="js/main.js?v=4.6.0-20260624-161159"></script>
+  <script type="module" src="js/main.js?v=4.7.0-20260624-163326"></script>
 </body>
 </html>
