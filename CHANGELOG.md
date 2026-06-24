@@ -1,5 +1,17 @@
 # Changelog
 
+## v4.1.6 — Onboarding Runtime Test & Mobile Proof Hotfix — 20260624-114913
+
+- Nova aba `Prova Mobile` para validar, no navegador real, se a criação de carreira abriu corretamente.
+- Novo sistema persistente `onboardingRuntimeProof`, schema 36.
+- Overlay visual que bloqueia o Dashboard se a carreira estiver inválida e o modal ainda não estiver visível.
+- Botão para executar prova de onboarding, abrir criação, confirmar visualmente no celular e exportar relatório local.
+- Atalho PWA para `#runtimeproof`.
+- Cache/build atualizado para v4.1.6.
+- Documentos adicionados: `AUDIT_v4.1.6.md` e `ONBOARDING_RUNTIME_PROOF_CHECKLIST_v4.1.6.md`.
+
+# Changelog
+
 ## v4.1.5 — Forced Onboarding Launcher & Invalid Career Block — 20260624-104720
 
 - Bloqueio total de Dashboard inválido: sem perfil completo ou base jogável, o jogo redireciona para o Gate Inicial.

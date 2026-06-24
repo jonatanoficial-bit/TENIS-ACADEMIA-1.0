@@ -604,12 +604,12 @@ function withMatchGuard(label, fn) {
 
 
 const OWNER_AVATARS = PLAYER_AVATARS;
-const SETUP_SAFE_TABS = new Set(['setupverify','initialgate','onboarding','cacheguard','input','a11y','helpcenter','diagnostics','compat','qa','polish','delivery','release','localization','adminhint','mobileux']);
+const SETUP_SAFE_TABS = new Set(['setupverify','initialgate','runtimeproof','onboarding','cacheguard','input','a11y','helpcenter','diagnostics','compat','qa','polish','delivery','release','localization','adminhint','mobileux']);
 
 const CRITICAL_ONBOARDING_BUTTONS = [
   'openSetupBtn','openSetupBannerBtn','saveOwnerSetupBtn','repairStartBtn','recoverCareerBtn','resetBtn','advanceWeekBtn','saveBtn','mobileQuickSave','mobileQuickTop','forceSetupModalBtn','testCareerSaveBtn','activateFirstAvatarBtn','freshSetupBtn'
 ];
-const CRITICAL_ONBOARDING_TABS = ['dashboard','roster','career','training','calendar','match','ranking','onboarding','cacheguard','setupverify'];
+const CRITICAL_ONBOARDING_TABS = ['dashboard','roster','career','training','calendar','match','ranking','onboarding','cacheguard','setupverify','runtimeproof'];
 
 
 
@@ -1253,15 +1253,15 @@ function renderForcedOnboardingGate() {
     ['Modal obrigatório', snap.setupComplete || snap.modalVisible, snap.modalVisible ? 'Aberto em tela cheia' : 'Será forçado no próximo clique/boot'],
     ['Build atual', true, BUILD_LABEL]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.1.5')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.1.6')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
 }
 window.forceOnboardingLauncher = forceOnboardingLauncher;
 window.forceRepairInvalidCareer = () => {
-  rebuildPlayableCareer('reparo forçado pelo launcher v4.1.5');
+  rebuildPlayableCareer('reparo forçado pelo launcher v4.1.6');
   ensureForcedOnboardingGateSystem().lastRepairAt = new Date().toISOString();
   saveState(state);
   render();
-  forceOnboardingLauncher('base recriada pelo launcher v4.1.5');
+  forceOnboardingLauncher('base recriada pelo launcher v4.1.6');
 };
 window.auditForcedOnboardingGate = () => {
   const snap = forcedOnboardingSnapshot();
@@ -1276,6 +1276,117 @@ window.exportForcedOnboardingReport = () => {
   const a = document.createElement('a');
   a.href = url;
   a.download = `vale-tennis-forced-onboarding-${BUILD_INFO.build}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+function ensureOnboardingRuntimeProofSystem() {
+  state.onboardingRuntimeProof ||= { score: 100, lastAuditToken: null, auditLog: [], bootProofs: [], modalProofs: [], lastProofStatus: 'pending', lastUserAgent: '', firstRunVisualConfirmed: false, flags: { runtimeLockOverlay: true, modalVisibilityProof: true, dashboardBlankProof: true, mobileProofExport: true } };
+  const proof = state.onboardingRuntimeProof;
+  proof.auditLog ||= [];
+  proof.bootProofs ||= [];
+  proof.modalProofs ||= [];
+  proof.lastProofStatus ||= 'pending';
+  proof.lastUserAgent ||= navigator.userAgent || '';
+  proof.firstRunVisualConfirmed ??= false;
+  proof.flags ||= { runtimeLockOverlay: true, modalVisibilityProof: true, dashboardBlankProof: true, mobileProofExport: true };
+  proof.flags.runtimeLockOverlay ??= true;
+  proof.flags.modalVisibilityProof ??= true;
+  proof.flags.dashboardBlankProof ??= true;
+  proof.flags.mobileProofExport ??= true;
+  return proof;
+}
+function onboardingRuntimeProofSnapshot() {
+  const issues = invalidCareerIssues(state);
+  const modal = $('#ownerSetupModal');
+  const lock = $('#onboardingRuntimeLock');
+  const modalRect = modal?.querySelector?.('.setup-card')?.getBoundingClientRect?.();
+  return {
+    at: new Date().toISOString(), build: BUILD_INFO.build, version: BUILD_INFO.version,
+    invalid: issues.length > 0, issues,
+    currentTab: state?.ui?.currentTab || 'dashboard', modalVisible: ownerSetupModalVisible(),
+    lockVisible: !!lock && !lock.classList.contains('hidden'),
+    ownerSetupComplete: !!state?.flags?.ownerSetupComplete,
+    roster: state?.roster?.length || 0, ranking: state?.ranking?.length || 0, calendar: state?.calendar?.length || 0,
+    money: Number(state?.academy?.money || 0), ownerName: state?.academy?.owner?.name || '', avatar: state?.academy?.owner?.avatar || '', academyName: state?.academy?.name || '',
+    viewport: { w: window.innerWidth, h: window.innerHeight, visualH: window.visualViewport?.height || window.innerHeight },
+    modalRect: modalRect ? { w: Math.round(modalRect.width), h: Math.round(modalRect.height), top: Math.round(modalRect.top), bottom: Math.round(modalRect.bottom) } : null,
+    userAgent: navigator.userAgent || ''
+  };
+}
+function calculateOnboardingRuntimeProofScore(snapshot = onboardingRuntimeProofSnapshot()) {
+  let score = 100;
+  if (snapshot.invalid && !snapshot.modalVisible) score -= 34;
+  if (snapshot.invalid && snapshot.currentTab === 'dashboard') score -= 30;
+  if (snapshot.invalid && !snapshot.lockVisible) score -= 16;
+  score -= Math.min(30, snapshot.issues.length * 5);
+  if (snapshot.roster < 1 || snapshot.ranking < 5 || snapshot.calendar < 4) score -= 18;
+  return clamp(Math.round(score), 0, 100);
+}
+function syncOnboardingRuntimeLock(reason='runtime') {
+  const lock = $('#onboardingRuntimeLock');
+  const text = $('#runtimeLockText');
+  if (!lock || !state) return;
+  const snap = onboardingRuntimeProofSnapshot();
+  const show = !!snap.invalid;
+  lock.classList.toggle('hidden', !show || ownerSetupModalVisible());
+  document.body.classList.toggle('runtime-onboarding-locked', show);
+  if (text && show) text.textContent = `Carreira incompleta: ${snap.issues.join(', ')}. Motivo: ${reason}.`;
+}
+function logOnboardingRuntimeProof(title='Prova runtime', result='OK', note='', snapshot = onboardingRuntimeProofSnapshot()) {
+  const proof = ensureOnboardingRuntimeProofSystem();
+  proof.score = calculateOnboardingRuntimeProofScore(snapshot);
+  proof.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  proof.lastProofStatus = result;
+  proof.lastUserAgent = snapshot.userAgent || '';
+  proof.auditLog.unshift({ title, result, note, score: proof.score, at: new Date().toISOString(), build: BUILD_INFO.build, snapshot });
+  proof.auditLog = proof.auditLog.slice(0, 20);
+  saveState(state);
+  return proof.score;
+}
+function renderOnboardingRuntimeProof() {
+  const host = $('#onboardingRuntimeProofHub');
+  if (!host || !state) return;
+  const proof = ensureOnboardingRuntimeProofSystem();
+  const snap = onboardingRuntimeProofSnapshot();
+  proof.score = calculateOnboardingRuntimeProofScore(snap);
+  const checks = [
+    ['Build atual visível', true, BUILD_LABEL],
+    ['Dashboard vazio bloqueado', !(snap.invalid && snap.currentTab === 'dashboard'), snap.invalid ? 'Redirecionamento para Gate/Criação' : 'Carreira pronta'],
+    ['Modal realmente visível', !snap.invalid || snap.modalVisible, snap.modalVisible ? 'Criação aberta acima do layout' : 'Aguardando disparo'],
+    ['Base jogável', snap.roster > 0 && snap.ranking >= 5 && snap.calendar >= 4 && snap.money > 0, `${snap.roster} atletas • ${snap.ranking} ranking • ${snap.calendar} eventos • caixa ${money(snap.money)}`],
+    ['Perfil obrigatório', !snap.issues.some(x => /nome|avatar|país|academia|cidade|criação/.test(x)), snap.issues.join(', ') || 'Nome, avatar, país, cidade e academia OK'],
+    ['Overlay de bloqueio', !snap.invalid || snap.lockVisible || snap.modalVisible, snap.lockVisible ? 'Ativo' : (snap.modalVisible ? 'Modal cobre a tela' : 'Inativo')]
+  ];
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.1.6')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
+}
+window.runOnboardingRuntimeProof = () => {
+  const before = onboardingRuntimeProofSnapshot();
+  if (before.invalid) {
+    syncOnboardingRuntimeLock('prova manual');
+    forceOnboardingLauncher('prova runtime v4.1.6');
+  }
+  setTimeout(() => {
+    const after = onboardingRuntimeProofSnapshot();
+    logOnboardingRuntimeProof('Prova runtime executada', after.invalid ? (after.modalVisible ? 'MODAL ABERTO':'BLOQUEADO') : 'OK', after.issues.join(', ') || 'Carreira válida.', after);
+    syncOnboardingRuntimeLock('prova executada');
+    renderOnboardingRuntimeProof();
+  }, 220);
+};
+window.confirmOnboardingVisualProof = () => {
+  const proof = ensureOnboardingRuntimeProofSystem();
+  proof.firstRunVisualConfirmed = true;
+  const snap = onboardingRuntimeProofSnapshot();
+  logOnboardingRuntimeProof('Confirmação visual manual', 'CONFIRMADO', `${BUILD_LABEL} confirmado pelo usuário no navegador.`, snap);
+  renderOnboardingRuntimeProof();
+};
+window.exportOnboardingRuntimeProof = () => {
+  const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, schema: BUILD_INFO.schemaVersion, generatedAt: new Date().toISOString(), snapshot: onboardingRuntimeProofSnapshot(), onboardingRuntimeProof: state.onboardingRuntimeProof, privacy: 'Relatório local. Não envia dados para servidor.' };
+  const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vale-tennis-onboarding-runtime-proof-${BUILD_INFO.build}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
@@ -1361,8 +1472,8 @@ window.openMandatoryCareerSetup = () => {
 };
 window.repairMandatoryEmptySave = () => {
   ensureMandatoryCareerGateSystem().repairCount = (ensureMandatoryCareerGateSystem().repairCount || 0) + 1;
-  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.1.5');
-  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.1.5';
+  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.1.6');
+  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.1.6';
   saveState(state); render(); openOwnerSetup(true);
 };
 window.auditMandatoryCareerGate = () => {
@@ -1742,7 +1853,7 @@ function renderCareerCreationUXHub() {
     <section class="release-grid"><article class="panel-card"><h4>Valores atuais do formulário</h4><div class="list-block"><div class="list-item"><span>Treinador</span><strong>${escapeHtml(snap.values.name || '—')}</strong></div><div class="list-item"><span>Academia</span><strong>${escapeHtml(snap.values.academy || '—')}</strong></div><div class="list-item"><span>País</span><strong>${escapeHtml(snap.values.country || '—')}</strong></div><div class="list-item"><span>Cidade</span><strong>${escapeHtml(snap.values.city || '—')}</strong></div></div></article><article class="panel-card"><h4>Últimas verificações</h4><div class="list-block">${(ux.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum teste executado nesta build.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.forceSetupModalNow = () => {
-  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.1.5');
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.1.6');
   state.flags ||= {}; state.flags.ownerSetupComplete = false;
   ensureCareerCreationUXSystem().firstRunVerified = false;
   saveState(state); render(); forceOnboardingLauncher('abertura manual pela aba Criação');
@@ -1757,7 +1868,7 @@ window.auditCareerCreationUX = () => {
   renderCareerCreationUXHub(); addLog(`Auditoria de criação de carreira: ${score}/100.`);
 };
 window.startFreshSetupSafely = () => {
-  backupBrokenCareer('reset guiado v4.1.5 solicitado pelo usuário');
+  backupBrokenCareer('reset guiado v4.1.6 solicitado pelo usuário');
   clearState();
   state = buildInitialState(content);
   migrateState();
@@ -1999,6 +2110,8 @@ async function boot() {
   hydrateAssetImages();
   handleStartupHash();
   if (startupStatus !== 'ok' || !careerIsPlayableAndConfigured(state)) forceOnboardingLauncher(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
+  setTimeout(() => window.runOnboardingRuntimeProof?.(), 380);
+  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.1.6'); }, 1800);
 }
 
 function applyAdminOverrides(content) {
@@ -2307,7 +2420,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -2439,6 +2552,8 @@ function render() {
   renderCacheUpdateGuard();
   renderMandatoryCareerGate();
   renderForcedOnboardingGate();
+  renderOnboardingRuntimeProof();
+  syncOnboardingRuntimeLock('render');
   renderMarket();
   renderStaff();
   updateRanking();
@@ -4188,7 +4303,7 @@ function ensureHelpCenterSystem() {
 function helpCenterSnapshot() {
   const help = ensureHelpCenterSystem();
   const tabs = [...document.querySelectorAll('.tab-panel')].map(p=>p.id.replace('tab-',''));
-  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md'];
+  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md','ONBOARDING_RUNTIME_PROOF_CHECKLIST_v4.1.6.md'];
   const checklist = help.onboardingChecklist || {};
   const done = Object.values(checklist).filter(Boolean).length;
   const total = Math.max(1, Object.keys(checklist).length);

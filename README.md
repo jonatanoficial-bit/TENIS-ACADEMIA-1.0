@@ -1,3 +1,23 @@
+# Vale Games Tennis Manager — v4.1.6
+
+Build `20260624-114913` — **Onboarding Runtime Test & Mobile Proof Hotfix**.
+
+Esta build adiciona uma prova visual/runtime do fluxo inicial. Ela mostra em tempo real se o Dashboard vazio está bloqueado, se a criação de carreira abriu acima do layout e se o navegador atual está carregando a build correta.
+
+Schema do save: 36.
+
+## Correções principais da v4.1.6
+
+- Nova aba **Prova Mobile**.
+- Novo sistema `onboardingRuntimeProof` no save.
+- Overlay de bloqueio visual quando a carreira está inválida e o modal ainda não apareceu.
+- Botão **Executar prova agora** para forçar e auditar a abertura do onboarding.
+- Botão **Confirmei no celular** para registrar a validação manual da build.
+- Exportação de relatório local da prova runtime.
+- Manifest PWA com atalho para a prova mobile do onboarding.
+
+---
+
 # Vale Games Tennis Manager — v4.1.5
 
 Build `20260624-104720` — **Forced Onboarding Launcher & Invalid Career Block**.

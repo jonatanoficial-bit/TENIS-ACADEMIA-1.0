@@ -1,16 +1,16 @@
-const CACHE_NAME = 'vale-tennis-v4.1.5-20260624-104720';
-const BUILD_VERSION = '4.1.5';
-const BUILD_ID = '20260624-104720';
+const CACHE_NAME = 'vale-tennis-v4.1.6-20260624-114913';
+const BUILD_VERSION = '4.1.6';
+const BUILD_ID = '20260624-114913';
 const CORE_ASSETS = [
   './',
-  './index.html?v=4.1.5-20260624-104720',
-  './css/styles.css?v=4.1.5-20260624-104720',
-  './js/main.js?v=4.1.5-20260624-104720',
-  './js/build.js?v=4.1.5-20260624-104720',
-  './js/contentLoader.js?v=4.1.5-20260624-104720',
-  './js/state.js?v=4.1.5-20260624-104720',
-  './build/build-info.json?v=4.1.5-20260624-104720',
-  './manifest.webmanifest?v=4.1.5-20260624-104720',
+  './index.html?v=4.1.6-20260624-114913',
+  './css/styles.css?v=4.1.6-20260624-114913',
+  './js/main.js?v=4.1.6-20260624-114913',
+  './js/build.js?v=4.1.6-20260624-114913',
+  './js/contentLoader.js?v=4.1.6-20260624-114913',
+  './js/state.js?v=4.1.6-20260624-114913',
+  './build/build-info.json?v=4.1.6-20260624-114913',
+  './manifest.webmanifest?v=4.1.6-20260624-114913',
   './assets/icons/icon.svg'
 ];
 
@@ -49,6 +49,6 @@ self.addEventListener('fetch', event => {
       const copy = response.clone();
       caches.open(CACHE_NAME).then(cache => cache.put(req, copy)).catch(() => {});
       return response;
-    }).catch(() => caches.match(req).then(match => match || caches.match('./index.html?v=4.1.5-20260624-104720')))
+    }).catch(() => caches.match(req).then(match => match || caches.match('./index.html?v=4.1.6-20260624-114913')))
   );
 });
