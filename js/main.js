@@ -338,7 +338,7 @@ function closeTournamentIdentity() {
   const modal = document.querySelector('#tournamentIdentityModal');
   if (!modal) return;
   modal.classList.add('hidden');
-  document.body.classList.remove('setup-open');
+  document.body.classList.remove('setup-open','setup-focus-mode');
 }
 
 function assetCandidates(src='') {
@@ -604,11 +604,12 @@ function withMatchGuard(label, fn) {
 
 
 const OWNER_AVATARS = PLAYER_AVATARS;
+const SETUP_SAFE_TABS = new Set(['dashboard','setupverify','initialgate','onboarding','cacheguard','input','a11y','helpcenter','diagnostics','compat','qa','polish','delivery','release','localization','adminhint','mobileux']);
 
 const CRITICAL_ONBOARDING_BUTTONS = [
-  'openSetupBtn','openSetupBannerBtn','saveOwnerSetupBtn','repairStartBtn','recoverCareerBtn','resetBtn','advanceWeekBtn','saveBtn','mobileQuickSave','mobileQuickTop'
+  'openSetupBtn','openSetupBannerBtn','saveOwnerSetupBtn','repairStartBtn','recoverCareerBtn','resetBtn','advanceWeekBtn','saveBtn','mobileQuickSave','mobileQuickTop','forceSetupModalBtn','testCareerSaveBtn','activateFirstAvatarBtn','freshSetupBtn'
 ];
-const CRITICAL_ONBOARDING_TABS = ['dashboard','roster','career','training','calendar','match','ranking','onboarding','cacheguard'];
+const CRITICAL_ONBOARDING_TABS = ['dashboard','roster','career','training','calendar','match','ranking','onboarding','cacheguard','setupverify'];
 
 
 
@@ -940,7 +941,7 @@ function closeDrawModal() {
   const modal = document.querySelector('#drawModal');
   if (!modal) return;
   modal.classList.add('hidden');
-  document.body.classList.remove('setup-open');
+  document.body.classList.remove('setup-open','setup-focus-mode');
 }
 function pickOpponent(round, player) {
   const event = state.calendar.find(e => e.week === state.academy.week) || state.activeTournament?.event || {};
@@ -967,24 +968,38 @@ function ownerData() {
 function openOwnerSetup(force=false) {
   const modal = $('#ownerSetupModal');
   if (!modal) return;
+  ensureCareerCreationUXSystem();
   const owner = ownerData();
-  $('#ownerNameInput').value = force ? '' : owner.name;
-  $('#ownerCountryInput').value = force ? 'BRA' : owner.country;
-  $('#academyNameInput').value = state.academy.name || 'Ace Academy';
-  $('#academyLogoInput').value = owner.logo || 'A';
-  $('#ownerAgeInput').value = owner.age || 36;
-  $('#ownerGenderInput').value = owner.gender || 'masculino';
-  $('#ownerBackgroundInput').value = owner.background || 'ex-jogador';
-  $('#ownerSpecialtyInput').value = owner.specialty || 'tecnica';
-  $('#academyCityInput').value = state.academy.careerProfile?.city || 'São Paulo';
-  $('#academyPhilosophyInput').value = state.academy.careerProfile?.philosophy || 'equilibrada';
-  $('#careerDifficultyInput').value = state.academy.careerProfile?.difficulty || 'normal';
-  $('#careerCurrencyInput').value = state.academy.careerProfile?.currency || 'BRL';
+  const wasVisible = ownerSetupModalVisible();
+  const hasTypedValues = !!($('#ownerNameInput')?.value || $('#academyNameInput')?.value || $('#academyCityInput')?.value);
+  const keepTypedValues = wasVisible && hasTypedValues;
+  if (!keepTypedValues) {
+    const hasRealOwner = !!state.academy?.owner?.name && state.academy.owner.name !== 'Seu nome';
+    $('#ownerNameInput').value = (!force && hasRealOwner) ? owner.name : '';
+    $('#ownerCountryInput').value = (!force && owner.country) ? owner.country : 'BRA';
+    $('#academyNameInput').value = (!force && state.academy?.name && state.academy.name !== 'Ace Academy') ? state.academy.name : '';
+    $('#academyLogoInput').value = owner.logo || 'VTA';
+    $('#ownerAgeInput').value = owner.age || 36;
+    $('#ownerGenderInput').value = owner.gender || 'masculino';
+    $('#ownerBackgroundInput').value = owner.background || 'ex-jogador';
+    $('#ownerSpecialtyInput').value = owner.specialty || 'tecnica';
+    $('#academyCityInput').value = state.academy.careerProfile?.city || 'São Paulo';
+    $('#academyPhilosophyInput').value = state.academy.careerProfile?.philosophy || 'equilibrada';
+    $('#careerDifficultyInput').value = state.academy.careerProfile?.difficulty || 'normal';
+    $('#careerCurrencyInput').value = state.academy.careerProfile?.currency || 'BRL';
+  }
   modal.style.display = 'flex';
   modal.classList.remove('hidden');
-  document.body.classList.add('setup-open');
+  document.body.classList.add('setup-open','setup-focus-mode');
   modal.setAttribute('aria-hidden','false');
-  renderOwnerChoices(owner.avatar);
+  renderOwnerChoices(state.careerCreationUX?.lastSelectedAvatar || owner.avatar || PLAYER_AVATARS[0]);
+  updateCareerPreview();
+  setTimeout(() => {
+    const first = $('#ownerNameInput');
+    if (first && !first.value && !document.activeElement?.closest?.('#ownerSetupModal')) first.focus({ preventScroll:true });
+    modal.scrollIntoView?.({ block:'start', behavior: state.mobileUX?.reduceMotion ? 'auto' : 'smooth' });
+  }, 90);
+  state.careerCreationUX.setupAttempts = (state.careerCreationUX.setupAttempts || 0) + 1;
 }
 function closeOwnerSetup() {
   const modal = $('#ownerSetupModal');
@@ -992,17 +1007,29 @@ function closeOwnerSetup() {
   modal.classList.add('hidden');
   modal.setAttribute('aria-hidden','true');
   modal.style.display = 'none';
-  document.body.classList.remove('setup-open');
+  document.body.classList.remove('setup-open','setup-focus-mode');
 }
 function renderOwnerChoices(active) {
   const host = $('#ownerAvatarChoices');
   if (!host) return;
-  host.innerHTML = OWNER_AVATARS.map((src, idx) => `<button class="choice-avatar ${src===active?'active':''}" data-owner-avatar="${src}" type="button">${avatarImg(src,'avatar-img',`avatar-${idx}`)}</button>`).join('');
-  host.querySelectorAll('[data-owner-avatar]').forEach(btn => btn.addEventListener('click', () => {
-    host.querySelectorAll('[data-owner-avatar]').forEach(x => x.classList.remove('active'));
-    btn.classList.add('active');
-  }));
+  const selected = active || state.careerCreationUX?.lastSelectedAvatar || PLAYER_AVATARS[0];
+  host.innerHTML = OWNER_AVATARS.map((src, idx) => `<button class="choice-avatar ${src===selected?'active':''}" data-owner-avatar="${src}" type="button" aria-pressed="${src===selected?'true':'false'}">${avatarImg(src,'avatar-img',`avatar-${idx}`)}<span>Avatar ${idx+1}</span></button>`).join('');
+  if (!host.querySelector('.choice-avatar.active')) host.querySelector('[data-owner-avatar]')?.classList.add('active');
   hydrateAssetImages();
+}
+function selectOwnerAvatar(src='') {
+  const host = $('#ownerAvatarChoices');
+  if (!host) return false;
+  const choice = src ? Array.from(host.querySelectorAll('[data-owner-avatar]')).find(x => x.dataset.ownerAvatar === src) : host.querySelector('[data-owner-avatar]');
+  if (!choice) return false;
+  host.querySelectorAll('[data-owner-avatar]').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-pressed','false'); });
+  choice.classList.add('active');
+  choice.setAttribute('aria-pressed','true');
+  ensureCareerCreationUXSystem();
+  state.careerCreationUX.lastSelectedAvatar = choice.dataset.ownerAvatar || PLAYER_AVATARS[0];
+  state.careerCreationUX.avatarTouchCount = (state.careerCreationUX.avatarTouchCount || 0) + 1;
+  updateCareerPreview();
+  return true;
 }
 
 function validateCareerSetup() {
@@ -1010,10 +1037,14 @@ function validateCareerSetup() {
   const academy = ($('#academyNameInput')?.value || '').trim();
   const city = ($('#academyCityInput')?.value || '').trim();
   const age = Number($('#ownerAgeInput')?.value || 0);
+  const country = ($('#ownerCountryInput')?.value || '').trim().toUpperCase();
+  const activeAvatar = document.querySelector('.choice-avatar.active');
   const errors = [];
   if (name.length < 2) errors.push('Informe um nome com pelo menos 2 caracteres.');
   if (academy.length < 3) errors.push('Informe o nome da academia.');
   if (city.length < 2) errors.push('Informe a cidade-sede.');
+  if (country.length < 2 || country.length > 3) errors.push('Informe a nacionalidade com 2 ou 3 letras.');
+  if (!activeAvatar) errors.push('Escolha um avatar para o treinador.');
   if (age < 18 || age > 85) errors.push('A idade deve estar entre 18 e 85 anos.');
   const box = $('#setupValidation');
   if (box) { box.innerHTML = errors.map(x => `<span>• ${x}</span>`).join(''); box.classList.toggle('hidden', !errors.length); }
@@ -1035,14 +1066,21 @@ function saveOwnerSetup() {
   const country = ($('#ownerCountryInput')?.value || 'BRA').trim().toUpperCase().replace(/[^A-Z]/g,'').slice(0,3) || 'BRA';
   const academyName = ($('#academyNameInput')?.value || '').trim();
   const logo = (($('#academyLogoInput')?.value || 'VTM').trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3)) || 'VTM';
-  const active = document.querySelector('.choice-avatar.active');
+  let active = document.querySelector('.choice-avatar.active');
+  if (!active) { selectOwnerAvatar(PLAYER_AVATARS[0]); active = document.querySelector('.choice-avatar.active'); }
   const avatar = active?.dataset.ownerAvatar || PLAYER_AVATARS[0];
   const snapshot = JSON.parse(JSON.stringify(state));
   try {
     state.academy.name = academyName;
-    state.academy.owner = { name: ownerName, country, avatar, logo, age: Number($('#ownerAgeInput').value), gender: $('#ownerGenderInput').value, background: $('#ownerBackgroundInput').value, specialty: $('#ownerSpecialtyInput').value };
-    state.academy.careerProfile = { city: $('#academyCityInput').value.trim(), philosophy: $('#academyPhilosophyInput').value, difficulty: $('#careerDifficultyInput').value, currency: $('#careerCurrencyInput').value, createdInBuild: BUILD_INFO.build };
+    state.academy.owner = { name: ownerName, country, avatar, logo, age: Number($('#ownerAgeInput')?.value || 36), gender: $('#ownerGenderInput')?.value || 'masculino', background: $('#ownerBackgroundInput')?.value || 'ex-jogador', specialty: $('#ownerSpecialtyInput')?.value || 'tecnica' };
+    state.academy.careerProfile = { city: ($('#academyCityInput')?.value || 'São Paulo').trim(), philosophy: $('#academyPhilosophyInput')?.value || 'equilibrada', difficulty: $('#careerDifficultyInput')?.value || 'normal', currency: $('#careerCurrencyInput')?.value || 'BRL', createdInBuild: BUILD_INFO.build };
     state.flags ||= {}; state.flags.ownerSetupComplete = true; state.flags.safeMode = false;
+    ensureCareerCreationUXSystem();
+    state.careerCreationUX.firstRunVerified = true;
+    state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.locked = false; state.mandatoryCareerGate.firstRunGatePassed = true;
+    state.careerCreationUX.lastSelectedAvatar = avatar;
+    state.careerCreationUX.auditLog.unshift({ title:'Carreira criada', result:'OK', note:`${ownerName} • ${academyName}`, at:new Date().toISOString(), build:BUILD_INFO.build });
+    state.careerCreationUX.auditLog = state.careerCreationUX.auditLog.slice(0,18);
     state.inbox.unshift({ title: `Bem-vindo, ${ownerName}`, body: `A ${academyName} iniciou sua trajetória internacional em ${state.academy.careerProfile.city}.`, week: state.academy.week });
     if (!saveState(state)) throw new Error('O armazenamento local recusou o salvamento.');
   } catch (err) {
@@ -1088,9 +1126,136 @@ function hasPlayableCareer(candidate = state) {
 function setupIsComplete(candidate = state) {
   return !!candidate?.flags?.ownerSetupComplete && !!candidate?.academy?.owner && !!candidate?.academy?.careerProfile;
 }
+
+function ensureMandatoryCareerGateSystem() {
+  state.mandatoryCareerGate ||= { score: 100, locked: true, lastAuditToken: null, auditLog: [], blockedTabs: 0, repairCount: 0, lastRepairReason: null, firstRunGatePassed: false, flags: { blockEmptyDashboard: true, requireOwnerProfile: true, requirePlayableCore: true, openModalBeforeGameplay: true, preserveBackupBeforeRepair: true } };
+  const gate = state.mandatoryCareerGate;
+  gate.auditLog ||= [];
+  gate.blockedTabs ??= 0;
+  gate.repairCount ??= 0;
+  gate.lastRepairReason ??= null;
+  gate.firstRunGatePassed ??= false;
+  gate.flags ||= { blockEmptyDashboard: true, requireOwnerProfile: true, requirePlayableCore: true, openModalBeforeGameplay: true, preserveBackupBeforeRepair: true };
+  gate.flags.blockEmptyDashboard ??= true;
+  gate.flags.requireOwnerProfile ??= true;
+  gate.flags.requirePlayableCore ??= true;
+  gate.flags.openModalBeforeGameplay ??= true;
+  gate.flags.preserveBackupBeforeRepair ??= true;
+  return gate;
+}
+function mandatoryCareerGateSnapshot() {
+  const coreIssues = playableCoreIssues(state);
+  const owner = state?.academy?.owner || {};
+  const profile = state?.academy?.careerProfile || {};
+  const ownerIssues = [];
+  if (!setupIsComplete(state)) ownerIssues.push('setup não concluído');
+  if (!owner.name || owner.name === 'Seu nome') ownerIssues.push('nome do treinador ausente');
+  if (!owner.avatar) ownerIssues.push('avatar ausente');
+  if (!owner.country) ownerIssues.push('país ausente');
+  if (!state?.academy?.name || state.academy.name === 'Ace Academy') ownerIssues.push('nome da academia ausente');
+  if (!profile.city) ownerIssues.push('cidade ausente');
+  const locked = coreIssues.length > 0 || ownerIssues.length > 0;
+  const safeTabs = [...SETUP_SAFE_TABS];
+  const snap = {
+    at: new Date().toISOString(), build: BUILD_INFO.build, version: BUILD_INFO.version,
+    locked, setupComplete: setupIsComplete(state), coreIssues, ownerIssues,
+    roster: state?.roster?.length || 0, ranking: state?.ranking?.length || 0, calendar: state?.calendar?.length || 0,
+    money: Number(state?.academy?.money || 0), currentTab: state?.ui?.currentTab || 'dashboard', modalVisible: ownerSetupModalVisible(),
+    safeTabs
+  };
+  return snap;
+}
+function calculateMandatoryGateScore(snapshot = mandatoryCareerGateSnapshot()) {
+  let score = 100;
+  score -= Math.min(36, snapshot.coreIssues.length * 12);
+  score -= Math.min(36, snapshot.ownerIssues.length * 8);
+  if (snapshot.locked && !snapshot.modalVisible) score -= 14;
+  if (snapshot.roster < 1) score -= 10;
+  return clamp(Math.round(score), 0, 100);
+}
+function logMandatoryCareerGate(title, result, note, snapshot = mandatoryCareerGateSnapshot()) {
+  const gate = ensureMandatoryCareerGateSystem();
+  gate.locked = snapshot.locked;
+  gate.score = calculateMandatoryGateScore(snapshot);
+  gate.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  gate.auditLog.unshift({ title, result, note, score: gate.score, at: new Date().toISOString(), build: BUILD_INFO.build, snapshot });
+  gate.auditLog = gate.auditLog.slice(0, 20);
+  saveState(state);
+  return gate.score;
+}
+function blockGameplayUntilCareerReady(tab='dashboard', reason='fluxo protegido') {
+  if (!state || setupIsComplete(state)) return false;
+  const gate = ensureMandatoryCareerGateSystem();
+  gate.blockedTabs = (gate.blockedTabs || 0) + 1;
+  gate.locked = true;
+  logMandatoryCareerGate('Aba bloqueada antes da criação', tab, reason);
+  state.flags ||= {};
+  state.flags.ownerSetupComplete = false;
+  state.ui ||= {};
+  state.ui.currentTab = 'initialgate';
+  setTimeout(() => enforceOwnerSetupFlow(`gate obrigatório: ${reason}`), 30);
+  return true;
+}
+function renderMandatoryCareerGate() {
+  const host = $('#mandatoryCareerGateHub');
+  if (!host || !state) return;
+  const gate = ensureMandatoryCareerGateSystem();
+  const snap = mandatoryCareerGateSnapshot();
+  gate.locked = snap.locked;
+  gate.score = calculateMandatoryGateScore(snap);
+  const checks = [
+    ['Base jogável', snap.coreIssues.length === 0, snap.coreIssues.length ? snap.coreIssues.join(', ') : 'Elenco, ranking, calendário e caixa OK'],
+    ['Perfil obrigatório', snap.ownerIssues.length === 0, snap.ownerIssues.length ? snap.ownerIssues.join(', ') : 'Nome, país, avatar, cidade e academia OK'],
+    ['Dashboard protegido', !snap.locked || snap.modalVisible || snap.setupComplete, snap.locked ? 'Jogo bloqueia gameplay até configurar' : 'Liberado'],
+    ['Modal de criação', snap.setupComplete || snap.modalVisible, snap.setupComplete ? 'Concluído' : (snap.modalVisible ? 'Aberto' : 'Será aberto automaticamente')],
+    ['Cache/build atual', BUILD_LABEL.includes(BUILD_INFO.date), BUILD_LABEL]
+  ];
+  host.innerHTML = `
+    <section class="onboarding-hero glass-card-lite mandatory-gate-hero">
+      <div><p class="eyebrow">Mandatory Career Gate • ${BUILD_LABEL}</p><h2>Entrada obrigatória antes do Dashboard</h2><p>Esta proteção impede o jogo de iniciar como na imagem enviada: sem atletas, sem nome, sem avatar e com botões sem efeito. Enquanto faltar perfil ou base jogável, o gameplay fica bloqueado e a criação aparece antes.</p></div>
+      <div class="release-score ${snap.locked ? 'pending' : 'ok'}"><span>Gate Score</span><strong>${gate.score}</strong><small>${snap.locked ? 'Bloqueado' : 'Liberado'}</small></div>
+    </section>
+    <section class="onboarding-actions">
+      <button class="btn-primary" onclick="window.openMandatoryCareerSetup()">Abrir criação obrigatória</button>
+      <button class="btn-secondary" onclick="window.repairMandatoryEmptySave()">Reparar save vazio</button>
+      <button class="btn-secondary" onclick="window.auditMandatoryCareerGate()">Auditar gate</button>
+      <button class="btn-ghost" onclick="window.exportMandatoryGateReport()">Exportar relatório</button>
+    </section>
+    <section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok' : 'pending'}"><span>${ok ? '✓' : '!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section>
+    <section class="release-grid"><article class="panel-card"><h4>Estado atual</h4><div class="list-block"><div class="list-item"><span>Elenco</span><strong>${snap.roster}</strong></div><div class="list-item"><span>Ranking</span><strong>${snap.ranking}</strong></div><div class="list-item"><span>Calendário</span><strong>${snap.calendar}</strong></div><div class="list-item"><span>Caixa</span><strong>${money(snap.money)}</strong></div><div class="list-item"><span>Aba atual</span><strong>${escapeHtml(snap.currentTab)}</strong></div></div></article><article class="panel-card"><h4>Histórico do gate</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio registrado nesta build.</span><strong>OK</strong></div>'}</div></article></section>`;
+}
+window.openMandatoryCareerSetup = () => {
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('gate obrigatório abriu criação com base segura');
+  state.flags ||= {}; state.flags.ownerSetupComplete = false;
+  ensureMandatoryCareerGateSystem().locked = true;
+  saveState(state); render(); enforceOwnerSetupFlow('abertura manual pelo Gate Inicial');
+};
+window.repairMandatoryEmptySave = () => {
+  ensureMandatoryCareerGateSystem().repairCount = (ensureMandatoryCareerGateSystem().repairCount || 0) + 1;
+  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.1.4');
+  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.1.4';
+  saveState(state); render(); openOwnerSetup(true);
+};
+window.auditMandatoryCareerGate = () => {
+  const snap = mandatoryCareerGateSnapshot();
+  const score = logMandatoryCareerGate('Auditoria do gate inicial', snap.locked ? 'Bloqueado' : 'Liberado', snap.locked ? [...snap.coreIssues, ...snap.ownerIssues].join(', ') : 'Carreira pronta para gameplay.', snap);
+  addLog(`Gate inicial auditado: ${score}/100.`);
+  renderMandatoryCareerGate();
+};
+window.exportMandatoryGateReport = () => {
+  const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, schema: BUILD_INFO.schemaVersion, generatedAt: new Date().toISOString(), snapshot: mandatoryCareerGateSnapshot(), mandatoryCareerGate: state.mandatoryCareerGate, privacy: 'Relatório local. Não envia dados para servidor.' };
+  const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vale-tennis-mandatory-gate-${BUILD_INFO.build}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 function preserveRuntimePreferences(fresh, previous) {
   if (!fresh || !previous) return fresh;
-  const preserve = ['mobileUX','inputReliability','accessibilityReadability','localizationStore','releaseNotesHelp','onboardingReliability','qualityPolish','releaseHardening','performanceDelivery','qaAutomation','browserCompatibility'];
+  const preserve = ['mobileUX','inputReliability','accessibilityReadability','localizationStore','releaseNotesHelp','onboardingReliability','careerCreationUX','qualityPolish','releaseHardening','performanceDelivery','qaAutomation','browserCompatibility','mandatoryCareerGate'];
   preserve.forEach(key => { if (previous[key]) fresh[key] = structuredClone(previous[key]); });
   fresh.ui = { currentTab: 'dashboard', lastStableTab: 'dashboard' };
   fresh.flags ||= {};
@@ -1135,6 +1300,7 @@ function ensurePlayableStart() {
   state.flags ||= {};
   if (!setupIsComplete(state)) {
     state.flags.ownerSetupComplete = false;
+    ensureMandatoryCareerGateSystem().locked = true;
     state.onboardingReliability ||= { score: 98, lastAuditToken: null, auditLog: [], buttonProbe: [], forcedOpens: 0, lastForcedReason: null, safeStartLocks: 0, modalVisibilityChecks: [], checklist: { setupModal: true, avatarChoices: true, ownerSaveButton: true, tabDelegation: true, dockDelegation: true, dashboardRecovery: true }, flags: { mandatorySetupGuard: true, eventDelegationFallback: true, hashRouter: true, modalRetry: true, buttonProbe: true } };
   state.careerSetupRecovery ||= { lastReason: null, repairedAt: null, forcedSetup: false, snapshots: [], bootGuard: true };
     state.careerSetupRecovery.forcedSetup = true;
@@ -1244,7 +1410,7 @@ function enforceOwnerSetupFlow(reason='setup pendente') {
   state.careerSetupRecovery.lastReason = reason;
   const attempt = (slot='imediato') => {
     if (setupIsComplete(state)) return;
-    openOwnerSetup(!state.academy?.owner);
+    openOwnerSetup(false);
     const visible = ownerSetupModalVisible();
     ob.modalVisibilityChecks.unshift({ slot, visible, at: new Date().toISOString(), build: BUILD_INFO.build });
     ob.modalVisibilityChecks = ob.modalVisibilityChecks.slice(0, 12);
@@ -1260,7 +1426,13 @@ function enforceOwnerSetupFlow(reason='setup pendente') {
 function installCriticalButtonDelegation() {
   if (window.__valeOnboardingDelegationInstalled) return;
   window.__valeOnboardingDelegationInstalled = true;
+  document.addEventListener('pointerup', event => {
+    const avatar = event.target.closest?.('[data-owner-avatar]');
+    if (avatar) { event.preventDefault(); selectOwnerAvatar(avatar.dataset.ownerAvatar); }
+  }, true);
   document.addEventListener('click', event => {
+    const avatar = event.target.closest?.('[data-owner-avatar]');
+    if (avatar) { event.preventDefault(); selectOwnerAvatar(avatar.dataset.ownerAvatar); return; }
     const btn = event.target.closest('button, a');
     if (!btn || btn.disabled) return;
     const tab = btn.dataset?.jumpTab || btn.dataset?.tab;
@@ -1344,6 +1516,117 @@ window.exportOnboardingReport = () => {
   a.download = `vale-tennis-onboarding-${BUILD_INFO.build}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+
+function ensureCareerCreationUXSystem() {
+  state.careerCreationUX ||= { score: 100, setupAttempts: 0, avatarTouchCount: 0, saveButtonChecks: [], lastAuditToken: null, auditLog: [], lastSelectedAvatar: null, firstRunVerified: false, buttonGuardActive: true, flags: { stickyModalFooter: true, delegatedAvatarTap: true, saveButtonGuard: true, defaultValueGuard: true, dashboardBlocker: true } };
+  const ux = state.careerCreationUX;
+  ux.score ??= 100;
+  ux.setupAttempts ??= 0;
+  ux.avatarTouchCount ??= 0;
+  ux.saveButtonChecks ||= [];
+  ux.auditLog ||= [];
+  ux.lastAuditToken ??= null;
+  ux.lastSelectedAvatar ??= null;
+  ux.firstRunVerified ??= false;
+  ux.buttonGuardActive ??= true;
+  ux.flags ||= { stickyModalFooter: true, delegatedAvatarTap: true, saveButtonGuard: true, defaultValueGuard: true, dashboardBlocker: true };
+  return ux;
+}
+function careerCreationSnapshot() {
+  const ux = ensureCareerCreationUXSystem();
+  const modal = $('#ownerSetupModal');
+  const values = {
+    name: ($('#ownerNameInput')?.value || '').trim(),
+    academy: ($('#academyNameInput')?.value || '').trim(),
+    city: ($('#academyCityInput')?.value || '').trim(),
+    country: ($('#ownerCountryInput')?.value || '').trim().toUpperCase(),
+    avatar: document.querySelector('.choice-avatar.active')?.dataset.ownerAvatar || ux.lastSelectedAvatar || null
+  };
+  const missing = [];
+  if (!values.name || values.name.length < 2) missing.push('nome');
+  if (!values.academy || values.academy.length < 3) missing.push('academia');
+  if (!values.city || values.city.length < 2) missing.push('cidade');
+  if (!values.country || values.country.length < 2) missing.push('país');
+  if (!values.avatar) missing.push('avatar');
+  const saveBtn = $('#saveOwnerSetupBtn');
+  const snap = {
+    at: new Date().toISOString(), build: BUILD_INFO.build, modalVisible: ownerSetupModalVisible(),
+    setupComplete: setupIsComplete(state), playable: hasPlayableCareer(state), playableIssues: playableCoreIssues(state),
+    values, missing, avatarChoices: $$('#ownerAvatarChoices [data-owner-avatar]').length,
+    saveButtonFound: !!saveBtn, saveButtonDisabled: !!saveBtn?.disabled,
+    dockCoversModal: !!(modal && ownerSetupModalVisible() && document.body.classList.contains('setup-open')),
+    firstRunVerified: !!ux.firstRunVerified, setupAttempts: ux.setupAttempts || 0, avatarTouchCount: ux.avatarTouchCount || 0
+  };
+  let score = 100;
+  if (!snap.playable) score -= 20;
+  if (!snap.setupComplete && !snap.modalVisible) score -= 18;
+  score -= Math.min(20, snap.missing.length * 5);
+  if (snap.avatarChoices < 3) score -= 12;
+  if (!snap.saveButtonFound || snap.saveButtonDisabled) score -= 12;
+  ux.score = clamp(Math.round(score), 0, 100);
+  return snap;
+}
+function logCareerCreationUX(title, result, note, snap = careerCreationSnapshot()) {
+  const ux = ensureCareerCreationUXSystem();
+  ux.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  ux.auditLog.unshift({ title, result, note, score: ux.score, at: new Date().toISOString(), build: BUILD_INFO.build, snapshot: snap });
+  ux.auditLog = ux.auditLog.slice(0, 18);
+  saveState(state);
+  return ux.score;
+}
+function renderCareerCreationUXHub() {
+  const host = $('#careerCreationUXHub');
+  if (!host) return;
+  const ux = ensureCareerCreationUXSystem();
+  const snap = careerCreationSnapshot();
+  const checks = [
+    ['Modal de criação', snap.setupComplete || snap.modalVisible, snap.setupComplete ? 'Carreira configurada' : (snap.modalVisible ? 'Aberto e visível' : 'Precisa abrir')],
+    ['Campos obrigatórios', snap.missing.length === 0 || !snap.modalVisible, snap.missing.length ? `Pendentes: ${snap.missing.join(', ')}` : 'Nome, país, avatar e academia OK'],
+    ['Avatares', snap.avatarChoices >= 3, `${snap.avatarChoices} opções detectadas`],
+    ['Botão criar', snap.saveButtonFound && !snap.saveButtonDisabled, snap.saveButtonFound ? 'Botão encontrado' : 'Botão ausente'],
+    ['Base jogável', snap.playable, snap.playable ? 'Elenco/ranking/calendário OK' : snap.playableIssues.join(', ')],
+    ['Primeiro acesso', snap.firstRunVerified || snap.setupComplete, snap.firstRunVerified || snap.setupComplete ? 'Confirmado' : 'Ainda não confirmado']
+  ];
+  host.innerHTML = `
+    <section class="onboarding-hero glass-card-lite career-creation-hero">
+      <div><p class="eyebrow">Career Creation UX • ${BUILD_LABEL}</p><h2>Criação de carreira protegida</h2><p>Esta central testa especificamente nome, país, avatar, academia e o botão Criar carreira. Use-a se o celular abrir no Dashboard vazio ou se algum botão parecer travado.</p></div>
+      <div class="release-score"><span>Setup Score</span><strong>${ux.score}</strong><small>${snap.setupComplete ? 'Concluído' : 'Pendente'}</small></div>
+    </section>
+    <section class="onboarding-actions">
+      <button id="forceSetupModalBtn" class="btn-primary" onclick="window.forceSetupModalNow()">Abrir criação agora</button>
+      <button id="activateFirstAvatarBtn" class="btn-secondary" onclick="window.activateFirstOwnerAvatar()">Ativar 1º avatar</button>
+      <button id="testCareerSaveBtn" class="btn-secondary" onclick="window.auditCareerCreationUX()">Testar botão criar</button>
+      <button id="freshSetupBtn" class="btn-ghost" onclick="window.startFreshSetupSafely()">Reset guiado do início</button>
+    </section>
+    <section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok' : 'pending'}"><span>${ok ? '✓' : '!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section>
+    <section class="release-grid"><article class="panel-card"><h4>Valores atuais do formulário</h4><div class="list-block"><div class="list-item"><span>Treinador</span><strong>${escapeHtml(snap.values.name || '—')}</strong></div><div class="list-item"><span>Academia</span><strong>${escapeHtml(snap.values.academy || '—')}</strong></div><div class="list-item"><span>País</span><strong>${escapeHtml(snap.values.country || '—')}</strong></div><div class="list-item"><span>Cidade</span><strong>${escapeHtml(snap.values.city || '—')}</strong></div></div></article><article class="panel-card"><h4>Últimas verificações</h4><div class="list-block">${(ux.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum teste executado nesta build.</span><strong>Pronto</strong></div>'}</div></article></section>`;
+}
+window.forceSetupModalNow = () => {
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.1.4');
+  state.flags ||= {}; state.flags.ownerSetupComplete = false;
+  ensureCareerCreationUXSystem().firstRunVerified = false;
+  saveState(state); render(); enforceOwnerSetupFlow('abertura manual pela aba Criação');
+};
+window.activateFirstOwnerAvatar = () => {
+  openOwnerSetup(false);
+  setTimeout(() => { selectOwnerAvatar(state.careerCreationUX?.lastSelectedAvatar || PLAYER_AVATARS[0]); logCareerCreationUX('Avatar ativado manualmente', 'OK', 'Seleção de avatar testada por delegação global.'); renderCareerCreationUXHub(); }, 80);
+};
+window.auditCareerCreationUX = () => {
+  const snap = careerCreationSnapshot();
+  const score = logCareerCreationUX('Auditoria da criação de carreira', `${ensureCareerCreationUXSystem().score}/100`, snap.missing.length ? `Pendências: ${snap.missing.join(', ')}` : 'Fluxo de criação apto para salvar.', snap);
+  renderCareerCreationUXHub(); addLog(`Auditoria de criação de carreira: ${score}/100.`);
+};
+window.startFreshSetupSafely = () => {
+  backupBrokenCareer('reset guiado v4.1.4 solicitado pelo usuário');
+  clearState();
+  state = buildInitialState(content);
+  migrateState();
+  state.flags.ownerSetupComplete = false;
+  ensureCareerCreationUXSystem().firstRunVerified = false;
+  addLog('Reset guiado iniciado. Configure nome, avatar, país e academia.');
+  saveState(state); render(); openOwnerSetup(true);
 };
 
 
@@ -1613,6 +1896,8 @@ function migrateState() {
   ensureLongCareerSystem();
   ensureInputReliabilitySystem();
   ensureCacheUpdateGuardSystem();
+  ensureCareerCreationUXSystem();
+  ensureMandatoryCareerGateSystem();
   applyMobileUXRuntime();
   applyInputReliabilityRuntime();
 }
@@ -1823,13 +2108,13 @@ function bindUI() {
   ensureDrawModal();
   $('#saveOwnerSetupBtn')?.addEventListener('click', saveOwnerSetup);
   $('#openCalendarBtn')?.addEventListener('click', () => switchTab('calendar'));
-  $('#advanceWeekBtn').addEventListener('click', advanceWeek);
-  $('#saveBtn').addEventListener('click', () => { saveState(state); addLog('Save realizado manualmente.'); render(); });
+  $('#advanceWeekBtn')?.addEventListener('click', advanceWeek);
+  $('#saveBtn')?.addEventListener('click', () => { saveState(state); addLog('Save realizado manualmente.'); render(); });
   $('#mobileQuickWeek')?.addEventListener('click', advanceWeek);
   $('#mobileQuickSave')?.addEventListener('click', () => { saveState(state); addLog('Save rápido mobile realizado.'); render(); });
   $('#mobileQuickMatch')?.addEventListener('click', () => switchTab('match'));
   $('#mobileQuickTop')?.addEventListener('click', () => scrollToAppTop());
-  $('#resetBtn').addEventListener('click', () => {
+  $('#resetBtn')?.addEventListener('click', () => {
     clearState();
     state = buildInitialState(content);
     migrateState();
@@ -1839,13 +2124,13 @@ function bindUI() {
     render();
     openOwnerSetup(true);
   });
-  $('#startMatchBtn').addEventListener('click', startScheduledMatch);
-  $('#playPointBtn').addEventListener('click', playPoint);
+  $('#startMatchBtn')?.addEventListener('click', startScheduledMatch);
+  $('#playPointBtn')?.addEventListener('click', playPoint);
   $('#playGameBtn')?.addEventListener('click', simulateCurrentGame);
   $('#playSetBtn')?.addEventListener('click', simulateCurrentSet);
   $('#playMatchBtn')?.addEventListener('click', simulateFullMatch);
   $('#tacticalPauseBtn')?.addEventListener('click', tacticalPause);
-  $('#autoMatchBtn').addEventListener('click', () => setAutoPlay(1));
+  $('#autoMatchBtn')?.addEventListener('click', () => setAutoPlay(1));
   $('#auto1xBtn')?.addEventListener('click', () => setAutoPlay(1));
   $('#auto2xBtn')?.addEventListener('click', () => setAutoPlay(2));
   $('#auto4xBtn')?.addEventListener('click', () => setAutoPlay(4));
@@ -1863,6 +2148,10 @@ function bindUI() {
 }
 
 function switchTab(tab) {
+  if (state && !setupIsComplete(state) && !SETUP_SAFE_TABS.has(tab)) {
+    blockGameplayUntilCareerReady(tab, `tentativa de abrir ${tab} antes da criação completa`);
+    tab = 'initialgate';
+  }
   state.ui ||= {}; state.ui.currentTab = tab; state.ui.lastStableTab = tab;
   document.body.dataset.currentTab = tab;
   $$('#mainTabs .tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
@@ -1880,7 +2169,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -2003,6 +2292,7 @@ function render() {
   renderLocalizationStore();
   renderHelpCenter();
   renderOnboardingReliabilityHub();
+  renderCareerCreationUXHub();
   renderCacheUpdateGuard();
   renderMarket();
   renderStaff();
@@ -3753,7 +4043,7 @@ function ensureHelpCenterSystem() {
 function helpCenterSnapshot() {
   const help = ensureHelpCenterSystem();
   const tabs = [...document.querySelectorAll('.tab-panel')].map(p=>p.id.replace('tab-',''));
-  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md'];
+  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md'];
   const checklist = help.onboardingChecklist || {};
   const done = Object.values(checklist).filter(Boolean).length;
   const total = Math.max(1, Object.keys(checklist).length);

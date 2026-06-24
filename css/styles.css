@@ -1342,3 +1342,32 @@ body.setup-open .setup-card{scroll-margin-bottom:calc(24px + env(safe-area-inset
 #ownerSetupModal input,#ownerSetupModal select,#ownerSetupModal button{touch-action:manipulation;}
 @media(max-width:760px){.onboarding-hero{grid-template-columns:1fr}.onboarding-actions{grid-template-columns:1fr 1fr}.onboarding-check-grid{grid-template-columns:1fr}.setup-actions{position:sticky;bottom:0;z-index:3;padding:10px 0 calc(6px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(8,16,29,0),rgba(8,16,29,.96) 28%,rgba(8,16,29,.98));}}
 @media(max-width:390px){.onboarding-actions{grid-template-columns:1fr}.onboarding-hero{padding:14px;border-radius:20px}}
+
+/* v4.1.3 — Career Creation UX & Avatar Selector Final Fix */
+.career-creation-hero{border-color:rgba(97,235,255,.28);background:linear-gradient(135deg,rgba(97,235,255,.13),rgba(154,255,129,.08),rgba(255,255,255,.035));}
+.setup-focus-mode .mobile-dock,.setup-focus-mode .mobile-quick-bar,.setup-focus-mode .runtime-build-stamp,.setup-focus-mode .build-overlay{display:none!important;}
+.choice-avatar{gap:4px;user-select:none;-webkit-user-select:none;touch-action:manipulation;min-height:104px;}
+.choice-avatar span{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.02em;}
+.choice-avatar.active{box-shadow:0 0 0 3px rgba(154,255,129,.12),0 12px 34px rgba(154,255,129,.12);}
+#ownerAvatarChoices{scroll-margin-bottom:120px;}
+#setupValidation:not(.hidden){display:grid;gap:4px;margin:8px 0;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,122,144,.35);background:rgba(255,122,144,.08);color:#ffd5dd;font-weight:700;}
+@media(max-width:760px){
+  #ownerSetupModal .setup-card{overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(96px + env(safe-area-inset-bottom));}
+  #ownerAvatarChoices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+  .choice-avatar{min-height:96px;padding:7px 4px;}
+  .choice-avatar img{width:62px!important;height:62px!important;}
+  #saveOwnerSetupBtn{width:100%;min-height:62px;border-radius:18px;}
+}
+@media(max-width:390px){#ownerAvatarChoices{grid-template-columns:repeat(2,minmax(0,1fr));}.choice-avatar{min-height:92px}.choice-avatar img{width:58px!important;height:58px!important;}}
+
+
+/* v4.1.4 Mandatory Career Gate */
+.mandatory-gate-hero { border: 1px solid rgba(125,255,142,.24); box-shadow: 0 18px 55px rgba(0,0,0,.22); }
+.release-score.pending strong { color: #ffd166; }
+.release-score.ok strong { color: #88ff9a; }
+body:not(.setup-open) .setup-modal.hidden { pointer-events: none; }
+body.setup-open .mobile-dock, body.setup-open .mobile-quickbar { display: none !important; }
+@media (max-width: 760px) {
+  #tab-initialgate .onboarding-actions { grid-template-columns: 1fr; }
+  #tab-initialgate .release-grid { grid-template-columns: 1fr; }
+}

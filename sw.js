@@ -1,5 +1,5 @@
-const CACHE_NAME = 'vale-tennis-v4.1.2-20260623-181210';
-const CORE_ASSETS = ['./','./index.html?v=4.1.2-20260623-181210','./css/styles.css?v=4.1.2-20260623-181210','./js/main.js?v=4.1.2-20260623-181210','./js/build.js?v=4.1.2-20260623-181210','./js/contentLoader.js?v=4.1.2-20260623-181210','./js/state.js?v=4.1.2-20260623-181210','./build/build-info.json?v=4.1.2-20260623-181210','./manifest.webmanifest?v=4.1.2-20260623-181210','./assets/icons/icon.svg'];
+const CACHE_NAME = 'vale-tennis-v4.1.4-20260624-103102';
+const CORE_ASSETS = ['./','./index.html?v=4.1.4-20260624-103102','./css/styles.css?v=4.1.4-20260624-103102','./js/main.js?v=4.1.4-20260624-103102','./js/build.js?v=4.1.4-20260624-103102','./js/contentLoader.js?v=4.1.4-20260624-103102','./js/state.js?v=4.1.4-20260624-103102','./build/build-info.json?v=4.1.4-20260624-103102','./manifest.webmanifest?v=4.1.4-20260624-103102','./assets/icons/icon.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE_ASSETS)).finally(() => self.skipWaiting()));
 });
@@ -8,7 +8,7 @@ self.addEventListener('activate', event => {
 });
 self.addEventListener('message', event => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
-  if (event.data?.type === 'BUILD_CHECK') event.source?.postMessage?.({ type:'BUILD_ACK', cache:CACHE_NAME, build:'20260623-181210', version:'4.1.2' });
+  if (event.data?.type === 'BUILD_CHECK') event.source?.postMessage?.({ type:'BUILD_ACK', cache:CACHE_NAME, build:'20260624-103102', version:'4.1.4' });
 });
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
@@ -18,5 +18,5 @@ self.addEventListener('fetch', event => {
     const copy = response.clone();
     caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => null);
     return response;
-  }).catch(() => caches.match(event.request).then(match => match || caches.match('./index.html?v=4.1.2-20260623-181210'))));
+  }).catch(() => caches.match(event.request).then(match => match || caches.match('./index.html?v=4.1.4-20260624-103102'))));
 });

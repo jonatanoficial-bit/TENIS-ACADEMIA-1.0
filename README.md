@@ -1,10 +1,36 @@
+# Vale Games Tennis Manager — v4.1.4
 
-## Build v4.1.2 — Cache/PWA Update Guard
+Build `20260624-103102` — **Mandatory New Career Gate & Empty Save Repair**.
+
+Esta build bloqueia completamente o caso visto no celular: Dashboard aberto sem carreira criada, sem avatar, sem atletas e com botões parecendo travados. Antes de liberar Atletas, Treino, Partida, Calendário ou Ranking, o jogo confirma nome do treinador, país, avatar, cidade, nome da academia e base jogável. Se houver save vazio/corrompido, a aba **Gate Inicial** permite reparar com backup local.
+
+Schema do save: 34.
+
+
+## v4.1.4 — Mandatory New Career Gate & Empty Save Repair (20260624-103102)
+
+- Gate inicial obrigatório antes de liberar gameplay.
+- Bloqueio contra Dashboard vazio sem treinador/avatar/academia.
+- Aba Gate Inicial com auditoria, reparo e exportação local.
+- Navegação para gameplay é redirecionada para criação se a carreira não estiver completa.
+- Schema 34.
+
+
+
+## Build atual — v4.1.3
+
+Fase: Career Creation UX & Avatar Selector Final Fix  
+Build: `20260623-183105`  
+Schema: `33`
+
+Esta versão reforça a criação de carreira, seleção de avatar e confiabilidade dos botões iniciais no mobile/PWA. A nova aba `Criação` permite abrir o modal, ativar avatar, auditar o botão de salvar e iniciar reset guiado de primeiro acesso.
+
+## Build v4.1.3 — Cache/PWA Update Guard
 
 Esta build adiciona uma aba Cache/PWA para confirmar a versão carregada no celular, registrar o Service Worker com cache-busting, limpar caches antigos e confirmar o primeiro acesso. Foi criada para evitar que o Chrome/PWA continue exibindo builds antigas como v4.0.8 depois do upload.
 
-Versão: v4.1.2  
-Build: 20260623-181210  
+Versão: v4.1.3  
+Build: 20260623-183105  
 Schema: 32
 
 # Vale Games Tennis Manager — v4.1.1

@@ -1,7 +1,7 @@
-# AUDIT v4.1.2 — Cache/PWA Update Guard & First-Run Verification Hotfix
+# AUDIT v4.1.3 — Career Creation UX & Avatar Selector Final Fix
 
-Build: 20260623-181210  
-Data/hora: 23/06/2026 18:12:10 São Paulo  
+Build: 20260623-183105  
+Data/hora: 23/06/2026 18:31:05 São Paulo  
 Schema: 32
 
 ## Alterações principais

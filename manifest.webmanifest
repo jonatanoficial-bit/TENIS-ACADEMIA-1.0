@@ -14,7 +14,7 @@
     }
   ],
   "id": "vale-games-tennis-manager",
-  "description": "Simulador mobile-first de gestão de tênis com carreira, torneios, economia, QA interno, criação de carreira segura e proteção contra cache/PWA antigo.",
+  "description": "Simulador mobile-first de gestão de tênis com carreira, torneios, economia, QA interno, criação de carreira obrigatória e reparo de save vazio.",
   "shortcuts": [
     {
       "name": "Abrir Partida",
@@ -75,6 +75,18 @@
       "short_name": "Cache",
       "url": "./index.html#cacheguard",
       "description": "Confirmar build carregada, limpar caches antigos e registrar atualização PWA"
+    },
+    {
+      "name": "Verificar Criação de Carreira",
+      "short_name": "Criar",
+      "url": "./index.html#setupverify",
+      "description": "Testar nome, país, avatar, botão criar e primeiro acesso"
+    },
+    {
+      "name": "Gate Inicial Obrigatório",
+      "short_name": "Gate",
+      "url": "./index.html#initialgate",
+      "description": "Verificar criação obrigatória, base jogável e bloqueio de Dashboard vazio"
     }
   ]
 }

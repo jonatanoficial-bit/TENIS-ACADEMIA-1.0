@@ -1,14 +1,33 @@
-# v4.1.2 — Cache/PWA Update Guard & First-Run Verification Hotfix
+
+## v4.1.4 — Mandatory New Career Gate & Empty Save Repair (20260624-103102)
+
+- Gate inicial obrigatório antes de liberar gameplay.
+- Bloqueio contra Dashboard vazio sem treinador/avatar/academia.
+- Aba Gate Inicial com auditoria, reparo e exportação local.
+- Navegação para gameplay é redirecionada para criação se a carreira não estiver completa.
+- Schema 34.
+
+
+
+## v4.1.3 — Career Creation UX & Avatar Selector Final Fix
+
+- Adicionada aba `Criação` para auditar nome, país, avatar e botão de criar carreira.
+- Reforçada seleção de avatar com delegação global de toque/clique.
+- Corrigida reabertura do modal para não apagar dados digitados em retries automáticos.
+- Botões críticos do bind inicial agora usam proteção para evitar travamento geral caso um elemento não exista.
+- Save schema atualizado para 33.
+- Adicionados `AUDIT_v4.1.3.md` e `CAREER_CREATION_UX_CHECKLIST_v4.1.3.md`.
+# v4.1.3 — Career Creation UX & Avatar Selector Final Fix
 
 - Nova aba Cache/PWA.
-- Novo sistema `cacheUpdateGuard` no save, schema 32.
+- Novo sistema `cacheUpdateGuard` no save, schema 33.
 - Registro explícito do Service Worker com cache-busting.
 - Botão para auditar atualização e cache.
 - Botão para limpar caches antigos do app.
 - Botão para confirmar primeiro acesso na build correta.
 - Botão para recarregar URL com versão/build atual.
 - Manifest PWA atualizado com atalho para Cache/PWA.
-- Documentos adicionados: `AUDIT_v4.1.2.md` e `CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md`.
+- Documentos adicionados: `AUDIT_v4.1.3.md` e `CACHE_PWA_UPDATE_CHECKLIST_v4.1.3.md`.
 
 
 ## v4.1.1 — Onboarding Flow & Button Reliability Hotfix — 23/06/2026 15:02:06

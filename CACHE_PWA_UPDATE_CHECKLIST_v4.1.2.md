@@ -1,7 +1,7 @@
-# Cache/PWA Update Checklist — v4.1.2
+# Cache/PWA Update Checklist — v4.1.3
 
-Build: 20260623-181210  
-Data: 23/06/2026 18:12:10  
+Build: 20260623-183105  
+Data: 23/06/2026 18:31:05  
 Schema: 32
 
 ## Objetivo
