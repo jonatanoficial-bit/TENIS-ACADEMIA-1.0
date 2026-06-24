@@ -1,5 +1,18 @@
 # Changelog
 
+## v4.1.7 — Clean Start Wizard & Deploy Verification Hotfix — 20260624-123742
+
+- Nova aba `Início Limpo` para resolver cache/PWA preso, build antiga e primeiro acesso quebrado.
+- Novo sistema persistente `cleanStartWizard`, schema 37.
+- Verificação direta de build visível no topo, Service Worker, Cache API, save local e base jogável.
+- Botão **Início limpo guiado** com backup local antes de limpar/recriar o primeiro acesso.
+- Botão **Limpar cache e recarregar** para remover caches `vale-tennis-*` e abrir a build atual com cache-busting.
+- Botão **Abrir criação** integrado ao launcher obrigatório.
+- Exportação local de diagnóstico clean start em JSON.
+- Atalho PWA para `#cleanstart`.
+- Documentos adicionados: `AUDIT_v4.1.7.md` e `CLEAN_START_DEPLOY_CHECKLIST_v4.1.7.md`.
+
+
 ## v4.1.6 — Onboarding Runtime Test & Mobile Proof Hotfix — 20260624-114913
 
 - Nova aba `Prova Mobile` para validar, no navegador real, se a criação de carreira abriu corretamente.

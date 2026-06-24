@@ -604,7 +604,7 @@ function withMatchGuard(label, fn) {
 
 
 const OWNER_AVATARS = PLAYER_AVATARS;
-const SETUP_SAFE_TABS = new Set(['setupverify','initialgate','runtimeproof','onboarding','cacheguard','input','a11y','helpcenter','diagnostics','compat','qa','polish','delivery','release','localization','adminhint','mobileux']);
+const SETUP_SAFE_TABS = new Set(['setupverify','initialgate','runtimeproof','cleanstart','onboarding','cacheguard','input','a11y','helpcenter','diagnostics','compat','qa','polish','delivery','release','localization','adminhint','mobileux']);
 
 const CRITICAL_ONBOARDING_BUTTONS = [
   'openSetupBtn','openSetupBannerBtn','saveOwnerSetupBtn','repairStartBtn','recoverCareerBtn','resetBtn','advanceWeekBtn','saveBtn','mobileQuickSave','mobileQuickTop','forceSetupModalBtn','testCareerSaveBtn','activateFirstAvatarBtn','freshSetupBtn'
@@ -1253,15 +1253,15 @@ function renderForcedOnboardingGate() {
     ['Modal obrigatório', snap.setupComplete || snap.modalVisible, snap.modalVisible ? 'Aberto em tela cheia' : 'Será forçado no próximo clique/boot'],
     ['Build atual', true, BUILD_LABEL]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.1.6')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.1.7')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
 }
 window.forceOnboardingLauncher = forceOnboardingLauncher;
 window.forceRepairInvalidCareer = () => {
-  rebuildPlayableCareer('reparo forçado pelo launcher v4.1.6');
+  rebuildPlayableCareer('reparo forçado pelo launcher v4.1.7');
   ensureForcedOnboardingGateSystem().lastRepairAt = new Date().toISOString();
   saveState(state);
   render();
-  forceOnboardingLauncher('base recriada pelo launcher v4.1.6');
+  forceOnboardingLauncher('base recriada pelo launcher v4.1.7');
 };
 window.auditForcedOnboardingGate = () => {
   const snap = forcedOnboardingSnapshot();
@@ -1358,13 +1358,13 @@ function renderOnboardingRuntimeProof() {
     ['Perfil obrigatório', !snap.issues.some(x => /nome|avatar|país|academia|cidade|criação/.test(x)), snap.issues.join(', ') || 'Nome, avatar, país, cidade e academia OK'],
     ['Overlay de bloqueio', !snap.invalid || snap.lockVisible || snap.modalVisible, snap.lockVisible ? 'Ativo' : (snap.modalVisible ? 'Modal cobre a tela' : 'Inativo')]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.1.6')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.1.7')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
 }
 window.runOnboardingRuntimeProof = () => {
   const before = onboardingRuntimeProofSnapshot();
   if (before.invalid) {
     syncOnboardingRuntimeLock('prova manual');
-    forceOnboardingLauncher('prova runtime v4.1.6');
+    forceOnboardingLauncher('prova runtime v4.1.7');
   }
   setTimeout(() => {
     const after = onboardingRuntimeProofSnapshot();
@@ -1387,6 +1387,145 @@ window.exportOnboardingRuntimeProof = () => {
   const a = document.createElement('a');
   a.href = url;
   a.download = `vale-tennis-onboarding-runtime-proof-${BUILD_INFO.build}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+
+function ensureCleanStartWizardSystem() {
+  state.cleanStartWizard ||= { score: 100, lastAuditToken: null, auditLog: [], deploymentChecks: [], resetBackups: [], staleBuildSeen: false, cleanStartConfirmed: false, lastResetAt: null, flags: { guidedReset: true, deployCheck: true, cacheClear: true, firstRunReopen: true, preserveBackup: true } };
+  const wizard = state.cleanStartWizard;
+  wizard.auditLog ||= [];
+  wizard.deploymentChecks ||= [];
+  wizard.resetBackups ||= [];
+  wizard.score ??= 100;
+  wizard.lastAuditToken ??= null;
+  wizard.staleBuildSeen ??= false;
+  wizard.cleanStartConfirmed ??= false;
+  wizard.lastResetAt ??= null;
+  wizard.flags ||= { guidedReset: true, deployCheck: true, cacheClear: true, firstRunReopen: true, preserveBackup: true };
+  wizard.flags.guidedReset ??= true;
+  wizard.flags.deployCheck ??= true;
+  wizard.flags.cacheClear ??= true;
+  wizard.flags.firstRunReopen ??= true;
+  wizard.flags.preserveBackup ??= true;
+  return wizard;
+}
+function cleanStartWizardSnapshot() {
+  const issues = invalidCareerIssues(state);
+  const buildText = $('#buildPill')?.textContent || '';
+  const overlayText = $('#buildOverlay')?.textContent || '';
+  const runtimeText = $('#runtimeBuildStamp')?.textContent || '';
+  const storedBuild = localStorage.getItem(LAST_SEEN_BUILD_KEY) || '';
+  const saveDiag = (() => { try { return getSaveDiagnostics(); } catch { return {}; } })();
+  return {
+    at: new Date().toISOString(), version: BUILD_INFO.version, build: BUILD_INFO.build, label: BUILD_LABEL,
+    visibleBuildOk: [buildText, overlayText, runtimeText].some(text => String(text).includes(BUILD_INFO.version) && String(text).includes(BUILD_INFO.date)),
+    buildText, overlayText, runtimeText,
+    storedBuild, staleBuildLikely: !!storedBuild && storedBuild !== BUILD_INFO.build,
+    serviceWorker: { supported: 'serviceWorker' in navigator, controlled: !!navigator.serviceWorker?.controller },
+    cacheApi: 'caches' in window,
+    storageWritable: (() => { try { localStorage.setItem('vale_tennis_clean_start_probe', BUILD_INFO.build); localStorage.removeItem('vale_tennis_clean_start_probe'); return true; } catch { return false; } })(),
+    invalidCareer: issues.length > 0, issues,
+    modalVisible: ownerSetupModalVisible(),
+    currentTab: state?.ui?.currentTab || 'dashboard',
+    roster: state?.roster?.length || 0, ranking: state?.ranking?.length || 0, calendar: state?.calendar?.length || 0, money: Number(state?.academy?.money || 0),
+    saveDiag, userAgent: navigator.userAgent || '', viewport: { w: window.innerWidth, h: window.innerHeight, vh: window.visualViewport?.height || window.innerHeight }
+  };
+}
+function calculateCleanStartScore(snapshot = cleanStartWizardSnapshot()) {
+  let score = 100;
+  if (!snapshot.visibleBuildOk) score -= 22;
+  if (snapshot.staleBuildLikely) score -= 18;
+  if (!snapshot.storageWritable) score -= 16;
+  if (snapshot.invalidCareer && snapshot.currentTab === 'dashboard') score -= 24;
+  if (snapshot.invalidCareer && !snapshot.modalVisible) score -= 18;
+  if (snapshot.roster < 1 || snapshot.ranking < 5 || snapshot.calendar < 4 || snapshot.money <= 0) score -= 14;
+  return clamp(Math.round(score), 0, 100);
+}
+function logCleanStartWizard(title='Auditoria de início limpo', result='OK', note='', snapshot = cleanStartWizardSnapshot()) {
+  const wizard = ensureCleanStartWizardSystem();
+  wizard.score = calculateCleanStartScore(snapshot);
+  wizard.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  wizard.staleBuildSeen = !!snapshot.staleBuildLikely;
+  wizard.deploymentChecks.unshift(snapshot);
+  wizard.deploymentChecks = wizard.deploymentChecks.slice(0, 10);
+  wizard.auditLog.unshift({ title, result, note, score: wizard.score, at: new Date().toISOString(), build: BUILD_INFO.build, snapshot });
+  wizard.auditLog = wizard.auditLog.slice(0, 24);
+  saveState(state);
+  return wizard.score;
+}
+function renderCleanStartWizard() {
+  const host = $('#cleanStartWizardHub');
+  if (!host || !state) return;
+  const wizard = ensureCleanStartWizardSystem();
+  const snap = cleanStartWizardSnapshot();
+  wizard.score = calculateCleanStartScore(snap);
+  const checks = [
+    ['Build atual visível', snap.visibleBuildOk, snap.visibleBuildOk ? BUILD_LABEL : 'O texto do topo não bate com a build JS.'],
+    ['Build antiga detectada', !snap.staleBuildLikely, snap.staleBuildLikely ? `Navegador guardou ${snap.storedBuild}` : 'Sem build antiga no histórico local.'],
+    ['Save local gravável', snap.storageWritable, snap.storageWritable ? 'localStorage OK' : 'O navegador bloqueou escrita local.'],
+    ['Carreira inválida bloqueada', !(snap.invalidCareer && snap.currentTab === 'dashboard'), snap.invalidCareer ? 'Deve abrir criação/reparo antes do Dashboard' : 'Carreira pronta.'],
+    ['Criação aparece quando precisa', !snap.invalidCareer || snap.modalVisible || SETUP_SAFE_TABS.has(snap.currentTab), snap.modalVisible ? 'Modal visível' : `Tab atual: ${snap.currentTab}`],
+    ['Base jogável', snap.roster > 0 && snap.ranking >= 5 && snap.calendar >= 4 && snap.money > 0, `${snap.roster} atletas • ${snap.ranking} ranking • ${snap.calendar} eventos • caixa ${money(snap.money)}`]
+  ];
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.1.7')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
+}
+window.runCleanStartAudit = () => {
+  const snap = cleanStartWizardSnapshot();
+  const note = snap.invalidCareer ? snap.issues.join(', ') : (snap.staleBuildLikely ? `Build anterior no histórico: ${snap.storedBuild}` : 'Deploy e primeiro acesso OK.');
+  const score = logCleanStartWizard('Auditoria clean start executada', scoreLabel(calculateCleanStartScore(snap)), note, snap);
+  addLog(`Clean Start Wizard auditado: ${score}/100.`);
+  if (snap.invalidCareer) forceOnboardingLauncher('auditoria clean start detectou carreira incompleta');
+  renderCleanStartWizard();
+};
+window.guidedCleanFirstRun = () => {
+  const wizard = ensureCleanStartWizardSystem();
+  try {
+    const backup = localStorage.getItem('vale_tennis_manager_save');
+    if (backup) {
+      const key = `vale_tennis_clean_start_backup_${BUILD_INFO.build}_${Date.now()}`;
+      localStorage.setItem(key, backup);
+      wizard.resetBackups.unshift({ key, at: new Date().toISOString(), build: BUILD_INFO.build });
+      wizard.resetBackups = wizard.resetBackups.slice(0, 8);
+    }
+  } catch (error) { console.warn('Backup clean start não pôde ser salvo', error); }
+  clearState();
+  state = buildInitialState(content);
+  migrateState();
+  state.cleanStartWizard = { ...ensureCleanStartWizardSystem(), resetBackups: wizard.resetBackups || [], auditLog: wizard.auditLog || [] };
+  ensureCleanStartWizardSystem().lastResetAt = new Date().toISOString();
+  ensureCleanStartWizardSystem().cleanStartConfirmed = true;
+  saveState(state);
+  addLog('Início limpo guiado aplicado. A criação de carreira foi aberta novamente.');
+  render();
+  forceOnboardingLauncher('início limpo guiado v4.1.7');
+};
+window.cleanOldCachesAndReload = async () => {
+  const wizard = ensureCleanStartWizardSystem();
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter(key => key.startsWith('vale-tennis-')).map(key => caches.delete(key)));
+      wizard.auditLog.unshift({ title:'Caches antigos removidos', result:'OK', note:`${keys.length} cache(s) encontrados.`, at:new Date().toISOString(), build: BUILD_INFO.build });
+    }
+    if (navigator.serviceWorker?.getRegistrations) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(reg => reg.update().catch(() => null)));
+    }
+  } catch (error) {
+    wizard.auditLog.unshift({ title:'Limpeza de cache falhou', result:'ATENÇÃO', note:String(error?.message || error), at:new Date().toISOString(), build: BUILD_INFO.build });
+  }
+  saveState(state);
+  location.href = `./index.html?v=${BUILD_INFO.version}-${BUILD_INFO.build}&fresh=${Date.now()}#cleanstart`;
+};
+window.exportCleanStartReport = () => {
+  const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, schema: BUILD_INFO.schemaVersion, generatedAt: new Date().toISOString(), snapshot: cleanStartWizardSnapshot(), cleanStartWizard: state.cleanStartWizard, privacy: 'Relatório local. Não envia dados para servidor.' };
+  const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vale-tennis-clean-start-${BUILD_INFO.build}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
@@ -1472,8 +1611,8 @@ window.openMandatoryCareerSetup = () => {
 };
 window.repairMandatoryEmptySave = () => {
   ensureMandatoryCareerGateSystem().repairCount = (ensureMandatoryCareerGateSystem().repairCount || 0) + 1;
-  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.1.6');
-  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.1.6';
+  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.1.7');
+  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.1.7';
   saveState(state); render(); openOwnerSetup(true);
 };
 window.auditMandatoryCareerGate = () => {
@@ -1495,7 +1634,7 @@ window.exportMandatoryGateReport = () => {
 
 function preserveRuntimePreferences(fresh, previous) {
   if (!fresh || !previous) return fresh;
-  const preserve = ['mobileUX','inputReliability','accessibilityReadability','localizationStore','releaseNotesHelp','onboardingReliability','careerCreationUX','qualityPolish','releaseHardening','performanceDelivery','qaAutomation','browserCompatibility','mandatoryCareerGate','forcedOnboardingGate'];
+  const preserve = ['mobileUX','inputReliability','accessibilityReadability','localizationStore','releaseNotesHelp','onboardingReliability','careerCreationUX','qualityPolish','releaseHardening','performanceDelivery','qaAutomation','browserCompatibility','mandatoryCareerGate','forcedOnboardingGate','cleanStartWizard'];
   preserve.forEach(key => { if (previous[key]) fresh[key] = structuredClone(previous[key]); });
   fresh.ui = { currentTab: 'dashboard', lastStableTab: 'dashboard' };
   fresh.flags ||= {};
@@ -1853,7 +1992,7 @@ function renderCareerCreationUXHub() {
     <section class="release-grid"><article class="panel-card"><h4>Valores atuais do formulário</h4><div class="list-block"><div class="list-item"><span>Treinador</span><strong>${escapeHtml(snap.values.name || '—')}</strong></div><div class="list-item"><span>Academia</span><strong>${escapeHtml(snap.values.academy || '—')}</strong></div><div class="list-item"><span>País</span><strong>${escapeHtml(snap.values.country || '—')}</strong></div><div class="list-item"><span>Cidade</span><strong>${escapeHtml(snap.values.city || '—')}</strong></div></div></article><article class="panel-card"><h4>Últimas verificações</h4><div class="list-block">${(ux.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum teste executado nesta build.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.forceSetupModalNow = () => {
-  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.1.6');
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.1.7');
   state.flags ||= {}; state.flags.ownerSetupComplete = false;
   ensureCareerCreationUXSystem().firstRunVerified = false;
   saveState(state); render(); forceOnboardingLauncher('abertura manual pela aba Criação');
@@ -1868,7 +2007,7 @@ window.auditCareerCreationUX = () => {
   renderCareerCreationUXHub(); addLog(`Auditoria de criação de carreira: ${score}/100.`);
 };
 window.startFreshSetupSafely = () => {
-  backupBrokenCareer('reset guiado v4.1.6 solicitado pelo usuário');
+  backupBrokenCareer('reset guiado v4.1.7 solicitado pelo usuário');
   clearState();
   state = buildInitialState(content);
   migrateState();
@@ -2104,6 +2243,7 @@ async function boot() {
   installLocalizationStoreRuntime();
   installHelpCenterRuntime();
   installCacheUpdateGuardRuntime();
+  setTimeout(() => { try { window.runCleanStartAudit?.(); } catch (error) { console.warn('Clean Start Wizard boot fallback', error); } }, 520);
   startCourtAnimation();
   drawCourt();
   render();
@@ -2111,7 +2251,7 @@ async function boot() {
   handleStartupHash();
   if (startupStatus !== 'ok' || !careerIsPlayableAndConfigured(state)) forceOnboardingLauncher(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
   setTimeout(() => window.runOnboardingRuntimeProof?.(), 380);
-  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.1.6'); }, 1800);
+  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.1.7'); }, 1800);
 }
 
 function applyAdminOverrides(content) {
@@ -2553,6 +2693,7 @@ function render() {
   renderMandatoryCareerGate();
   renderForcedOnboardingGate();
   renderOnboardingRuntimeProof();
+  renderCleanStartWizard();
   syncOnboardingRuntimeLock('render');
   renderMarket();
   renderStaff();
@@ -4303,7 +4444,7 @@ function ensureHelpCenterSystem() {
 function helpCenterSnapshot() {
   const help = ensureHelpCenterSystem();
   const tabs = [...document.querySelectorAll('.tab-panel')].map(p=>p.id.replace('tab-',''));
-  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md','ONBOARDING_RUNTIME_PROOF_CHECKLIST_v4.1.6.md'];
+  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md','ONBOARDING_RUNTIME_PROOF_CHECKLIST_v4.1.7.md'];
   const checklist = help.onboardingChecklist || {};
   const done = Object.values(checklist).filter(Boolean).length;
   const total = Math.max(1, Object.keys(checklist).length);

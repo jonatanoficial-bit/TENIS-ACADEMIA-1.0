@@ -1,3 +1,24 @@
+# Vale Games Tennis Manager — v4.1.7
+
+Build `20260624-123742` — **Clean Start Wizard & Deploy Verification Hotfix**.
+
+Esta build adiciona uma central de **Início Limpo** para resolver o problema prático de navegador/PWA preso em versão antiga ou save parcial. Ela verifica se a build exibida no topo bate com o JavaScript carregado, testa save local, Service Worker, cache e força a criação de carreira quando o Dashboard vazio ainda aparece.
+
+Schema do save: 37.
+
+## Correções principais da v4.1.7
+
+- Nova aba **Início Limpo**.
+- Novo sistema `cleanStartWizard` no save.
+- Botão **Verificar deploy agora** para comparar build visível, build JS, cache e save.
+- Botão **Início limpo guiado** com backup local antes de recriar o primeiro acesso.
+- Botão **Limpar cache e recarregar** para remover caches antigos do app.
+- Botão **Abrir criação** ligado ao launcher obrigatório de carreira.
+- Exportação local de diagnóstico clean start.
+- Manifest PWA com atalho para `#cleanstart`.
+
+---
+
 # Vale Games Tennis Manager — v4.1.6
 
 Build `20260624-114913` — **Onboarding Runtime Test & Mobile Proof Hotfix**.

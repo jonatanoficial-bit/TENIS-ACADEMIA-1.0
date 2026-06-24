@@ -1,7 +1,7 @@
 {
   "name": "Vale Games Tennis Manager",
   "short_name": "Vale Tennis",
-  "start_url": "./index.html?v=4.1.6-20260624-114913",
+  "start_url": "./index.html?v=4.1.7-20260624-123742",
   "display": "standalone",
   "background_color": "#08101d",
   "theme_color": "#08101d",
@@ -14,7 +14,7 @@
     }
   ],
   "id": "vale-games-tennis-manager",
-  "description": "Simulador mobile-first de gestão de tênis com prova runtime do onboarding, criação obrigatória de carreira, avatar, academia, torneios, economia e proteção contra Dashboard vazio.",
+  "description": "Simulador mobile-first de gestão de tênis com início limpo guiado, verificação de deploy/cache, criação obrigatória de carreira, avatar, academia, torneios, economia e proteção contra Dashboard vazio.",
   "shortcuts": [
     {
       "name": "Abrir Partida",
@@ -99,6 +99,12 @@
       "short_name": "Prova",
       "url": "./index.html#runtimeproof",
       "description": "Executar prova de abertura da criação, bloqueio de Dashboard vazio e validação mobile"
+    },
+    {
+      "name": "Início Limpo e Deploy",
+      "short_name": "Limpo",
+      "url": "./index.html#cleanstart",
+      "description": "Verificar build, limpar cache antigo, resetar primeiro acesso e abrir criação obrigatória"
     }
   ]
 }
