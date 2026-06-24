@@ -1,10 +1,10 @@
 {
   "appName": "Vale Games Tennis Manager",
-  "version": "4.2.0",
-  "build": "20260624-145253",
-  "phase": "Full Start Screen Rebuild & Career Creator 2.0",
-  "builtAt": "2026-06-24T14:52:53-03:00",
+  "version": "4.3.0",
+  "build": "20260624-151806",
+  "phase": "Academy Facilities Expansion",
+  "builtAt": "2026-06-24T15:18:06-03:00",
   "date": "24/06/2026",
-  "time": "14:52:53",
-  "schemaVersion": 39
+  "time": "15:18:06",
+  "schemaVersion": 40
 }

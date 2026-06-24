@@ -1,7 +1,7 @@
 {
   "name": "Vale Games Tennis Manager",
   "short_name": "Vale Tennis",
-  "start_url": "./index.html?v=4.2.0-20260624-145253#start",
+  "start_url": "./index.html?v=4.3.0-20260624-151806#start",
   "display": "standalone",
   "background_color": "#08101d",
   "theme_color": "#08101d",
@@ -14,13 +14,19 @@
     }
   ],
   "id": "vale-games-tennis-manager",
-  "description": "Simulador mobile-first de gestão de tênis com tela inicial premium reconstruída, criador de carreira 2.0, hard reset guiado, cache protegido, torneios, economia e bloqueio contra Dashboard vazio.",
+  "description": "Simulador mobile-first de gestão de tênis com tela inicial premium, Career Creator 2.0, expansão avançada da academia, instalações, manutenção, impacto esportivo-financeiro e bloqueio contra Dashboard vazio.",
   "shortcuts": [
     {
       "name": "Tela Inicial Premium",
       "short_name": "Início 2.0",
       "url": "./index.html?start=1#startscreen",
       "description": "Abrir a tela inicial premium com Nova Carreira, Continuar e Recuperar"
+    },
+    {
+      "name": "Instalações da Academia",
+      "short_name": "Instalações",
+      "url": "./index.html#facilitiespro",
+      "description": "Abrir expansão de quadras, centro físico, médico, análise, alojamento, marketing e manutenção"
     },
     {
       "name": "Abrir Partida",
@@ -81,42 +87,6 @@
       "short_name": "Cache",
       "url": "./index.html#cacheguard",
       "description": "Confirmar build carregada, limpar caches antigos e registrar atualização PWA"
-    },
-    {
-      "name": "Verificar Criação de Carreira",
-      "short_name": "Criar",
-      "url": "./index.html#setupverify",
-      "description": "Testar nome, país, avatar, botão criar e primeiro acesso"
-    },
-    {
-      "name": "Gate Inicial Obrigatório",
-      "short_name": "Gate",
-      "url": "./index.html#initialgate",
-      "description": "Verificar criação obrigatória, base jogável e bloqueio de Dashboard vazio"
-    },
-    {
-      "name": "Launcher Obrigatório de Carreira",
-      "short_name": "Criar",
-      "url": "./index.html#initialgate",
-      "description": "Forçar criação de carreira, avatar, nome da academia e reparo de save inválido"
-    },
-    {
-      "name": "Prova Mobile do Onboarding",
-      "short_name": "Prova",
-      "url": "./index.html#runtimeproof",
-      "description": "Executar prova de abertura da criação, bloqueio de Dashboard vazio e validação mobile"
-    },
-    {
-      "name": "Início Limpo e Deploy",
-      "short_name": "Limpo",
-      "url": "./index.html#cleanstart",
-      "description": "Verificar build, limpar cache antigo, resetar primeiro acesso e abrir criação obrigatória"
-    },
-    {
-      "name": "Hard Reset e Onboarding",
-      "short_name": "Reset",
-      "url": "./index.html?hardreset=1#emergencystart",
-      "description": "Abrir reset controlado, limpar cache e forçar nova criação de carreira"
     }
   ]
 }

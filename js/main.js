@@ -603,6 +603,34 @@ function withMatchGuard(label, fn) {
 }
 
 
+
+
+const FACILITY_DEFINITIONS = {
+  courtsHard: { title: 'Quadras rápidas', icon: '🎾', desc: 'Base competitiva para piso duro, saque, devolução e calendário global.', area: 'quadras', baseCost: 42000, maintenance: 1700, impact: { training: 1.6, reputation: 1.0, match: 0.8 } },
+  courtsClay: { title: 'Quadras de saibro', icon: '🧱', desc: 'Rallies longos, resistência, paciência e formação de atletas completos.', area: 'quadras', baseCost: 52000, maintenance: 2100, impact: { stamina: 1.4, injury: -0.4, training: 0.8 } },
+  courtsGrass: { title: 'Quadra de grama', icon: '🌱', desc: 'Especialização premium para saque, rede e torneios rápidos.', area: 'quadras', baseCost: 76000, maintenance: 3200, impact: { serve: 1.5, reputation: 1.4, match: 0.9 } },
+  training: { title: 'Centro técnico', icon: '🏋️', desc: 'Melhora evolução técnica, consistência, potência e carga de treino.', area: 'performance', baseCost: 36000, maintenance: 1500, impact: { training: 2.2, morale: 0.4 } },
+  gym: { title: 'Centro físico', icon: '💪', desc: 'Força, velocidade, resistência e proteção contra queda física.', area: 'performance', baseCost: 48000, maintenance: 1900, impact: { stamina: 1.5, injury: -0.6, recovery: 0.6 } },
+  medical: { title: 'Centro médico', icon: '🩺', desc: 'Recuperação, prevenção de lesões e retorno seguro ao circuito.', area: 'saúde', baseCost: 44000, maintenance: 1700, impact: { recovery: 2.0, injury: -1.2 } },
+  dormitory: { title: 'Alojamento', icon: '🏠', desc: 'Moral, descanso e integração da equipe em semanas longas.', area: 'bem-estar', baseCost: 39000, maintenance: 1400, impact: { morale: 1.2, recovery: 0.5 } },
+  analytics: { title: 'Sala de análise', icon: '📊', desc: 'Vídeo, scouting tático e leitura de adversários no Match Center.', area: 'inteligência', baseCost: 55000, maintenance: 2100, impact: { match: 1.8, scouting: 1.2 } },
+  scouting: { title: 'Departamento de scouting', icon: '🌍', desc: 'Amplia leitura de mercado, jovens talentos e oportunidades globais.', area: 'mercado', baseCost: 37000, maintenance: 1300, impact: { scouting: 2.1, finance: 0.4 } },
+  marketing: { title: 'Marketing e mídia', icon: '📣', desc: 'Aumenta reputação, propostas comerciais e valor de patrocinadores.', area: 'negócio', baseCost: 46000, maintenance: 1600, impact: { reputation: 1.8, finance: 1.2 } },
+  finance: { title: 'Diretoria financeira', icon: '💼', desc: 'Controle de custos, contratos, patrocinadores e risco de caixa.', area: 'negócio', baseCost: 34000, maintenance: 1200, impact: { finance: 2.0, costs: -0.6 } },
+  maintenance: { title: 'Manutenção operacional', icon: '🛠️', desc: 'Reduz degradação das instalações e evita perda de reputação.', area: 'operação', baseCost: 30000, maintenance: 900, impact: { costs: -0.4, reputation: 0.5 } }
+};
+const FACILITY_MAINTENANCE_MODES = {
+  economy: { label: 'Econômico', cost: 0.72, decay: 1.45, morale: -0.6, desc: 'Corta custos, mas aumenta desgaste e reduz conforto.' },
+  balanced: { label: 'Equilibrado', cost: 1, decay: 1, morale: 0, desc: 'Mantém estrutura estável com custo controlado.' },
+  premium: { label: 'Premium', cost: 1.28, decay: 0.55, morale: 0.9, desc: 'Maior custo, melhor conforto e menor risco de degradação.' }
+};
+const FACILITY_UPGRADE_PLANS = {
+  performance: { label: 'Alta performance', focus: ['training','gym','medical','analytics'], desc: 'Treino, físico, saúde e análise para elevar atletas.' },
+  commercial: { label: 'Comercial', focus: ['marketing','finance','courtsHard','dormitory'], desc: 'Reputação, patrocínios, receitas e experiência premium.' },
+  scouting: { label: 'Base global', focus: ['scouting','courtsClay','dormitory','analytics'], desc: 'Captação, formação e calendário internacional.' },
+  surfaces: { label: 'Especialista em pisos', focus: ['courtsHard','courtsClay','courtsGrass','training'], desc: 'Preparação por superfície e identidade esportiva.' }
+};
+
 const OWNER_AVATARS = PLAYER_AVATARS;
 const SETUP_SAFE_TABS = new Set(['startscreen','setupverify','initialgate','runtimeproof','cleanstart','emergencystart','onboarding','cacheguard','input','a11y','helpcenter','diagnostics','compat','qa','polish','delivery','release','localization','adminhint','mobileux']);
 
@@ -1440,15 +1468,15 @@ function renderForcedOnboardingGate() {
     ['Modal obrigatório', snap.setupComplete || snap.modalVisible, snap.modalVisible ? 'Aberto em tela cheia' : 'Será forçado no próximo clique/boot'],
     ['Build atual', true, BUILD_LABEL]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.2.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.3.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
 }
 window.forceOnboardingLauncher = forceOnboardingLauncher;
 window.forceRepairInvalidCareer = () => {
-  rebuildPlayableCareer('reparo forçado pelo launcher v4.2.0');
+  rebuildPlayableCareer('reparo forçado pelo launcher v4.3.0');
   ensureForcedOnboardingGateSystem().lastRepairAt = new Date().toISOString();
   saveState(state);
   render();
-  forceOnboardingLauncher('base recriada pelo launcher v4.2.0');
+  forceOnboardingLauncher('base recriada pelo launcher v4.3.0');
 };
 window.auditForcedOnboardingGate = () => {
   const snap = forcedOnboardingSnapshot();
@@ -1545,13 +1573,13 @@ function renderOnboardingRuntimeProof() {
     ['Perfil obrigatório', !snap.issues.some(x => /nome|avatar|país|academia|cidade|criação/.test(x)), snap.issues.join(', ') || 'Nome, avatar, país, cidade e academia OK'],
     ['Overlay de bloqueio', !snap.invalid || snap.lockVisible || snap.modalVisible, snap.lockVisible ? 'Ativo' : (snap.modalVisible ? 'Modal cobre a tela' : 'Inativo')]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.2.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.3.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
 }
 window.runOnboardingRuntimeProof = () => {
   const before = onboardingRuntimeProofSnapshot();
   if (before.invalid) {
     syncOnboardingRuntimeLock('prova manual');
-    forceOnboardingLauncher('prova runtime v4.2.0');
+    forceOnboardingLauncher('prova runtime v4.3.0');
   }
   setTimeout(() => {
     const after = onboardingRuntimeProofSnapshot();
@@ -1656,7 +1684,7 @@ function renderCleanStartWizard() {
     ['Criação aparece quando precisa', !snap.invalidCareer || snap.modalVisible || SETUP_SAFE_TABS.has(snap.currentTab), snap.modalVisible ? 'Modal visível' : `Tab atual: ${snap.currentTab}`],
     ['Base jogável', snap.roster > 0 && snap.ranking >= 5 && snap.calendar >= 4 && snap.money > 0, `${snap.roster} atletas • ${snap.ranking} ranking • ${snap.calendar} eventos • caixa ${money(snap.money)}`]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.2.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.3.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
 }
 window.runCleanStartAudit = () => {
   const snap = cleanStartWizardSnapshot();
@@ -1686,7 +1714,7 @@ window.guidedCleanFirstRun = () => {
   saveState(state);
   addLog('Início limpo guiado aplicado. A criação de carreira foi aberta novamente.');
   render();
-  forceOnboardingLauncher('início limpo guiado v4.2.0');
+  forceOnboardingLauncher('início limpo guiado v4.3.0');
 };
 window.cleanOldCachesAndReload = async () => {
   const wizard = ensureCleanStartWizardSystem();
@@ -1782,7 +1810,7 @@ function showStandaloneStartupShield(reason='carreira inválida') {
     document.body.appendChild(shield);
   }
   const issues = invalidCareerIssues(state);
-  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.2.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.2.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
+  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.3.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.3.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
   shield.classList.remove('hidden');
   ensureEmergencyStartControlSystem().startupShieldVisible = true;
   saveState(state);
@@ -1801,7 +1829,7 @@ function applyEmergencyStartRoute() {
     return;
   }
   if (!careerIsPlayableAndConfigured(state)) {
-    setTimeout(() => { launchStartScreenV2('boot v4.2.0 detectou carreira incompleta'); }, 320);
+    setTimeout(() => { launchStartScreenV2('boot v4.3.0 detectou carreira incompleta'); }, 320);
   }
 }
 function renderEmergencyStartControl() {
@@ -1818,7 +1846,7 @@ function renderEmergencyStartControl() {
     ['Dados da academia', !!(snap.owner && snap.academy && snap.city && snap.avatar), `${snap.owner || 'sem treinador'} • ${snap.academy || 'sem academia'} • ${snap.city || 'sem cidade'}`],
     ['Armazenamento local', snap.storageWritable, snap.storageWritable ? 'localStorage OK' : 'Navegador bloqueou save local.']
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.2.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.2.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.3.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.3.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.hardResetFirstRun = async (reason='hard reset guiado') => {
   const esc = ensureEmergencyStartControlSystem();
@@ -1947,8 +1975,8 @@ window.openMandatoryCareerSetup = () => {
 };
 window.repairMandatoryEmptySave = () => {
   ensureMandatoryCareerGateSystem().repairCount = (ensureMandatoryCareerGateSystem().repairCount || 0) + 1;
-  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.2.0');
-  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.2.0';
+  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.3.0');
+  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.3.0';
   saveState(state); render(); openOwnerSetup(true);
 };
 window.auditMandatoryCareerGate = () => {
@@ -2329,7 +2357,7 @@ function renderCareerCreationUXHub() {
     <section class="release-grid"><article class="panel-card"><h4>Valores atuais do formulário</h4><div class="list-block"><div class="list-item"><span>Treinador</span><strong>${escapeHtml(snap.values.name || '—')}</strong></div><div class="list-item"><span>Academia</span><strong>${escapeHtml(snap.values.academy || '—')}</strong></div><div class="list-item"><span>País</span><strong>${escapeHtml(snap.values.country || '—')}</strong></div><div class="list-item"><span>Cidade</span><strong>${escapeHtml(snap.values.city || '—')}</strong></div></div></article><article class="panel-card"><h4>Últimas verificações</h4><div class="list-block">${(ux.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum teste executado nesta build.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.forceSetupModalNow = () => {
-  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.2.0');
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.3.0');
   state.flags ||= {}; state.flags.ownerSetupComplete = false;
   ensureCareerCreationUXSystem().firstRunVerified = false;
   saveState(state); render(); forceOnboardingLauncher('abertura manual pela aba Criação');
@@ -2344,7 +2372,7 @@ window.auditCareerCreationUX = () => {
   renderCareerCreationUXHub(); addLog(`Auditoria de criação de carreira: ${score}/100.`);
 };
 window.startFreshSetupSafely = () => {
-  backupBrokenCareer('reset guiado v4.2.0 solicitado pelo usuário');
+  backupBrokenCareer('reset guiado v4.3.0 solicitado pelo usuário');
   clearState();
   state = buildInitialState(content);
   migrateState();
@@ -2589,7 +2617,7 @@ async function boot() {
   handleStartupHash();
   if (startupStatus !== 'ok' || !careerIsPlayableAndConfigured(state)) launchStartScreenV2(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
   setTimeout(() => window.runOnboardingRuntimeProof?.(), 380);
-  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.2.0'); }, 1800);
+  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.3.0'); }, 1800);
 }
 
 function applyAdminOverrides(content) {
@@ -2899,7 +2927,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { startscreen: 'office', dashboard: 'office', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -2996,6 +3024,7 @@ function render() {
   renderCareerRecoveryBanner();
   renderStartScreenV2();
   renderVisualAcademy();
+  renderAcademyFacilitiesPro();
   updateSceneForTab(state.ui?.currentTab || 'dashboard');
   $('#reputationLabel').textContent = state.academy.reputation;
   $('#sponsorLabel').textContent = money(calculateSponsor());
@@ -4784,7 +4813,7 @@ function ensureHelpCenterSystem() {
 function helpCenterSnapshot() {
   const help = ensureHelpCenterSystem();
   const tabs = [...document.querySelectorAll('.tab-panel')].map(p=>p.id.replace('tab-',''));
-  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md','ONBOARDING_RUNTIME_PROOF_CHECKLIST_v4.2.0.md'];
+  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md','ONBOARDING_RUNTIME_PROOF_CHECKLIST_v4.3.0.md'];
   const checklist = help.onboardingChecklist || {};
   const done = Object.values(checklist).filter(Boolean).length;
   const total = Math.max(1, Object.keys(checklist).length);
@@ -4932,21 +4961,109 @@ function renderHealth() {
 }
 
 
+
+function ensureAcademyFacilitiesPro() {
+  state.academy ||= {};
+  state.academy.facilities ||= {};
+  const defaults = { training:1, medical:1, finance:1, scouting:1, courtsHard:1, courtsClay:0, courtsGrass:0, gym:1, dormitory:0, analytics:0, marketing:0, maintenance:1 };
+  Object.entries(defaults).forEach(([key, value]) => { state.academy.facilities[key] ??= value; });
+  state.academyFacilitiesPro ||= { score: 76, maintenanceMode: 'balanced', upgradePlan: 'performance', lastProcessedToken: null, lastAuditToken: null, auditLog: [], projectQueue: [], flags: { realMaintenance: true, trainingImpact: true, medicalImpact: true, financeImpact: true, mobileFacilityCards: true } };
+  const fp = state.academyFacilitiesPro;
+  fp.score ??= 76; fp.maintenanceMode ||= 'balanced'; fp.upgradePlan ||= 'performance'; fp.auditLog ||= []; fp.projectQueue ||= [];
+  fp.flags ||= { realMaintenance: true, trainingImpact: true, medicalImpact: true, financeImpact: true, mobileFacilityCards: true };
+  return fp;
+}
+function facilityLevel(key) { ensureAcademyFacilitiesPro(); return Number(state.academy.facilities?.[key] || 0); }
+function facilityTotalLevel() { ensureAcademyFacilitiesPro(); return Object.keys(FACILITY_DEFINITIONS).reduce((sum, key) => sum + facilityLevel(key), 0); }
+function facilityUpgradeCost(key) {
+  const def = FACILITY_DEFINITIONS[key] || FACILITY_DEFINITIONS.training;
+  const level = facilityLevel(key);
+  const prestigeTax = Math.max(0, Math.round((state.academy.reputation || 0) * 140));
+  return Math.round(def.baseCost * (level + 1) * (1 + level * 0.18) + prestigeTax);
+}
+function facilityLinkedStaff(key) {
+  const map = { training:'Tecnico', gym:'Preparador Fisico', medical:'Fisioterapeuta', finance:'Financeiro', scouting:'Psicologo', analytics:'Analista', marketing:'Financeiro', dormitory:'Nutricionista' };
+  return state.staff?.[map[key]] || null;
+}
+function facilityEffectSnapshot() {
+  ensureAcademyFacilitiesPro();
+  const f = state.academy.facilities || {};
+  const mode = FACILITY_MAINTENANCE_MODES[state.academyFacilitiesPro.maintenanceMode] || FACILITY_MAINTENANCE_MODES.balanced;
+  const training = (f.training || 0) * 2.2 + (f.courtsHard || 0) * 0.8 + (f.courtsClay || 0) * 0.7 + (f.courtsGrass || 0) * 0.6 + (f.analytics || 0) * 0.5;
+  const recovery = (f.medical || 0) * 2 + (f.gym || 0) * 0.9 + (f.dormitory || 0) * 0.8;
+  const reputation = (f.marketing || 0) * 1.8 + (f.courtsGrass || 0) * 1.4 + (f.courtsHard || 0) * 0.8 + (f.maintenance || 0) * 0.4;
+  const finance = (f.finance || 0) * 2 + (f.marketing || 0) * 1.1 + (f.scouting || 0) * 0.3;
+  const scouting = (f.scouting || 0) * 2.2 + (f.analytics || 0) * 0.9;
+  const maintenance = Math.max(0, Object.entries(f).reduce((sum, [key, level]) => sum + ((FACILITY_DEFINITIONS[key]?.maintenance || 1100) * Number(level || 0)), 0) * mode.cost);
+  const score = clamp(Math.round(38 + facilityTotalLevel() * 3.2 + training * 0.8 + recovery * 0.5 + reputation * 0.6 - (mode.cost > 1 ? 2 : 0)), 0, 100);
+  return { training, recovery, reputation, finance, scouting, maintenance: Math.round(maintenance), score, mode };
+}
+function facilityWeeklyMaintenance() { return facilityEffectSnapshot().maintenance; }
+function academyFacilityRecommendation() {
+  ensureAcademyFacilitiesPro();
+  const plan = FACILITY_UPGRADE_PLANS[state.academyFacilitiesPro.upgradePlan] || FACILITY_UPGRADE_PLANS.performance;
+  const candidate = plan.focus.map(key => ({ key, level: facilityLevel(key), cost: facilityUpgradeCost(key), def: FACILITY_DEFINITIONS[key] })).sort((a,b)=>a.level-b.level || a.cost-b.cost)[0];
+  return candidate || { key:'training', level:facilityLevel('training'), cost:facilityUpgradeCost('training'), def:FACILITY_DEFINITIONS.training };
+}
+function renderAcademyFacilitiesPro() {
+  const host = $('#academyFacilitiesProHub');
+  if (!host) return;
+  const fp = ensureAcademyFacilitiesPro();
+  const fx = facilityEffectSnapshot();
+  fp.score = fx.score;
+  const rec = academyFacilityRecommendation();
+  const modeOptions = Object.entries(FACILITY_MAINTENANCE_MODES).map(([key, item]) => `<button class="mini-btn ${fp.maintenanceMode===key?'active':''}" onclick="window.setFacilitiesMaintenanceMode('${key}')">${item.label}</button>`).join('');
+  const planOptions = Object.entries(FACILITY_UPGRADE_PLANS).map(([key, item]) => `<button class="mini-btn ${fp.upgradePlan===key?'active':''}" onclick="window.setFacilitiesUpgradePlan('${key}')">${item.label}</button>`).join('');
+  const cards = Object.entries(FACILITY_DEFINITIONS).map(([key, def]) => {
+    const level = facilityLevel(key);
+    const staff = facilityLinkedStaff(key);
+    return `<article class="facility-pro-card panel-card ${level ? '' : 'locked'}">
+      <div class="facility-pro-top"><span class="facility-pro-icon">${def.icon}</span><div><h4>${def.title}</h4><p>${def.desc}</p></div></div>
+      <div class="facility-pro-metrics"><span>Nível <b>${level}</b></span><span>Manutenção <b>${money((def.maintenance || 0) * level)}</b></span><span>${staff ? `Staff <b>${escapeHtml(staff.name)}</b>` : `<b>${def.area}</b>`}</span></div>
+      <div class="facility-progress"><span style="width:${Math.min(100, level*18+8)}%"></span></div>
+      <button class="btn-secondary" onclick="window.upgradeFacility('${key}')">Evoluir ${money(facilityUpgradeCost(key))}</button>
+    </article>`;
+  }).join('');
+  const log = (fp.auditLog || []).slice(0,6).map(item => `<div class="list-item"><div><strong>${escapeHtml(item.title || 'Instalação')}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || '')}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria executada nesta build.</span><strong>Pronto</strong></div>';
+  host.innerHTML = `<section class="release-score-grid facilities-score-grid"><article class="release-score ${fx.score>=80?'ok':'pending'}"><span>Infraestrutura</span><strong>${fx.score}</strong><small>score</small></article><article class="release-score ok"><span>Treino</span><strong>+${fx.training.toFixed(1)}</strong><small>impacto</small></article><article class="release-score ok"><span>Recuperação</span><strong>+${fx.recovery.toFixed(1)}</strong><small>saúde</small></article><article class="release-score pending"><span>Custo semanal</span><strong>${money(fx.maintenance)}</strong><small>${fx.mode.label}</small></article></section>
+  <section class="release-grid"><article class="panel-card"><h4>Política de manutenção</h4><p class="muted">${fx.mode.desc}</p><div class="tag-row">${modeOptions}</div></article><article class="panel-card"><h4>Plano de expansão</h4><p class="muted">${(FACILITY_UPGRADE_PLANS[fp.upgradePlan]||FACILITY_UPGRADE_PLANS.performance).desc}</p><div class="tag-row">${planOptions}</div></article><article class="panel-card"><h4>Recomendação</h4><p>Próximo upgrade sugerido: <strong>${rec.def.icon} ${rec.def.title}</strong></p><p class="muted">Nível atual ${rec.level} • custo ${money(rec.cost)}</p><button class="btn-primary" onclick="window.upgradeFacility('${rec.key}')">Executar recomendação</button></article></section>
+  <section class="facilities-pro-grid">${cards}</section>
+  <section class="release-grid"><article class="panel-card"><h4>Impactos diretos</h4><div class="list-block"><div class="list-item"><span>Treino semanal</span><strong>+${fx.training.toFixed(1)}</strong></div><div class="list-item"><span>Recuperação/saúde</span><strong>+${fx.recovery.toFixed(1)}</strong></div><div class="list-item"><span>Reputação/patrocínio</span><strong>+${fx.reputation.toFixed(1)}</strong></div><div class="list-item"><span>Scouting e análise</span><strong>+${fx.scouting.toFixed(1)}</strong></div></div></article><article class="panel-card"><div class="panel-title-row"><h4>Auditoria</h4><button class="mini-btn" onclick="window.runFacilitiesAudit()">Auditar</button></div><div class="list-block">${log}</div><div class="tag-row"><button class="btn-secondary" onclick="window.exportFacilitiesReport()">Exportar relatório</button></div></article></section>`;
+}
+function processFacilitiesWeek() {
+  const fp = ensureAcademyFacilitiesPro();
+  const token = `${state.academy.season}-${state.academy.week}`;
+  if (fp.lastProcessedToken === token) return;
+  const fx = facilityEffectSnapshot();
+  state.roster.forEach(player => {
+    player.morale = clamp((player.morale || 70) + (facilityLevel('dormitory') * 0.2) + fx.mode.morale, 25, 100);
+    player.health = clamp((player.health || 75) + facilityLevel('medical') * 0.18 + facilityLevel('gym') * 0.12, 30, 100);
+    player.fatigue = Math.max(0, (player.fatigue || 0) - facilityLevel('dormitory') * 0.12 - facilityLevel('medical') * 0.1);
+  });
+  if (state.academy.week % 4 === 0) state.academy.reputation += Math.max(0, Math.round(fx.reputation / 8));
+  fp.lastProcessedToken = token;
+  fp.auditLog.unshift({ title: 'Semana de instalações processada', result: `score ${fx.score}`, note: `Manutenção ${money(fx.maintenance)} • treino +${fx.training.toFixed(1)} • recuperação +${fx.recovery.toFixed(1)}`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  fp.auditLog = fp.auditLog.slice(0, 24);
+}
+window.setFacilitiesMaintenanceMode = (mode) => { const fp = ensureAcademyFacilitiesPro(); if (!FACILITY_MAINTENANCE_MODES[mode]) return; fp.maintenanceMode = mode; fp.auditLog.unshift({ title: 'Manutenção alterada', result: FACILITY_MAINTENANCE_MODES[mode].label, note: FACILITY_MAINTENANCE_MODES[mode].desc, at: new Date().toISOString(), build: BUILD_INFO.build }); saveState(state); renderAcademyFacilitiesPro(); };
+window.setFacilitiesUpgradePlan = (plan) => { const fp = ensureAcademyFacilitiesPro(); if (!FACILITY_UPGRADE_PLANS[plan]) return; fp.upgradePlan = plan; fp.auditLog.unshift({ title: 'Plano de expansão alterado', result: FACILITY_UPGRADE_PLANS[plan].label, note: FACILITY_UPGRADE_PLANS[plan].desc, at: new Date().toISOString(), build: BUILD_INFO.build }); saveState(state); renderAcademyFacilitiesPro(); };
+window.runFacilitiesAudit = () => { const fp = ensureAcademyFacilitiesPro(); const fx = facilityEffectSnapshot(); fp.score = fx.score; fp.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`; fp.auditLog.unshift({ title: 'Auditoria de infraestrutura concluída', result: `${fx.score}/100`, note: `Total nível ${facilityTotalLevel()} • custo semanal ${money(fx.maintenance)} • modo ${fx.mode.label}.`, at: new Date().toISOString(), build: BUILD_INFO.build }); fp.auditLog = fp.auditLog.slice(0,24); addLog(`Instalações v${BUILD_INFO.version}: auditoria ${fx.score}/100.`); saveState(state); renderAcademyFacilitiesPro(); renderFacilities(); };
+window.exportFacilitiesReport = () => { const fp = ensureAcademyFacilitiesPro(); const payload = { app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, schema: BUILD_INFO.schemaVersion, generatedAt: new Date().toISOString(), facilities: state.academy.facilities, score: facilityEffectSnapshot(), maintenanceMode: fp.maintenanceMode, upgradePlan: fp.upgradePlan, auditLog: fp.auditLog, privacy: 'Relatório local. Nenhum dado é enviado para servidor.' }; try { const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `vale-tennis-facilities-${BUILD_INFO.version}-${BUILD_INFO.build}.json`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); } catch (error) { console.info('Facilities report', payload, error); } fp.auditLog.unshift({ title:'Relatório exportado', result:'JSON', note:'Diagnóstico local das instalações gerado.', at:payload.generatedAt, build:BUILD_INFO.build }); saveState(state); renderAcademyFacilitiesPro(); };
+
 function renderFacilities() {
-  const map = {
-    training: { title: 'Centro de Treino', staff: state.staff.Tecnico, avatar: STAFF_AVATARS['Tecnico'], desc: 'Evolução técnica, potência e consistência.' },
-    medical: { title: 'Centro Médico', staff: state.staff.Fisioterapeuta, avatar: STAFF_AVATARS['Fisioterapeuta'], desc: 'Recuperação, prevenção e gestão física.' },
-    finance: { title: 'Financeiro', staff: state.staff.Financeiro, avatar: STAFF_AVATARS['Financeiro'], desc: 'Patrocínio, caixa e acordos estratégicos.' },
-    scouting: { title: 'Scouting', staff: state.staff.Psicologo, avatar: STAFF_AVATARS['Psicologo'], desc: 'Leitura de mercado e novos perfis.' }
-  };
-  $('#facilityList').innerHTML = Object.entries(state.academy.facilities).map(([key, level]) => {
-    const info = map[key];
-    const cost = (level + 1) * 18000;
+  const host = $('#facilityList');
+  if (!host) return;
+  ensureAcademyFacilitiesPro();
+  const entries = Object.entries(state.academy.facilities || {}).filter(([key]) => FACILITY_DEFINITIONS[key]).slice(0, 12);
+  host.innerHTML = entries.map(([key, level]) => {
+    const info = FACILITY_DEFINITIONS[key];
+    const cost = facilityUpgradeCost(key);
+    const staff = facilityLinkedStaff(key);
     return `
     <article class="facility-card panel-card">
-      <div class="facility-head">${avatarImg(info.avatar,'avatar-img',info.title)}<div><h4>${info.title}</h4><p class="muted">${info.desc}</p></div></div>
-      <div class="facility-level-row"><span class="metric">Nível ${level}</span><span class="metric">Staff ${info.staff ? info.staff.name : 'vago'}</span></div>
-      <div class="facility-progress"><span style="width:${Math.min(100, level*20 + 10)}%"></span></div>
+      <div class="facility-head"><div class="facility-icon">${info.icon}</div><div><h4>${info.title}</h4><p class="muted">${info.desc}</p></div></div>
+      <div class="facility-level-row"><span class="metric">Nível ${level}</span><span class="metric">${staff ? `Staff ${staff.name}` : info.area}</span></div>
+      <div class="facility-progress"><span style="width:${Math.min(100, level*16 + 12)}%"></span></div>
       <button class="btn-secondary facility-upgrade-btn" onclick="window.upgradeFacility('${key}')">Upgrade ${money(cost)}</button>
     </article>`;
   }).join('');
@@ -4958,13 +5075,21 @@ window.openTournamentIdentity = openTournamentIdentity;
 window.closeTournamentIdentity = closeTournamentIdentity;
 
 window.upgradeFacility = (key) => {
-  const level = state.academy.facilities[key];
-  const cost = (level + 1) * 18000;
-  if (state.academy.money < cost) return addLog('Caixa insuficiente para upgrade.');
+  ensureAcademyFacilitiesPro();
+  if (!FACILITY_DEFINITIONS[key]) return addLog('Instalação não encontrada.');
+  const level = facilityLevel(key);
+  const cost = facilityUpgradeCost(key);
+  if (state.academy.money < cost) return addLog(`Caixa insuficiente para upgrade em ${FACILITY_DEFINITIONS[key].title}.`);
   state.academy.money -= cost;
-  state.academy.facilities[key] += 1;
-  state.academy.reputation += 2;
-  addLog(`Upgrade concluído em ${key}.`);
+  state.academy.facilities[key] = level + 1;
+  const fx = facilityEffectSnapshot();
+  state.academy.reputation += key === 'marketing' || key === 'courtsGrass' ? 3 : 1;
+  state.academyFacilitiesPro.score = fx.score;
+  state.academyFacilitiesPro.auditLog.unshift({ title: `Upgrade: ${FACILITY_DEFINITIONS[key].title}`, result: `Nível ${level + 1}`, note: `Investimento ${money(cost)} • manutenção projetada ${money(fx.maintenance)}.`, at: new Date().toISOString(), build: BUILD_INFO.build });
+  state.academyFacilitiesPro.auditLog = state.academyFacilitiesPro.auditLog.slice(0, 24);
+  state.summary.unshift(`${FACILITY_DEFINITIONS[key].title} evoluiu para nível ${level + 1}. Impacto estrutural aplicado.`);
+  state.summary = state.summary.slice(0, 8);
+  addLog(`Upgrade concluído em ${FACILITY_DEFINITIONS[key].title}.`);
   render();
   hydrateAssetImages();
 };
@@ -6299,6 +6424,7 @@ function advanceWeek() {
   const weeklyCosts = calculateWeeklyCosts();
   state.academy.money += weeklyIncome - weeklyCosts;
   processCommercialWeek(weeklyIncome, weeklyCosts);
+  processFacilitiesWeek();
   if (state.activeTournament && state.activeTournament.event.week < state.academy.week) state.activeTournament = null;
   state.roster.forEach(player => {
     const physio = getStaffBonus('Fisioterapeuta', 'recovery') + getStaffBonus('Nutricionista','recovery') + getStaffBonus('Preparador Fisico','recovery');
@@ -6431,14 +6557,16 @@ function calculateSponsor() {
   const base = state.academy.sponsor * (1 + state.academy.reputation / 140 + getStaffBonus('Financeiro', 'sponsor') / 100);
   const contracts = commercialWeeklySponsorBoost();
   const newsroomBoost = (state.newsroom?.sentiment || 62) > 70 ? 0.04 : (state.newsroom?.sentiment || 62) < 42 ? -0.05 : 0;
-  return Math.max(0, Math.round((base + contracts) * (1 + newsroomBoost)));
+  const facilitySponsorBoost = (state.academy?.facilities?.marketing || 0) * 0.012 + (state.academy?.facilities?.finance || 0) * 0.006;
+  return Math.max(0, Math.round((base + contracts) * (1 + newsroomBoost + facilitySponsorBoost)));
 }
 function calculateWeeklyCosts() {
   ensureCommercialCareerSystem();
   const salaries = state.roster.reduce((sum, p) => sum + p.salary, 0) + Object.values(state.staff).filter(Boolean).reduce((sum, s) => sum + s.salary, 0);
   const financeCut = getStaffBonus('Financeiro', 'costs');
   const investorFee = investorPressure() * 220;
-  return Math.round((state.academy.weeklyCosts + salaries + investorFee) * (1 - Math.abs(Math.min(0, financeCut)) / 100));
+  const facilityMaintenance = facilityWeeklyMaintenance();
+  return Math.round((state.academy.weeklyCosts + salaries + investorFee + facilityMaintenance) * (1 - Math.abs(Math.min(0, financeCut)) / 100));
 }
 function getStaffBonus(role, key) { const member = state.staff[role]; return member?.effects?.[key] || 0; }
 function getDepartmentBonus(key) { return Object.values(state.staff || {}).filter(Boolean).reduce((sum,m)=>sum+(m.effects?.[key]||0),0); }

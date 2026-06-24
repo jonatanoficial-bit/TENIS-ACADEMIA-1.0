@@ -5,7 +5,7 @@ const STORAGE_KEY = 'vale_tennis_manager_save';
 const LEGACY_KEYS = ['ace_academy_save_v040', 'ace-manager-save'];
 const BACKUP_KEY = 'vale_tennis_manager_save_backup';
 const CORRUPT_KEY = 'vale_tennis_manager_corrupt_save';
-const CURRENT_SCHEMA = 39;
+const CURRENT_SCHEMA = 40;
 
 const clone = (value) => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 
@@ -73,6 +73,19 @@ export function migrateSave(data) {
   state.academy.bankruptcyWarnings ??= 0;
   state.academy.owner ??= null;
   state.academy.careerProfile ??= null;
+  state.academy.facilities ||= {};
+  state.academy.facilities.training ??= 1;
+  state.academy.facilities.medical ??= 1;
+  state.academy.facilities.finance ??= 1;
+  state.academy.facilities.scouting ??= 1;
+  state.academy.facilities.courtsHard ??= 1;
+  state.academy.facilities.courtsClay ??= 0;
+  state.academy.facilities.courtsGrass ??= 0;
+  state.academy.facilities.gym ??= 1;
+  state.academy.facilities.dormitory ??= 0;
+  state.academy.facilities.analytics ??= 0;
+  state.academy.facilities.marketing ??= 0;
+  state.academy.facilities.maintenance ??= 1;
   state.flags.safeMode ??= false;
   state.ui.lastStableTab ??= state.ui.currentTab || 'dashboard';
   state.activeTournament ??= null;
@@ -487,6 +500,22 @@ export function migrateSave(data) {
   state.startScreenV2.flags.blockDashboardUntilValid ??= true;
   state.startScreenV2.flags.continueRequiresValidCareer ??= true;
   state.startScreenV2.flags.guidedRecovery ??= true;
+
+
+  state.academyFacilitiesPro ||= { score: 76, maintenanceMode: 'balanced', upgradePlan: 'performance', lastProcessedToken: null, lastAuditToken: null, auditLog: [], projectQueue: [], flags: { realMaintenance: true, trainingImpact: true, medicalImpact: true, financeImpact: true, mobileFacilityCards: true } };
+  state.academyFacilitiesPro.score ??= 76;
+  state.academyFacilitiesPro.maintenanceMode ||= 'balanced';
+  state.academyFacilitiesPro.upgradePlan ||= 'performance';
+  state.academyFacilitiesPro.lastProcessedToken ??= null;
+  state.academyFacilitiesPro.lastAuditToken ??= null;
+  state.academyFacilitiesPro.auditLog ||= [];
+  state.academyFacilitiesPro.projectQueue ||= [];
+  state.academyFacilitiesPro.flags ||= { realMaintenance: true, trainingImpact: true, medicalImpact: true, financeImpact: true, mobileFacilityCards: true };
+  state.academyFacilitiesPro.flags.realMaintenance ??= true;
+  state.academyFacilitiesPro.flags.trainingImpact ??= true;
+  state.academyFacilitiesPro.flags.medicalImpact ??= true;
+  state.academyFacilitiesPro.flags.financeImpact ??= true;
+  state.academyFacilitiesPro.flags.mobileFacilityCards ??= true;
 
   return state;
 }

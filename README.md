@@ -1,3 +1,22 @@
+# Vale Games Tennis Manager v4.3.0
+
+Build `20260624-151806` — Academy Facilities Expansion
+
+## v4.3.0 — Academy Facilities Expansion
+
+Esta fase expande a academia com uma camada de infraestrutura jogável: quadras por superfície, centro técnico, centro físico, centro médico, alojamento, análise, scouting, marketing, financeiro e manutenção operacional.
+
+Principais pontos:
+
+- Nova aba **Instalações**.
+- Sistema persistente `academyFacilitiesPro`.
+- Manutenção semanal real adicionada aos custos.
+- Política de manutenção: econômico, equilibrado ou premium.
+- Plano de expansão: alta performance, comercial, base global ou pisos.
+- Upgrades com custo progressivo, impacto em reputação, treino, recuperação, scouting e patrocínio.
+- Relatório local exportável em JSON.
+- Compatibilidade mantida com Dashboard, Treino, Economia, Match Center e PWA.
+
 # Vale Games Tennis Manager — v4.2.0
 
 Build `20260624-145253` — **Full Start Screen Rebuild & Career Creator 2.0**.
