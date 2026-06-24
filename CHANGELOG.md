@@ -1,16 +1,16 @@
 # Changelog
 
-## v4.1.7 — Clean Start Wizard & Deploy Verification Hotfix — 20260624-123742
+## v4.1.8 — Hard Reset Route & Standalone Onboarding Shield Hotfix — 20260624-142131
 
 - Nova aba `Início Limpo` para resolver cache/PWA preso, build antiga e primeiro acesso quebrado.
-- Novo sistema persistente `cleanStartWizard`, schema 37.
+- Novo sistema persistente `cleanStartWizard`, schema 38.
 - Verificação direta de build visível no topo, Service Worker, Cache API, save local e base jogável.
 - Botão **Início limpo guiado** com backup local antes de limpar/recriar o primeiro acesso.
 - Botão **Limpar cache e recarregar** para remover caches `vale-tennis-*` e abrir a build atual com cache-busting.
 - Botão **Abrir criação** integrado ao launcher obrigatório.
 - Exportação local de diagnóstico clean start em JSON.
 - Atalho PWA para `#cleanstart`.
-- Documentos adicionados: `AUDIT_v4.1.7.md` e `CLEAN_START_DEPLOY_CHECKLIST_v4.1.7.md`.
+- Documentos adicionados: `AUDIT_v4.1.8.md` e `CLEAN_START_DEPLOY_CHECKLIST_v4.1.8.md`.
 
 
 ## v4.1.6 — Onboarding Runtime Test & Mobile Proof Hotfix — 20260624-114913
@@ -368,3 +368,15 @@ Build: 20260620-121454 • Data/hora visível: 20/06/2026 12:14:54
 - Modal de criação passa a abrir obrigatoriamente quando a carreira ainda não tem dono/perfil.
 - Conteúdo JSON agora recebe cache-busting por build.
 - Ajustado espaço inferior mobile para evitar que dock/barra rápida cubram botões.
+
+## v4.1.8 — Hard Reset Route & Standalone Onboarding Shield Hotfix
+
+- Adicionada aba **Reset/Onboarding**.
+- Adicionado sistema persistente `emergencyStartControl`.
+- Adicionada rota de emergência `index.html?hardreset=1#emergencystart`.
+- Adicionado overlay independente de boot para bloquear Dashboard vazio quando o modal ainda não abriu.
+- Adicionado **Hard reset com backup** para limpar save parcial e reabrir criação de carreira.
+- Adicionado botão **Limpar cache + rota nova** para celular/PWA preso em build antiga.
+- Adicionada exportação local de diagnóstico emergencial.
+- Save migrado para schema 38.
+

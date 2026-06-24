@@ -1,16 +1,16 @@
-const CACHE_NAME = 'vale-tennis-v4.1.7-20260624-123742';
-const BUILD_VERSION = '4.1.7';
-const BUILD_ID = '20260624-123742';
+const CACHE_NAME = 'vale-tennis-v4.1.8-20260624-142131';
+const BUILD_VERSION = '4.1.8';
+const BUILD_ID = '20260624-142131';
 const CORE_ASSETS = [
   './',
-  './index.html?v=4.1.7-20260624-123742',
-  './css/styles.css?v=4.1.7-20260624-123742',
-  './js/main.js?v=4.1.7-20260624-123742',
-  './js/build.js?v=4.1.7-20260624-123742',
-  './js/contentLoader.js?v=4.1.7-20260624-123742',
-  './js/state.js?v=4.1.7-20260624-123742',
-  './build/build-info.json?v=4.1.7-20260624-123742',
-  './manifest.webmanifest?v=4.1.7-20260624-123742',
+  './index.html?v=4.1.8-20260624-142131',
+  './css/styles.css?v=4.1.8-20260624-142131',
+  './js/main.js?v=4.1.8-20260624-142131',
+  './js/build.js?v=4.1.8-20260624-142131',
+  './js/contentLoader.js?v=4.1.8-20260624-142131',
+  './js/state.js?v=4.1.8-20260624-142131',
+  './build/build-info.json?v=4.1.8-20260624-142131',
+  './manifest.webmanifest?v=4.1.8-20260624-142131',
   './assets/icons/icon.svg'
 ];
 
@@ -40,6 +40,10 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
+  if (url.searchParams.has('fresh') || url.searchParams.has('hardreset')) {
+    event.respondWith(fetch(req, { cache:'no-store' }));
+    return;
+  }
   if (url.pathname.endsWith('/build-info.json') || url.pathname.includes('/build/build-info.json')) {
     event.respondWith(fetch(req, { cache:'no-store' }).catch(() => caches.match(req)));
     return;
@@ -49,6 +53,6 @@ self.addEventListener('fetch', event => {
       const copy = response.clone();
       caches.open(CACHE_NAME).then(cache => cache.put(req, copy)).catch(() => {});
       return response;
-    }).catch(() => caches.match(req).then(match => match || caches.match('./index.html?v=4.1.7-20260624-123742')))
+    }).catch(() => caches.match(req).then(match => match || caches.match('./index.html?v=4.1.8-20260624-142131')))
   );
 });

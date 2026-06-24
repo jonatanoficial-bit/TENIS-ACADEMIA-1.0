@@ -1,7 +1,7 @@
 {
   "name": "Vale Games Tennis Manager",
   "short_name": "Vale Tennis",
-  "start_url": "./index.html?v=4.1.7-20260624-123742",
+  "start_url": "./index.html?v=4.1.8-20260624-142131",
   "display": "standalone",
   "background_color": "#08101d",
   "theme_color": "#08101d",
@@ -14,7 +14,7 @@
     }
   ],
   "id": "vale-games-tennis-manager",
-  "description": "Simulador mobile-first de gestão de tênis com início limpo guiado, verificação de deploy/cache, criação obrigatória de carreira, avatar, academia, torneios, economia e proteção contra Dashboard vazio.",
+  "description": "Simulador mobile-first de gestão de tênis com hard reset guiado, rota sem cache, criação obrigatória de carreira, avatar, academia, torneios, economia e proteção contra Dashboard vazio.",
   "shortcuts": [
     {
       "name": "Abrir Partida",
@@ -105,6 +105,12 @@
       "short_name": "Limpo",
       "url": "./index.html#cleanstart",
       "description": "Verificar build, limpar cache antigo, resetar primeiro acesso e abrir criação obrigatória"
+    },
+    {
+      "name": "Hard Reset e Onboarding",
+      "short_name": "Reset",
+      "url": "./index.html?hardreset=1#emergencystart",
+      "description": "Abrir reset controlado, limpar cache e forçar nova criação de carreira"
     }
   ]
 }
