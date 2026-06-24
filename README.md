@@ -1,3 +1,14 @@
+# Vale Games Tennis Manager — v4.5.0
+
+Build `20260624-154349` — Real Season Objectives & Board Pressure.
+
+## Destaques v4.5.0
+- Nova aba **Temporada**.
+- Metas reais por ambição: Sobrevivência, Profissional, Agressivo e Elite mundial.
+- Diretoria avalia ranking, caixa, reputação, títulos e fluxo semanal.
+- Pressão do board altera confiança, inbox, logs e reputação se a crise ficar alta.
+- Exportação JSON local do relatório de metas.
+
 # Vale Games Tennis Manager v4.4.0
 
 Build `20260624-152754` — Academy Facilities Expansion

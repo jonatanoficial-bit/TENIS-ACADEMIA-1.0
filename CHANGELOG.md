@@ -1,3 +1,13 @@
+## v4.5.0 — Real Season Objectives & Board Pressure
+
+Build `20260624-154349` • 24/06/2026 15:43:49 BRT • schema 42.
+
+- Adicionada aba **Temporada** com metas da diretoria e cobrança semanal.
+- Criado sistema `seasonBoardPressure` com score, confiança, pressão, ambição e histórico de revisões.
+- Metas passam a considerar melhor ranking, caixa mínimo, reputação, títulos e fluxo semanal.
+- Avançar semana processa avaliação da diretoria e gera alertas no inbox quando necessário.
+- Incluído relatório JSON local e checklist de auditoria v4.5.0.
+
 
 ## v4.4.0 — Academy Facilities Expansion (20260624-152754)
 

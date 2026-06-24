@@ -1,7 +1,7 @@
 {
   "name": "Vale Games Tennis Manager",
   "short_name": "Vale Tennis",
-  "start_url": "./index.html?v=4.4.0-20260624-152754#start",
+  "start_url": "./index.html?v=4.5.0-20260624-154349#start",
   "display": "standalone",
   "background_color": "#08101d",
   "theme_color": "#08101d",
@@ -14,7 +14,7 @@
     }
   ],
   "id": "vale-games-tennis-manager",
-  "description": "Simulador mobile-first de gestão de tênis com tela inicial premium, Career Creator 2.0, instalações avançadas e Broadcast 2D com heatmap, replay e leitura tática.",
+  "description": "Simulador mobile-first de gestão de tênis com tela inicial premium, instalações avançadas, Broadcast 2D e metas reais da temporada com pressão da diretoria.",
   "shortcuts": [
     {
       "name": "Tela Inicial Premium",
@@ -33,6 +33,12 @@
       "short_name": "2D Match",
       "url": "./index.html#broadcast2d",
       "description": "Abrir transmissão 2D com heatmap, câmera e leitura tática"
+    },
+    {
+      "name": "Metas da Temporada",
+      "short_name": "Metas",
+      "url": "./index.html#seasonboard",
+      "description": "Abrir objetivos reais, pressão da diretoria e avaliação semanal da temporada"
     },
     {
       "name": "Abrir Partida",

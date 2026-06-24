@@ -1482,15 +1482,15 @@ function renderForcedOnboardingGate() {
     ['Modal obrigatório', snap.setupComplete || snap.modalVisible, snap.modalVisible ? 'Aberto em tela cheia' : 'Será forçado no próximo clique/boot'],
     ['Build atual', true, BUILD_LABEL]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.4.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.5.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
 }
 window.forceOnboardingLauncher = forceOnboardingLauncher;
 window.forceRepairInvalidCareer = () => {
-  rebuildPlayableCareer('reparo forçado pelo launcher v4.4.0');
+  rebuildPlayableCareer('reparo forçado pelo launcher v4.5.0');
   ensureForcedOnboardingGateSystem().lastRepairAt = new Date().toISOString();
   saveState(state);
   render();
-  forceOnboardingLauncher('base recriada pelo launcher v4.4.0');
+  forceOnboardingLauncher('base recriada pelo launcher v4.5.0');
 };
 window.auditForcedOnboardingGate = () => {
   const snap = forcedOnboardingSnapshot();
@@ -1587,13 +1587,13 @@ function renderOnboardingRuntimeProof() {
     ['Perfil obrigatório', !snap.issues.some(x => /nome|avatar|país|academia|cidade|criação/.test(x)), snap.issues.join(', ') || 'Nome, avatar, país, cidade e academia OK'],
     ['Overlay de bloqueio', !snap.invalid || snap.lockVisible || snap.modalVisible, snap.lockVisible ? 'Ativo' : (snap.modalVisible ? 'Modal cobre a tela' : 'Inativo')]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.4.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.5.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
 }
 window.runOnboardingRuntimeProof = () => {
   const before = onboardingRuntimeProofSnapshot();
   if (before.invalid) {
     syncOnboardingRuntimeLock('prova manual');
-    forceOnboardingLauncher('prova runtime v4.4.0');
+    forceOnboardingLauncher('prova runtime v4.5.0');
   }
   setTimeout(() => {
     const after = onboardingRuntimeProofSnapshot();
@@ -1698,7 +1698,7 @@ function renderCleanStartWizard() {
     ['Criação aparece quando precisa', !snap.invalidCareer || snap.modalVisible || SETUP_SAFE_TABS.has(snap.currentTab), snap.modalVisible ? 'Modal visível' : `Tab atual: ${snap.currentTab}`],
     ['Base jogável', snap.roster > 0 && snap.ranking >= 5 && snap.calendar >= 4 && snap.money > 0, `${snap.roster} atletas • ${snap.ranking} ranking • ${snap.calendar} eventos • caixa ${money(snap.money)}`]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.4.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.5.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
 }
 window.runCleanStartAudit = () => {
   const snap = cleanStartWizardSnapshot();
@@ -1728,7 +1728,7 @@ window.guidedCleanFirstRun = () => {
   saveState(state);
   addLog('Início limpo guiado aplicado. A criação de carreira foi aberta novamente.');
   render();
-  forceOnboardingLauncher('início limpo guiado v4.4.0');
+  forceOnboardingLauncher('início limpo guiado v4.5.0');
 };
 window.cleanOldCachesAndReload = async () => {
   const wizard = ensureCleanStartWizardSystem();
@@ -1824,7 +1824,7 @@ function showStandaloneStartupShield(reason='carreira inválida') {
     document.body.appendChild(shield);
   }
   const issues = invalidCareerIssues(state);
-  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.4.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.4.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
+  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.5.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.5.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
   shield.classList.remove('hidden');
   ensureEmergencyStartControlSystem().startupShieldVisible = true;
   saveState(state);
@@ -1843,7 +1843,7 @@ function applyEmergencyStartRoute() {
     return;
   }
   if (!careerIsPlayableAndConfigured(state)) {
-    setTimeout(() => { launchStartScreenV2('boot v4.4.0 detectou carreira incompleta'); }, 320);
+    setTimeout(() => { launchStartScreenV2('boot v4.5.0 detectou carreira incompleta'); }, 320);
   }
 }
 function renderEmergencyStartControl() {
@@ -1860,7 +1860,7 @@ function renderEmergencyStartControl() {
     ['Dados da academia', !!(snap.owner && snap.academy && snap.city && snap.avatar), `${snap.owner || 'sem treinador'} • ${snap.academy || 'sem academia'} • ${snap.city || 'sem cidade'}`],
     ['Armazenamento local', snap.storageWritable, snap.storageWritable ? 'localStorage OK' : 'Navegador bloqueou save local.']
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.4.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.4.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.5.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.5.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.hardResetFirstRun = async (reason='hard reset guiado') => {
   const esc = ensureEmergencyStartControlSystem();
@@ -1989,8 +1989,8 @@ window.openMandatoryCareerSetup = () => {
 };
 window.repairMandatoryEmptySave = () => {
   ensureMandatoryCareerGateSystem().repairCount = (ensureMandatoryCareerGateSystem().repairCount || 0) + 1;
-  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.4.0');
-  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.4.0';
+  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.5.0');
+  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.5.0';
   saveState(state); render(); openOwnerSetup(true);
 };
 window.auditMandatoryCareerGate = () => {
@@ -2371,7 +2371,7 @@ function renderCareerCreationUXHub() {
     <section class="release-grid"><article class="panel-card"><h4>Valores atuais do formulário</h4><div class="list-block"><div class="list-item"><span>Treinador</span><strong>${escapeHtml(snap.values.name || '—')}</strong></div><div class="list-item"><span>Academia</span><strong>${escapeHtml(snap.values.academy || '—')}</strong></div><div class="list-item"><span>País</span><strong>${escapeHtml(snap.values.country || '—')}</strong></div><div class="list-item"><span>Cidade</span><strong>${escapeHtml(snap.values.city || '—')}</strong></div></div></article><article class="panel-card"><h4>Últimas verificações</h4><div class="list-block">${(ux.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum teste executado nesta build.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.forceSetupModalNow = () => {
-  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.4.0');
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.5.0');
   state.flags ||= {}; state.flags.ownerSetupComplete = false;
   ensureCareerCreationUXSystem().firstRunVerified = false;
   saveState(state); render(); forceOnboardingLauncher('abertura manual pela aba Criação');
@@ -2386,7 +2386,7 @@ window.auditCareerCreationUX = () => {
   renderCareerCreationUXHub(); addLog(`Auditoria de criação de carreira: ${score}/100.`);
 };
 window.startFreshSetupSafely = () => {
-  backupBrokenCareer('reset guiado v4.4.0 solicitado pelo usuário');
+  backupBrokenCareer('reset guiado v4.5.0 solicitado pelo usuário');
   clearState();
   state = buildInitialState(content);
   migrateState();
@@ -2631,7 +2631,7 @@ async function boot() {
   handleStartupHash();
   if (startupStatus !== 'ok' || !careerIsPlayableAndConfigured(state)) launchStartScreenV2(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
   setTimeout(() => window.runOnboardingRuntimeProof?.(), 380);
-  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.4.0'); }, 1800);
+  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.5.0'); }, 1800);
 }
 
 function applyAdminOverrides(content) {
@@ -2943,7 +2943,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', broadcast2d: 'broadcast', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', broadcast2d: 'broadcast', seasonboard: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -3061,6 +3061,7 @@ function render() {
   renderNewsroom();
   renderMobileUX();
   renderCommercialCareer();
+  renderSeasonBoardPressure();
   renderLongCareer();
   renderReleaseCandidate();
   renderQualityPolish();
@@ -4830,7 +4831,7 @@ function ensureHelpCenterSystem() {
 function helpCenterSnapshot() {
   const help = ensureHelpCenterSystem();
   const tabs = [...document.querySelectorAll('.tab-panel')].map(p=>p.id.replace('tab-',''));
-  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md','ONBOARDING_RUNTIME_PROOF_CHECKLIST_v4.4.0.md'];
+  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md','ONBOARDING_RUNTIME_PROOF_CHECKLIST_v4.1.6.md'];
   const checklist = help.onboardingChecklist || {};
   const done = Object.values(checklist).filter(Boolean).length;
   const total = Math.max(1, Object.keys(checklist).length);
@@ -5947,7 +5948,7 @@ function startScheduledMatch() {
   const logo = logoForTournament(event.name);
   const firstServer = (state.academy.week + (run.roundIndex || 0)) % 2 === 0 ? 'player' : 'opponent';
   state.match = {
-    engineVersion: 'v4.4-2d-broadcast', presentation: 'broadcast-pro', event, round, drawType: run.entryType, tournamentRunId: run.createdAt,
+    engineVersion: 'v4.5-board-pressure', presentation: 'broadcast-pro', event, round, drawType: run.entryType, tournamentRunId: run.createdAt,
     playerId: player.id, playerName: player.name, opponentName: opponent.name, opponent,
     sets: [], set: 1, setsPlayer: 0, setsOpponent: 0,
     gamesPlayer: 0, gamesOpponent: 0, playerScore: 0, opponentScore: 0,
@@ -6564,6 +6565,7 @@ function advanceWeek() {
   generateNewsroomWeeklyItems();
   maybeCreateSponsorOffer();
   evaluateObjectives();
+  processBoardPressureWeek(weeklyIncome, weeklyCosts);
   if (state.academy.week > 52) {
     state.academy.week = 1;
     state.academy.season += 1;
@@ -6829,6 +6831,129 @@ function drawCourt(lastWinner = null) {
   }
 }
 
+
+
+// v4.5.0 — Real Season Objectives & Board Pressure
+const BOARD_AMBITIONS = {
+  survival: { label: 'Sobrevivência', desc: 'Manter caixa positivo e entrar no Top 150 sem quebrar a academia.', rank: 150, cash: 0, reputation: 32, titles: 0, risk: 0.82 },
+  balanced: { label: 'Profissional', desc: 'Top 120, reputação crescente e caixa saudável.', rank: 120, cash: 25000, reputation: 42, titles: 0, risk: 1 },
+  aggressive: { label: 'Agressivo', desc: 'Top 80, título pequeno ou final relevante e reputação forte.', rank: 80, cash: 60000, reputation: 55, titles: 1, risk: 1.18 },
+  elite: { label: 'Elite mundial', desc: 'Top 50, títulos, imagem internacional e pressão máxima.', rank: 50, cash: 100000, reputation: 70, titles: 2, risk: 1.38 }
+};
+function ensureSeasonBoardPressure() {
+  state.seasonBoardPressure ||= { score: 72, ambition: 'balanced', boardConfidence: 68, pressure: 34, lastProcessedToken: null, lastAuditToken: null, reviewLog: [], flags: { weeklyReview: true, objectiveWeights: true, boardPressure: true, financeGate: true, rankingGate: true } };
+  const sb = state.seasonBoardPressure;
+  sb.score ??= 72;
+  sb.ambition ||= 'balanced';
+  sb.boardConfidence ??= 68;
+  sb.pressure ??= 34;
+  sb.reviewLog ||= [];
+  sb.lastProcessedToken ??= null;
+  sb.lastAuditToken ??= null;
+  sb.flags ||= { weeklyReview: true, objectiveWeights: true, boardPressure: true, financeGate: true, rankingGate: true };
+  return sb;
+}
+function seasonTitlesCount(season = state.academy?.season) {
+  const names = new Set((state.roster || []).map(p => p.name));
+  return (state.tournamentLife?.championHistory || []).filter(h => h.season === season && names.has(h.champion)).length;
+}
+function boardSnapshot() {
+  const sb = ensureSeasonBoardPressure();
+  const amb = BOARD_AMBITIONS[sb.ambition] || BOARD_AMBITIONS.balanced;
+  const best = chooseBestPlayer();
+  const rank = best ? getPlayerRank(best.id) : 999;
+  const titles = seasonTitlesCount();
+  const cash = Math.round(state.academy?.money || 0);
+  const reputation = Math.round(state.academy?.reputation || 0);
+  const weeklyCosts = calculateWeeklyCosts();
+  const weeklyIncome = calculateSponsor();
+  const net = weeklyIncome - weeklyCosts;
+  const objectives = [
+    { id:'ranking', label:`Melhor ranking até Top ${amb.rank}`, current:rank, target:amb.rank, progress:rank <= amb.rank ? 100 : clamp(Math.round((amb.rank / Math.max(rank, amb.rank)) * 100), 0, 100), weight:34, status: rank <= amb.rank ? 'ok' : rank <= amb.rank + 35 ? 'atenção' : 'risco' },
+    { id:'finance', label:`Caixa mínimo ${money(amb.cash)}`, current:cash, target:amb.cash, progress:amb.cash <= 0 ? (cash >= 0 ? 100 : 0) : clamp(Math.round((cash / amb.cash) * 100), 0, 100), weight:24, status: cash >= amb.cash ? 'ok' : cash >= amb.cash * .55 ? 'atenção' : 'risco' },
+    { id:'reputation', label:`Reputação ${amb.reputation}+`, current:reputation, target:amb.reputation, progress:clamp(Math.round((reputation / amb.reputation) * 100), 0, 100), weight:20, status: reputation >= amb.reputation ? 'ok' : reputation >= amb.reputation * .7 ? 'atenção' : 'risco' },
+    { id:'titles', label:`Títulos da temporada ${amb.titles}+`, current:titles, target:amb.titles, progress:amb.titles <= 0 ? 100 : clamp(Math.round((titles / amb.titles) * 100), 0, 100), weight:12, status: titles >= amb.titles ? 'ok' : amb.titles === 0 ? 'ok' : 'atenção' },
+    { id:'cashflow', label:'Fluxo semanal positivo', current:net, target:1, progress:net >= 0 ? 100 : clamp(Math.round((1 - Math.min(1, Math.abs(net) / Math.max(1, weeklyCosts))) * 100), 0, 100), weight:10, status: net >= 0 ? 'ok' : net > -weeklyCosts * .28 ? 'atenção' : 'risco' }
+  ];
+  const score = clamp(Math.round(objectives.reduce((sum,o)=>sum + (o.progress * o.weight / 100), 0)), 0, 100);
+  const failed = objectives.filter(o=>o.status === 'risco').length;
+  const pressure = clamp(Math.round((100 - score) * amb.risk + failed * 7 + Math.max(0, state.commercialCareer?.riskScore || 0) * .12), 0, 100);
+  const confidence = clamp(Math.round((sb.boardConfidence * .62) + (score * .38) - (failed * 2)), 0, 100);
+  return { ambition: sb.ambition, ambitionLabel: amb.label, ambitionDesc: amb.desc, bestPlayer: best?.name || '—', bestRank: rank, titles, cash, reputation, weeklyIncome, weeklyCosts, net, objectives, score, pressure, confidence, week: state.academy.week, season: state.academy.season };
+}
+function boardStatusLabel(score) { return score >= 82 ? 'Diretoria confiante' : score >= 65 ? 'Pressão controlada' : score >= 45 ? 'Cobrança aumentando' : 'Crise com a diretoria'; }
+function renderSeasonBoardPressure() {
+  const host = $('#seasonBoardPressureHub');
+  if (!host) return;
+  const sb = ensureSeasonBoardPressure();
+  const snap = boardSnapshot();
+  sb.score = snap.score; sb.pressure = snap.pressure; sb.boardConfidence = snap.confidence;
+  const objectives = snap.objectives.map(o => `<article class="panel-card board-objective ${o.status}"><div class="panel-title-row"><div><h4>${escapeHtml(o.label)}</h4><p class="muted">Peso ${o.weight}% • status ${o.status}</p></div><strong>${o.progress}%</strong></div><div class="facility-progress"><span style="width:${o.progress}%"></span></div><div class="commercial-contract-line"><span>Atual: ${o.id === 'finance' || o.id === 'cashflow' ? money(o.current) : o.current}</span><span>Meta: ${o.id === 'finance' ? money(o.target) : o.target}</span></div></article>`).join('');
+  const reviews = sb.reviewLog.slice(0,8).map(r=>`<div class="list-item"><div><strong>${escapeHtml(r.title)}</strong><div class="small">${escapeHtml(r.note)}</div></div><b>${r.result}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma cobrança formal ainda.</span><strong>OK</strong></div>';
+  host.innerHTML = `
+    <section class="release-score-grid board-score-grid">
+      <article class="release-score ${snap.score>=70?'ok':'pending'}"><span>Score temporada</span><strong>${snap.score}</strong><small>${boardStatusLabel(snap.score)}</small></article>
+      <article class="release-score ${snap.confidence>=65?'ok':'pending'}"><span>Confiança board</span><strong>${snap.confidence}</strong><small>diretoria</small></article>
+      <article class="release-score ${snap.pressure<55?'ok':'pending'}"><span>Pressão</span><strong>${snap.pressure}</strong><small>cobrança</small></article>
+      <article class="release-score ${snap.net>=0?'ok':'pending'}"><span>Fluxo semanal</span><strong>${money(snap.net)}</strong><small>entrada - saída</small></article>
+    </section>
+    <section class="panel-card board-hero-card">
+      <div><p class="eyebrow">Temporada ${snap.season} • semana ${snap.week}</p><h2>${boardStatusLabel(snap.score)}</h2><p class="muted">Plano ${snap.ambitionLabel}: ${escapeHtml(snap.ambitionDesc)} Melhor atleta: ${escapeHtml(snap.bestPlayer)} #${snap.bestRank} • títulos ${snap.titles} • reputação ${snap.reputation}.</p></div>
+      <div class="tag-row">${Object.entries(BOARD_AMBITIONS).map(([key,val])=>`<button class="mini-btn ${snap.ambition===key?'active':''}" onclick="window.setBoardAmbition('${key}')">${val.label}</button>`).join('')}</div>
+    </section>
+    <section class="release-grid board-objective-grid">${objectives}</section>
+    <section class="release-grid">
+      <article class="panel-card"><div class="panel-title-row"><h4>Ações da diretoria</h4><span class="metric-build">schema ${BUILD_INFO.schemaVersion}</span></div><div class="tag-row"><button class="btn-primary" onclick="window.runBoardReview()">Revisar metas agora</button><button class="btn-secondary" onclick="window.exportBoardReport()">Exportar relatório</button><button class="btn-ghost" onclick="window.switchBoardTabToFinance?.()">Ver economia</button></div><p class="muted">A revisão semanal ajusta confiança, pressão e mensagens no inbox sem enviar dados para servidor.</p></article>
+      <article class="panel-card"><div class="panel-title-row"><h4>Histórico de cobranças</h4><span class="metric-build">local</span></div><div class="list-block">${reviews}</div></article>
+    </section>`;
+}
+window.setBoardAmbition = (ambition='balanced') => {
+  const sb = ensureSeasonBoardPressure();
+  if (!BOARD_AMBITIONS[ambition]) return;
+  sb.ambition = ambition;
+  sb.reviewLog.unshift({ title:'Ambição da temporada alterada', result:BOARD_AMBITIONS[ambition].label, note:BOARD_AMBITIONS[ambition].desc, at:new Date().toISOString(), build:BUILD_INFO.build });
+  sb.reviewLog = sb.reviewLog.slice(0,24);
+  saveState(state); renderSeasonBoardPressure();
+};
+window.switchBoardTabToFinance = () => switchTab('economy');
+window.runBoardReview = () => {
+  const sb = ensureSeasonBoardPressure();
+  const snap = boardSnapshot();
+  sb.score = snap.score; sb.pressure = snap.pressure; sb.boardConfidence = snap.confidence; sb.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`;
+  const title = snap.score >= 70 ? 'Diretoria aprova a rota da temporada' : snap.score >= 50 ? 'Diretoria exige reação nas próximas semanas' : 'Reunião crítica: risco de intervenção';
+  const note = `Score ${snap.score}/100 • pressão ${snap.pressure}/100 • melhor ranking #${snap.bestRank} • caixa ${money(snap.cash)}.`;
+  sb.reviewLog.unshift({ title, result:`${snap.score}/100`, note, at:new Date().toISOString(), build:BUILD_INFO.build });
+  sb.reviewLog = sb.reviewLog.slice(0,24);
+  state.inbox.unshift({ title, body: note, week: state.academy.week });
+  addLog(`Board v${BUILD_INFO.version}: revisão ${snap.score}/100, pressão ${snap.pressure}/100.`);
+  saveState(state); renderSeasonBoardPressure(); renderInbox();
+};
+function processBoardPressureWeek(weeklyIncome=0, weeklyCosts=0) {
+  const sb = ensureSeasonBoardPressure();
+  const token = `${state.academy.season}-${state.academy.week}`;
+  if (sb.lastProcessedToken === token) return;
+  const snap = boardSnapshot();
+  const delta = snap.score >= 82 ? 3 : snap.score >= 65 ? 1 : snap.score >= 45 ? -2 : -5;
+  sb.boardConfidence = clamp((sb.boardConfidence ?? 68) + delta, 0, 100);
+  sb.pressure = clamp(snap.pressure - delta, 0, 100);
+  sb.score = snap.score;
+  sb.lastProcessedToken = token;
+  if (state.academy.week % 4 === 0 || snap.score < 55 || snap.pressure > 72) {
+    const title = snap.score >= 70 ? 'Relatório mensal: temporada sob controle' : 'Relatório mensal: diretoria pressionando';
+    const note = `Meta ${snap.ambitionLabel}: score ${snap.score}/100, fluxo ${money(weeklyIncome-weeklyCosts)}, ranking #${snap.bestRank}.`;
+    sb.reviewLog.unshift({ title, result:`${snap.score}/100`, note, at:new Date().toISOString(), build:BUILD_INFO.build });
+    state.inbox.unshift({ title, body: note, week: state.academy.week });
+    sb.reviewLog = sb.reviewLog.slice(0,24);
+  }
+  if (sb.pressure > 82) state.academy.reputation = Math.max(0, Math.round((state.academy.reputation || 0) - 1));
+}
+window.exportBoardReport = () => {
+  const sb = ensureSeasonBoardPressure();
+  const payload = { app:BUILD_INFO.appName, version:BUILD_INFO.version, build:BUILD_INFO.build, schema:BUILD_INFO.schemaVersion, generatedAt:new Date().toISOString(), snapshot:boardSnapshot(), system:sb, privacy:'Relatório local. Nenhum dado é enviado para servidor.' };
+  try { const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `vale-tennis-board-${BUILD_INFO.version}-${BUILD_INFO.build}.json`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); } catch(error) { console.info('Board report', payload, error); }
+  sb.reviewLog.unshift({ title:'Relatório da diretoria exportado', result:'JSON', note:'Diagnóstico local de metas e pressão gerado.', at:payload.generatedAt, build:BUILD_INFO.build });
+  saveState(state); renderSeasonBoardPressure();
+};
 
 
 function getEconomySummary(){
