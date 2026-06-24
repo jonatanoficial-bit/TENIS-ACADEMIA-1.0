@@ -1,8 +1,8 @@
-# Vale Games Tennis Manager v4.3.0
+# Vale Games Tennis Manager v4.4.0
 
-Build `20260624-151806` — Academy Facilities Expansion
+Build `20260624-152754` — Academy Facilities Expansion
 
-## v4.3.0 — Academy Facilities Expansion
+## v4.4.0 — Academy Facilities Expansion
 
 Esta fase expande a academia com uma camada de infraestrutura jogável: quadras por superfície, centro técnico, centro físico, centro médico, alojamento, análise, scouting, marketing, financeiro e manutenção operacional.
 
@@ -204,3 +204,8 @@ index.html?hardreset=1#emergencystart
 
 A nova aba **Reset/Onboarding** permite limpar cache, criar backup local, resetar apenas o primeiro acesso e abrir obrigatoriamente a criação de carreira com avatar, nome, país, cidade e academia.
 
+
+
+## v4.4.0 — Match Visual 2D Broadcast Upgrade
+
+Build `20260624-152754`. Adiciona transmissão 2D com câmera de TV, câmera do técnico, mapa tático, modo mobile limpo, heatmap dos últimos pontos, rastro da bola e exportação local de diagnóstico.

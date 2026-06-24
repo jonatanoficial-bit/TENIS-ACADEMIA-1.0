@@ -5,7 +5,7 @@ const STORAGE_KEY = 'vale_tennis_manager_save';
 const LEGACY_KEYS = ['ace_academy_save_v040', 'ace-manager-save'];
 const BACKUP_KEY = 'vale_tennis_manager_save_backup';
 const CORRUPT_KEY = 'vale_tennis_manager_corrupt_save';
-const CURRENT_SCHEMA = 40;
+const CURRENT_SCHEMA = 41;
 
 const clone = (value) => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 
@@ -516,6 +516,20 @@ export function migrateSave(data) {
   state.academyFacilitiesPro.flags.medicalImpact ??= true;
   state.academyFacilitiesPro.flags.financeImpact ??= true;
   state.academyFacilitiesPro.flags.mobileFacilityCards ??= true;
+
+  state.matchVisual2D ||= { score: 88, cameraMode: 'broadcast', overlayMode: 'standard', ballTrail: true, shotMap: [], auditLog: [], lastAuditToken: null, flags: { cinematicCourt: true, shotMapLive: true, tacticalZones: true, mobileBroadcast: true } };
+  state.matchVisual2D.score ??= 88;
+  state.matchVisual2D.cameraMode ||= 'broadcast';
+  state.matchVisual2D.overlayMode ||= 'standard';
+  state.matchVisual2D.ballTrail ??= true;
+  state.matchVisual2D.shotMap ||= [];
+  state.matchVisual2D.auditLog ||= [];
+  state.matchVisual2D.lastAuditToken ??= null;
+  state.matchVisual2D.flags ||= { cinematicCourt: true, shotMapLive: true, tacticalZones: true, mobileBroadcast: true };
+  state.matchVisual2D.flags.cinematicCourt ??= true;
+  state.matchVisual2D.flags.shotMapLive ??= true;
+  state.matchVisual2D.flags.tacticalZones ??= true;
+  state.matchVisual2D.flags.mobileBroadcast ??= true;
 
   return state;
 }

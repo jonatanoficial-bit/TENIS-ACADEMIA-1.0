@@ -1,12 +1,12 @@
 
-## v4.3.0 — Academy Facilities Expansion (20260624-151806)
+## v4.4.0 — Academy Facilities Expansion (20260624-152754)
 
 - Adicionada nova aba **Instalações**.
 - Adicionado sistema persistente `academyFacilitiesPro` com score, política de manutenção, plano de expansão e auditoria.
 - Expandidas instalações da academia: quadras rápidas, saibro, grama, centro técnico, físico, médico, alojamento, análise, scouting, marketing, financeiro e manutenção.
 - Custos semanais agora incluem manutenção operacional das instalações.
 - Patrocínio, reputação, recuperação, moral e treino passam a receber impacto direto da infraestrutura.
-- Adicionados relatório exportável e checklist de auditoria v4.3.0.
+- Adicionados relatório exportável e checklist de auditoria v4.4.0.
 
 # Changelog
 

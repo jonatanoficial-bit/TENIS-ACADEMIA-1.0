@@ -59,6 +59,20 @@ const TACTICAL_OPTIONS = {
 };
 const SCORE_NAMES = ['0', '15', '30', '40', 'AD'];
 const ROUND_ORDER = ['Q', 'R16', 'QF', 'SF', 'F'];
+
+const MATCH_VISUAL_CAMERAS = {
+  broadcast: { label: 'TV Broadcast', desc: 'Câmera ampla com placar, rastro da bola e leitura de rally.' },
+  coach: { label: 'Câmera do técnico', desc: 'Mostra zonas, tendência de rally e tomada de decisão.' },
+  tactical: { label: 'Mapa tático', desc: 'Prioriza heatmap, direção do saque e impacto do plano.' },
+  mobile: { label: 'Mobile limpo', desc: 'HUD maior, menos ruído visual e botões fáceis no celular.' }
+};
+const MATCH_VISUAL_OVERLAYS = {
+  standard: { label: 'Padrão', desc: 'Placar, nomes, bola e replay curto.' },
+  tactical: { label: 'Zonas táticas', desc: 'Áreas de ataque/defesa, saque e devolução.' },
+  heatmap: { label: 'Heatmap', desc: 'Mapa vivo dos últimos pontos e pressão territorial.' },
+  cinematic: { label: 'Cinemático', desc: 'Visual mais limpo para parecer transmissão.' }
+};
+
 let autoPlayTimer = null;
 let autoPlaySpeed = 1;
 let courtClock = 0;
@@ -1468,15 +1482,15 @@ function renderForcedOnboardingGate() {
     ['Modal obrigatório', snap.setupComplete || snap.modalVisible, snap.modalVisible ? 'Aberto em tela cheia' : 'Será forçado no próximo clique/boot'],
     ['Build atual', true, BUILD_LABEL]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.3.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.4.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
 }
 window.forceOnboardingLauncher = forceOnboardingLauncher;
 window.forceRepairInvalidCareer = () => {
-  rebuildPlayableCareer('reparo forçado pelo launcher v4.3.0');
+  rebuildPlayableCareer('reparo forçado pelo launcher v4.4.0');
   ensureForcedOnboardingGateSystem().lastRepairAt = new Date().toISOString();
   saveState(state);
   render();
-  forceOnboardingLauncher('base recriada pelo launcher v4.3.0');
+  forceOnboardingLauncher('base recriada pelo launcher v4.4.0');
 };
 window.auditForcedOnboardingGate = () => {
   const snap = forcedOnboardingSnapshot();
@@ -1573,13 +1587,13 @@ function renderOnboardingRuntimeProof() {
     ['Perfil obrigatório', !snap.issues.some(x => /nome|avatar|país|academia|cidade|criação/.test(x)), snap.issues.join(', ') || 'Nome, avatar, país, cidade e academia OK'],
     ['Overlay de bloqueio', !snap.invalid || snap.lockVisible || snap.modalVisible, snap.lockVisible ? 'Ativo' : (snap.modalVisible ? 'Modal cobre a tela' : 'Inativo')]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.3.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.4.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
 }
 window.runOnboardingRuntimeProof = () => {
   const before = onboardingRuntimeProofSnapshot();
   if (before.invalid) {
     syncOnboardingRuntimeLock('prova manual');
-    forceOnboardingLauncher('prova runtime v4.3.0');
+    forceOnboardingLauncher('prova runtime v4.4.0');
   }
   setTimeout(() => {
     const after = onboardingRuntimeProofSnapshot();
@@ -1684,7 +1698,7 @@ function renderCleanStartWizard() {
     ['Criação aparece quando precisa', !snap.invalidCareer || snap.modalVisible || SETUP_SAFE_TABS.has(snap.currentTab), snap.modalVisible ? 'Modal visível' : `Tab atual: ${snap.currentTab}`],
     ['Base jogável', snap.roster > 0 && snap.ranking >= 5 && snap.calendar >= 4 && snap.money > 0, `${snap.roster} atletas • ${snap.ranking} ranking • ${snap.calendar} eventos • caixa ${money(snap.money)}`]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.3.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.4.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
 }
 window.runCleanStartAudit = () => {
   const snap = cleanStartWizardSnapshot();
@@ -1714,7 +1728,7 @@ window.guidedCleanFirstRun = () => {
   saveState(state);
   addLog('Início limpo guiado aplicado. A criação de carreira foi aberta novamente.');
   render();
-  forceOnboardingLauncher('início limpo guiado v4.3.0');
+  forceOnboardingLauncher('início limpo guiado v4.4.0');
 };
 window.cleanOldCachesAndReload = async () => {
   const wizard = ensureCleanStartWizardSystem();
@@ -1810,7 +1824,7 @@ function showStandaloneStartupShield(reason='carreira inválida') {
     document.body.appendChild(shield);
   }
   const issues = invalidCareerIssues(state);
-  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.3.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.3.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
+  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.4.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.4.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
   shield.classList.remove('hidden');
   ensureEmergencyStartControlSystem().startupShieldVisible = true;
   saveState(state);
@@ -1829,7 +1843,7 @@ function applyEmergencyStartRoute() {
     return;
   }
   if (!careerIsPlayableAndConfigured(state)) {
-    setTimeout(() => { launchStartScreenV2('boot v4.3.0 detectou carreira incompleta'); }, 320);
+    setTimeout(() => { launchStartScreenV2('boot v4.4.0 detectou carreira incompleta'); }, 320);
   }
 }
 function renderEmergencyStartControl() {
@@ -1846,7 +1860,7 @@ function renderEmergencyStartControl() {
     ['Dados da academia', !!(snap.owner && snap.academy && snap.city && snap.avatar), `${snap.owner || 'sem treinador'} • ${snap.academy || 'sem academia'} • ${snap.city || 'sem cidade'}`],
     ['Armazenamento local', snap.storageWritable, snap.storageWritable ? 'localStorage OK' : 'Navegador bloqueou save local.']
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.3.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.3.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.4.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.4.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.hardResetFirstRun = async (reason='hard reset guiado') => {
   const esc = ensureEmergencyStartControlSystem();
@@ -1975,8 +1989,8 @@ window.openMandatoryCareerSetup = () => {
 };
 window.repairMandatoryEmptySave = () => {
   ensureMandatoryCareerGateSystem().repairCount = (ensureMandatoryCareerGateSystem().repairCount || 0) + 1;
-  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.3.0');
-  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.3.0';
+  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.4.0');
+  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.4.0';
   saveState(state); render(); openOwnerSetup(true);
 };
 window.auditMandatoryCareerGate = () => {
@@ -2357,7 +2371,7 @@ function renderCareerCreationUXHub() {
     <section class="release-grid"><article class="panel-card"><h4>Valores atuais do formulário</h4><div class="list-block"><div class="list-item"><span>Treinador</span><strong>${escapeHtml(snap.values.name || '—')}</strong></div><div class="list-item"><span>Academia</span><strong>${escapeHtml(snap.values.academy || '—')}</strong></div><div class="list-item"><span>País</span><strong>${escapeHtml(snap.values.country || '—')}</strong></div><div class="list-item"><span>Cidade</span><strong>${escapeHtml(snap.values.city || '—')}</strong></div></div></article><article class="panel-card"><h4>Últimas verificações</h4><div class="list-block">${(ux.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum teste executado nesta build.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.forceSetupModalNow = () => {
-  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.3.0');
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.4.0');
   state.flags ||= {}; state.flags.ownerSetupComplete = false;
   ensureCareerCreationUXSystem().firstRunVerified = false;
   saveState(state); render(); forceOnboardingLauncher('abertura manual pela aba Criação');
@@ -2372,7 +2386,7 @@ window.auditCareerCreationUX = () => {
   renderCareerCreationUXHub(); addLog(`Auditoria de criação de carreira: ${score}/100.`);
 };
 window.startFreshSetupSafely = () => {
-  backupBrokenCareer('reset guiado v4.3.0 solicitado pelo usuário');
+  backupBrokenCareer('reset guiado v4.4.0 solicitado pelo usuário');
   clearState();
   state = buildInitialState(content);
   migrateState();
@@ -2617,7 +2631,7 @@ async function boot() {
   handleStartupHash();
   if (startupStatus !== 'ok' || !careerIsPlayableAndConfigured(state)) launchStartScreenV2(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
   setTimeout(() => window.runOnboardingRuntimeProof?.(), 380);
-  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.3.0'); }, 1800);
+  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.4.0'); }, 1800);
 }
 
 function applyAdminOverrides(content) {
@@ -2840,6 +2854,7 @@ function stopAutoPlay() {
     autoPlayTimer = null;
     addMatchLog('Autoplay pausado.');
     renderMatch();
+  renderMatchVisual2D();
   hydrateAssetImages();
   }
   refreshAutoButtons();
@@ -2901,6 +2916,7 @@ function bindUI() {
     currentStrategy = btn.dataset.strategy;
     addMatchLog(`Estratégia alterada para ${btn.textContent}.`);
     renderMatch();
+  renderMatchVisual2D();
   hydrateAssetImages();
   }));
 }
@@ -2921,13 +2937,13 @@ function switchTab(tab) {
   $$('.tab-panel').forEach(panel => panel.classList.toggle('active', panel.id === `tab-${tab}`));
   updateSceneForTab(tab);
   applyMobileUXRuntime();
-  if (tab === 'match') drawCourt();
+  if (tab === 'match' || tab === 'broadcast2d') drawCourt();
   if (window.innerWidth < 1100) scrollToAppTop(true);
 }
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', broadcast2d: 'broadcast', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -3070,6 +3086,7 @@ function render() {
   renderRanking();
   hydrateAssetImages();
   renderMatch();
+  renderMatchVisual2D();
   hydrateAssetImages();
   ensureDrawModal();
   ensureTournamentIdentityModal();
@@ -4813,7 +4830,7 @@ function ensureHelpCenterSystem() {
 function helpCenterSnapshot() {
   const help = ensureHelpCenterSystem();
   const tabs = [...document.querySelectorAll('.tab-panel')].map(p=>p.id.replace('tab-',''));
-  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md','ONBOARDING_RUNTIME_PROOF_CHECKLIST_v4.3.0.md'];
+  const docs = ['README.md','CHANGELOG.md','RELEASE_CHECKLIST_v4.0.0.md','QA_CHECKLIST_v4.0.4.md','LOCALIZATION_STORE_CHECKLIST_v4.0.8.md','HELP_CENTER_v4.0.9.md','START_RECOVERY_CHECKLIST_v4.1.0.md','ONBOARDING_FLOW_CHECKLIST_v4.1.1.md','CACHE_PWA_UPDATE_CHECKLIST_v4.1.2.md','MANDATORY_CAREER_GATE_CHECKLIST_v4.1.4.md','FORCED_ONBOARDING_CHECKLIST_v4.1.5.md','ONBOARDING_RUNTIME_PROOF_CHECKLIST_v4.4.0.md'];
   const checklist = help.onboardingChecklist || {};
   const done = Object.values(checklist).filter(Boolean).length;
   const total = Math.max(1, Object.keys(checklist).length);
@@ -5930,7 +5947,7 @@ function startScheduledMatch() {
   const logo = logoForTournament(event.name);
   const firstServer = (state.academy.week + (run.roundIndex || 0)) % 2 === 0 ? 'player' : 'opponent';
   state.match = {
-    engineVersion: 'v3.12-premium-visual-academy', presentation: 'broadcast-pro', event, round, drawType: run.entryType, tournamentRunId: run.createdAt,
+    engineVersion: 'v4.4-2d-broadcast', presentation: 'broadcast-pro', event, round, drawType: run.entryType, tournamentRunId: run.createdAt,
     playerId: player.id, playerName: player.name, opponentName: opponent.name, opponent,
     sets: [], set: 1, setsPlayer: 0, setsOpponent: 0,
     gamesPlayer: 0, gamesOpponent: 0, playerScore: 0, opponentScore: 0,
@@ -6069,6 +6086,7 @@ function playPoint() {
     maybeInjure(player, point.rally > 14 ? 1.4 : 0.8);
     updateTennisScore(point.winner);
     appendReplay(point, state.match);
+    recordMatchVisualPoint(point, state.match);
     addMatchLog(`${point.serve} • ${point.type} • ${point.speed || '—'} km/h: ${point.text}`);
     drawCourt(won ? 'player' : 'opponent');
     renderMatch();
@@ -6348,6 +6366,101 @@ function handleTacticalPlanClick(event) {
     renderMatch();
   }
 }
+
+function ensureMatchVisual2D(save=false) {
+  if (!state) return { score: 88, cameraMode: 'broadcast', overlayMode: 'standard', ballTrail: true, shotMap: [], auditLog: [], flags: {} };
+  state.matchVisual2D ||= { score: 88, cameraMode: 'broadcast', overlayMode: 'standard', ballTrail: true, shotMap: [], auditLog: [], lastAuditToken: null, flags: { cinematicCourt: true, shotMapLive: true, tacticalZones: true, mobileBroadcast: true } };
+  const mv = state.matchVisual2D;
+  mv.score ??= 88;
+  mv.cameraMode ||= 'broadcast';
+  mv.overlayMode ||= 'standard';
+  mv.ballTrail ??= true;
+  mv.shotMap ||= [];
+  mv.auditLog ||= [];
+  mv.flags ||= { cinematicCourt: true, shotMapLive: true, tacticalZones: true, mobileBroadcast: true };
+  if (save) saveState(state);
+  return mv;
+}
+function matchVisualScore() {
+  const mv = ensureMatchVisual2D();
+  const hasMatch = !!state.match;
+  const points = mv.shotMap?.length || 0;
+  const hasCanvas = !!document.getElementById('matchCanvas');
+  return clamp(70 + (hasCanvas ? 8 : 0) + (hasMatch ? 7 : 0) + Math.min(10, points) + (mv.ballTrail ? 3 : 0), 0, 100);
+}
+function renderMatchVisual2D() {
+  const host = $('#matchVisual2DHub');
+  if (!host || !state) return;
+  const mv = ensureMatchVisual2D();
+  mv.score = matchVisualScore();
+  const match = state.match;
+  const shotRows = (mv.shotMap || []).slice(-8).reverse().map((p, i) => `<div class="list-item"><span>${i+1}. ${escapeHtml(p.type || 'Ponto')} • ${escapeHtml(p.winner === 'player' ? 'Seu atleta' : 'Adversário')}</span><strong>${p.speed || '—'} km/h</strong></div>`).join('') || '<div class="empty-state">Jogue pontos no Match Center para popular o mapa 2D.</div>';
+  const cameraButtons = Object.entries(MATCH_VISUAL_CAMERAS).map(([key, item]) => `<button class="mini-btn ${mv.cameraMode === key ? 'active' : ''}" onclick="window.setMatchVisualCamera('${key}')">${item.label}</button>`).join('');
+  const overlayButtons = Object.entries(MATCH_VISUAL_OVERLAYS).map(([key, item]) => `<button class="mini-btn ${mv.overlayMode === key ? 'active' : ''}" onclick="window.setMatchVisualOverlay('${key}')">${item.label}</button>`).join('');
+  const current = MATCH_VISUAL_CAMERAS[mv.cameraMode] || MATCH_VISUAL_CAMERAS.broadcast;
+  host.innerHTML = `
+    <section class="match-visual-hero">
+      <div><p class="eyebrow">Match Visual 2D Broadcast Upgrade</p><h2>Transmissão 2D com leitura tática</h2><p>${current.desc}</p></div>
+      <div class="release-score-card"><span>Prontidão visual</span><strong>${mv.score}/100</strong><small>${BUILD_LABEL}</small></div>
+    </section>
+    <section class="release-grid match-visual-grid">
+      <article class="panel-card"><h4>Câmera</h4><div class="tag-row">${cameraButtons}</div><p class="muted">Modo atual: ${current.label}</p></article>
+      <article class="panel-card"><h4>Overlay</h4><div class="tag-row">${overlayButtons}</div><p class="muted">Heatmap, zonas e HUD mobile usam os últimos pontos simulados.</p></article>
+      <article class="panel-card"><h4>Status da partida</h4><div class="list-block"><div class="list-item"><span>Partida ativa</span><strong>${match ? 'Sim' : 'Não'}</strong></div><div class="list-item"><span>Pontos no mapa</span><strong>${mv.shotMap.length}</strong></div><div class="list-item"><span>Rastro da bola</span><strong>${mv.ballTrail ? 'Ligado' : 'Desligado'}</strong></div><div class="list-item"><span>Overlay</span><strong>${MATCH_VISUAL_OVERLAYS[mv.overlayMode]?.label || mv.overlayMode}</strong></div></div></article>
+      <article class="panel-card"><h4>Controles rápidos</h4><div class="tag-row"><button class="btn-primary" onclick="window.openMatch2DView()">Abrir partida 2D</button><button class="btn-secondary" onclick="window.toggleMatchBallTrail()">Alternar rastro</button><button class="btn-ghost" onclick="window.runMatchVisualAudit()">Auditar</button><button class="btn-ghost" onclick="window.exportMatchVisualReport()">Exportar</button></div></article>
+    </section>
+    <section class="release-grid"><article class="panel-card"><h4>Mapa dos últimos pontos</h4><div class="shot-map-mini">${(mv.shotMap || []).slice(-28).map(p => `<i title="${escapeHtml(p.type || 'ponto')}" class="${p.winner === 'player' ? 'player' : 'opponent'}" style="left:${p.xPct || 50}%;top:${p.yPct || 50}%"></i>`).join('')}</div></article><article class="panel-card"><h4>Replay textual</h4><div class="list-block">${shotRows}</div></article></section>`;
+}
+function recordMatchVisualPoint(point, match) {
+  const mv = ensureMatchVisual2D();
+  if (!point || !match) return;
+  const side = point.winner === 'player' ? 1 : -1;
+  const baseX = point.direction === 'aberto' ? 68 : point.direction === 'T' ? 50 : point.direction === 'corpo' ? 42 : 56;
+  const rallyShift = clamp((point.rally || 0) * 1.8, 0, 26);
+  const xPct = clamp(baseX + (Math.random() * 18 - 9), 12, 88);
+  const yPct = clamp((point.winner === 'player' ? 35 : 65) + side * (point.type === 'Ace' ? -10 : point.type === 'Winner' ? -rallyShift * 0.4 : rallyShift * 0.25), 14, 86);
+  mv.shotMap.push({ type: point.type, winner: point.winner, speed: point.speed || match.lastServeSpeed || 0, rally: point.rally || 0, direction: point.direction || 'misto', xPct: Math.round(xPct), yPct: Math.round(yPct), score: scoreSnapshot(match), at: new Date().toISOString(), build: BUILD_INFO.build });
+  mv.shotMap = mv.shotMap.slice(-90);
+}
+function drawMatchVisualOverlay(ctx, w, h, match, p1, p2, bx, by) {
+  const mv = ensureMatchVisual2D();
+  if (!mv || mv.overlayMode === 'cinematic') return;
+  ctx.save();
+  if (mv.overlayMode === 'tactical' || mv.cameraMode === 'coach' || mv.cameraMode === 'tactical') {
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    for (let i = 1; i < 4; i++) ctx.fillRect(w * (0.12 + i * 0.19), h * 0.12, 2, h * 0.76);
+    ctx.fillStyle = 'rgba(111, 231, 255, 0.12)';
+    ctx.fillRect(w * 0.12, h * 0.62, w * 0.76, h * 0.26);
+    ctx.fillStyle = 'rgba(255, 178, 87, 0.10)';
+    ctx.fillRect(w * 0.12, h * 0.12, w * 0.76, h * 0.26);
+  }
+  const points = (mv.shotMap || []).slice(-40);
+  if (points.length && (mv.overlayMode === 'heatmap' || mv.cameraMode === 'tactical')) {
+    points.forEach((p, idx) => {
+      ctx.fillStyle = p.winner === 'player' ? `rgba(120,255,160,${0.10 + idx / 420})` : `rgba(255,120,150,${0.10 + idx / 420})`;
+      ctx.beginPath();
+      ctx.arc(w * (p.xPct || 50) / 100, h * (p.yPct || 50) / 100, Math.max(8, w * 0.012), 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+  if (mv.ballTrail) {
+    const pointsTrail = [p1, { x: bx, y: by }, p2];
+    ctx.strokeStyle = 'rgba(255,255,255,0.34)';
+    ctx.lineWidth = Math.max(2, w * 0.003);
+    ctx.beginPath();
+    ctx.moveTo(pointsTrail[0].x, pointsTrail[0].y);
+    ctx.quadraticCurveTo(pointsTrail[1].x, pointsTrail[1].y - h * 0.1, pointsTrail[2].x, pointsTrail[2].y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+window.setMatchVisualCamera = (mode) => { const mv = ensureMatchVisual2D(); if (!MATCH_VISUAL_CAMERAS[mode]) return; mv.cameraMode = mode; mv.auditLog.unshift({ title:'Câmera alterada', result:MATCH_VISUAL_CAMERAS[mode].label, at:new Date().toISOString(), build:BUILD_INFO.build }); saveState(state); drawCourt(); renderMatchVisual2D(); };
+window.setMatchVisualOverlay = (mode) => { const mv = ensureMatchVisual2D(); if (!MATCH_VISUAL_OVERLAYS[mode]) return; mv.overlayMode = mode; mv.auditLog.unshift({ title:'Overlay alterado', result:MATCH_VISUAL_OVERLAYS[mode].label, at:new Date().toISOString(), build:BUILD_INFO.build }); saveState(state); drawCourt(); renderMatchVisual2D(); };
+window.toggleMatchBallTrail = () => { const mv = ensureMatchVisual2D(); mv.ballTrail = !mv.ballTrail; mv.auditLog.unshift({ title:'Rastro da bola', result:mv.ballTrail ? 'Ligado' : 'Desligado', at:new Date().toISOString(), build:BUILD_INFO.build }); saveState(state); drawCourt(); renderMatchVisual2D(); };
+window.openMatch2DView = () => { switchTab('match'); drawCourt(); renderMatch(); renderMatchVisual2D(); };
+window.runMatchVisualAudit = () => { const mv = ensureMatchVisual2D(); mv.score = matchVisualScore(); mv.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`; mv.auditLog.unshift({ title:'Auditoria Broadcast 2D', result:`${mv.score}/100`, note:`Canvas ${canvas ? 'OK' : 'ausente'} • pontos ${mv.shotMap.length} • câmera ${mv.cameraMode}.`, at:new Date().toISOString(), build:BUILD_INFO.build }); mv.auditLog = mv.auditLog.slice(0,30); saveState(state); renderMatchVisual2D(); addLog(`Broadcast 2D auditado: ${mv.score}/100.`); };
+window.exportMatchVisualReport = () => { const mv = ensureMatchVisual2D(); const payload = { app:BUILD_INFO.appName, version:BUILD_INFO.version, build:BUILD_INFO.build, schema:BUILD_INFO.schemaVersion, generatedAt:new Date().toISOString(), cameraMode:mv.cameraMode, overlayMode:mv.overlayMode, score:matchVisualScore(), shotMap:mv.shotMap, auditLog:mv.auditLog, match: state.match ? { event:state.match.event?.name, player:state.match.playerName, opponent:state.match.opponentName, score:scoreSnapshot(state.match) } : null, privacy:'Relatório local. Nenhum dado é enviado para servidor.' }; try { const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `vale-tennis-broadcast2d-${BUILD_INFO.version}-${BUILD_INFO.build}.json`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); } catch(error) { console.info('Match Visual 2D report', payload, error); } mv.auditLog.unshift({ title:'Relatório Broadcast 2D exportado', result:'JSON', at:payload.generatedAt, build:BUILD_INFO.build }); saveState(state); renderMatchVisual2D(); };
+
 function renderMatch() {
   const match = state.match;
   renderBroadcastIntro(match);
@@ -6693,6 +6806,8 @@ function drawCourt(lastWinner = null) {
   ctx.arc(bx, by, 7, 0, Math.PI * 2);
   ctx.fill();
 
+  drawMatchVisualOverlay(ctx, w, h, match, p1, p2, bx, by);
+
   ctx.fillStyle = 'rgba(5,10,18,0.66)';
   ctx.fillRect(18, 16, 320, 58);
   ctx.fillStyle = '#e8f4ff';
@@ -6701,7 +6816,7 @@ function drawCourt(lastWinner = null) {
   ctx.fillStyle = '#9fb6cf';
   ctx.font = '500 14px Inter, system-ui, sans-serif';
   const autoLabel = autoPlayTimer ? `Auto ${autoPlaySpeed}x` : 'Manual';
-  ctx.fillText(`Estratégia ${currentStrategy.toUpperCase()} • ${tacticalOption('attackPattern', getTacticalPlan().attackPattern).label || 'Tática'} • ${autoLabel}`, 30, 61);
+  ctx.fillText(`Estratégia ${currentStrategy.toUpperCase()} • 2D ${ensureMatchVisual2D().cameraMode.toUpperCase()} • ${autoLabel}`, 30, 61);
   if (match?.lastPoint) {
     ctx.fillStyle = 'rgba(5,10,18,0.70)';
     ctx.fillRect(w - 340, 16, 318, 72);
