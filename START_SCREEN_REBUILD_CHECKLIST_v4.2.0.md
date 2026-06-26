@@ -12,7 +12,7 @@
 
 ## Teste recomendado no celular
 1. Abrir a URL publicada.
-2. Confirmar topo `v4.2.0 • 24/06/2026 • 14:52:53`.
+2. Confirmar topo `v4.2.0 • 26/06/2026 • 14:52:53`.
 3. Se aparecer a tela inicial, tocar em **Nova Carreira**.
 4. Escolher avatar, preencher nome, país, cidade e academia.
 5. Tocar em **Criar carreira e entrar**.

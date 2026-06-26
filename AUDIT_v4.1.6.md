@@ -37,4 +37,4 @@ Reforçar a validação prática do fluxo inicial no navegador real, principalme
 
 ## Resultado
 
-A build foi gerada como ZIP completo, preservando assets e sistemas anteriores. O teste visual mobile ainda deve ser feito no aparelho real após o deploy, confirmando que o topo mostra `v4.1.6 • 24/06/2026 • 11:49:13`.
+A build foi gerada como ZIP completo, preservando assets e sistemas anteriores. O teste visual mobile ainda deve ser feito no aparelho real após o deploy, confirmando que o topo mostra `v4.1.6 • 26/06/2026 • 11:49:13`.

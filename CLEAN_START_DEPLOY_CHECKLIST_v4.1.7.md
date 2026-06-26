@@ -3,7 +3,7 @@
 ## Teste obrigatório após upload
 
 1. Abrir o site publicado.
-2. Confirmar no topo: `v4.1.7 • 24/06/2026 • 12:37:42`.
+2. Confirmar no topo: `v4.1.7 • 26/06/2026 • 12:37:42`.
 3. Abrir a aba `Início Limpo`.
 4. Tocar em `Verificar deploy agora`.
 5. Se aparecer build antiga, tocar em `Limpar cache e recarregar`.

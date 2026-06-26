@@ -1,7 +1,8 @@
-import { loadContent } from './contentLoader.js';
+import { loadContent, getFallbackContent } from './contentLoader.js';
 import { buildInitialState, saveState, loadState, clearState, migrateSave, getSaveDiagnostics } from './state.js';
 import { BUILD_INFO, BUILD_LABEL } from './build.js';
 import { enrichPlayer, categoryAverage, surfaceLabel } from './modules/player-database.js';
+window.__valeTennisModuleLoaded = true;
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -1482,15 +1483,15 @@ function renderForcedOnboardingGate() {
     ['Modal obrigatório', snap.setupComplete || snap.modalVisible, snap.modalVisible ? 'Aberto em tela cheia' : 'Será forçado no próximo clique/boot'],
     ['Build atual', true, BUILD_LABEL]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.7.0')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite forced-onboarding-hero"><div><p class="eyebrow">Forced Onboarding • ${BUILD_LABEL}</p><h2>Launcher obrigatório de nova carreira</h2><p>Se o save estiver vazio, parcial ou antigo, o Dashboard fica bloqueado. O jogador deve escolher avatar, nome, país, cidade e academia antes de competir.</p></div><div class="release-score ${snap.hardLock ? 'pending':'ok'}"><span>Onboarding</span><strong>${gate.score}</strong><small>${snap.hardLock ? 'Travado':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('botão da central v4.8.1')">Abrir criação em tela cheia</button><button class="btn-secondary" onclick="window.forceRepairInvalidCareer()">Reparar e recriar base</button><button class="btn-secondary" onclick="window.auditForcedOnboardingGate()">Auditar launcher</button><button class="btn-ghost" onclick="window.exportForcedOnboardingReport()">Exportar relatório</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Bloqueios recentes</h4><div class="list-block">${(gate.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum bloqueio nesta sessão.</span><strong>OK</strong></div>'}</div></article></section>`;
 }
 window.forceOnboardingLauncher = forceOnboardingLauncher;
 window.forceRepairInvalidCareer = () => {
-  rebuildPlayableCareer('reparo forçado pelo launcher v4.7.0');
+  rebuildPlayableCareer('reparo forçado pelo launcher v4.8.1');
   ensureForcedOnboardingGateSystem().lastRepairAt = new Date().toISOString();
   saveState(state);
   render();
-  forceOnboardingLauncher('base recriada pelo launcher v4.7.0');
+  forceOnboardingLauncher('base recriada pelo launcher v4.8.1');
 };
 window.auditForcedOnboardingGate = () => {
   const snap = forcedOnboardingSnapshot();
@@ -1587,13 +1588,13 @@ function renderOnboardingRuntimeProof() {
     ['Perfil obrigatório', !snap.issues.some(x => /nome|avatar|país|academia|cidade|criação/.test(x)), snap.issues.join(', ') || 'Nome, avatar, país, cidade e academia OK'],
     ['Overlay de bloqueio', !snap.invalid || snap.lockVisible || snap.modalVisible, snap.lockVisible ? 'Ativo' : (snap.modalVisible ? 'Modal cobre a tela' : 'Inativo')]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.7.0')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite runtime-proof-hero"><div><p class="eyebrow">Runtime Proof • ${BUILD_LABEL}</p><h2>Prova mobile do fluxo inicial</h2><p>Esta central mostra, em tempo real, se a criação de carreira abriu de verdade e se o Dashboard vazio está bloqueado no navegador atual.</p></div><div class="release-score ${proof.score >= 85 ? 'ok':'pending'}"><span>Prova</span><strong>${proof.score}</strong><small>${snap.invalid ? 'Configurar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runOnboardingRuntimeProof()">Executar prova agora</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('prova runtime v4.8.1')">Abrir criação</button><button class="btn-secondary" onclick="window.confirmOnboardingVisualProof()">Confirmei no celular</button><button class="btn-ghost" onclick="window.exportOnboardingRuntimeProof()">Exportar prova</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Últimas provas</h4><div class="list-block">${(proof.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma prova nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado atual</h4><p class="muted">Tab: ${escapeHtml(snap.currentTab)} • Modal: ${snap.modalVisible ? 'visível':'não visível'} • Overlay: ${snap.lockVisible ? 'visível':'oculto'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.visualH)} • Build ${escapeHtml(BUILD_INFO.build)}</p></article></section>`;
 }
 window.runOnboardingRuntimeProof = () => {
   const before = onboardingRuntimeProofSnapshot();
   if (before.invalid) {
     syncOnboardingRuntimeLock('prova manual');
-    forceOnboardingLauncher('prova runtime v4.7.0');
+    forceOnboardingLauncher('prova runtime v4.8.1');
   }
   setTimeout(() => {
     const after = onboardingRuntimeProofSnapshot();
@@ -1698,7 +1699,7 @@ function renderCleanStartWizard() {
     ['Criação aparece quando precisa', !snap.invalidCareer || snap.modalVisible || SETUP_SAFE_TABS.has(snap.currentTab), snap.modalVisible ? 'Modal visível' : `Tab atual: ${snap.currentTab}`],
     ['Base jogável', snap.roster > 0 && snap.ranking >= 5 && snap.calendar >= 4 && snap.money > 0, `${snap.roster} atletas • ${snap.ranking} ranking • ${snap.calendar} eventos • caixa ${money(snap.money)}`]
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.7.0')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite clean-start-hero"><div><p class="eyebrow">Clean Start Wizard • ${BUILD_LABEL}</p><h2>Início limpo e verificação de deploy</h2><p>Use esta central quando o navegador ficar preso em versão antiga ou quando o jogo abrir com Dashboard vazio. Ela verifica build, save, cache/PWA e força a criação de carreira quando necessário.</p></div><div class="release-score ${wizard.score >= 85 ? 'ok':'pending'}"><span>Clean</span><strong>${wizard.score}</strong><small>${snap.invalidCareer ? 'Criar':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.runCleanStartAudit()">Verificar deploy agora</button><button class="btn-secondary" onclick="window.guidedCleanFirstRun()">Início limpo guiado</button><button class="btn-secondary" onclick="window.cleanOldCachesAndReload()">Limpar cache e recarregar</button><button class="btn-secondary" onclick="window.forceOnboardingLauncher('Clean Start Wizard v4.8.1')">Abrir criação</button><button class="btn-ghost" onclick="window.exportCleanStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label, ok, note]) => `<article class="release-check ${ok ? 'ok':'pending'}"><span>${ok ? '✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Histórico clean start</h4><div class="list-block">${(wizard.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article><article class="panel-card"><h4>Estado técnico</h4><p class="muted">Build JS: ${escapeHtml(BUILD_INFO.build)} • Topo: ${escapeHtml(snap.buildText || 'não lido')}</p><p class="muted">SW: ${snap.serviceWorker.supported ? (snap.serviceWorker.controlled ? 'controlado':'suportado, não controlado') : 'sem suporte'} • Cache API: ${snap.cacheApi ? 'sim':'não'}</p><p class="muted">Viewport: ${snap.viewport.w}×${Math.round(snap.viewport.vh)} • Save schema ${escapeHtml(String(snap.saveDiag?.schemaVersion || BUILD_INFO.schemaVersion))}</p></article></section>`;
 }
 window.runCleanStartAudit = () => {
   const snap = cleanStartWizardSnapshot();
@@ -1728,7 +1729,7 @@ window.guidedCleanFirstRun = () => {
   saveState(state);
   addLog('Início limpo guiado aplicado. A criação de carreira foi aberta novamente.');
   render();
-  forceOnboardingLauncher('início limpo guiado v4.7.0');
+  forceOnboardingLauncher('início limpo guiado v4.8.1');
 };
 window.cleanOldCachesAndReload = async () => {
   const wizard = ensureCleanStartWizardSystem();
@@ -1824,7 +1825,7 @@ function showStandaloneStartupShield(reason='carreira inválida') {
     document.body.appendChild(shield);
   }
   const issues = invalidCareerIssues(state);
-  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.7.0')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.7.0')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
+  shield.innerHTML = `<div class="emergency-shield-card glass"><p class="eyebrow">Início bloqueado • ${BUILD_LABEL}</p><h2>Antes de jogar, crie sua carreira</h2><p>O jogo detectou save vazio/parcial: ${escapeHtml(issues.slice(0,5).join(', ') || reason)}. O Dashboard fica bloqueado para não começar quebrado.</p><div class="emergency-shield-actions"><button class="btn-primary" onclick="window.hideStandaloneStartupShield?.(); window.forceOnboardingLauncher('shield independente v4.8.1')">Abrir criação</button><button class="btn-secondary" onclick="window.hardResetFirstRun('shield independente v4.8.1')">Resetar início com backup</button><button class="btn-ghost" onclick="window.clearCachesThenFreshStart()">Limpar cache e recarregar</button></div><small>Atalho sem cache: index.html?hardreset=1#emergencystart</small></div>`;
   shield.classList.remove('hidden');
   ensureEmergencyStartControlSystem().startupShieldVisible = true;
   saveState(state);
@@ -1843,7 +1844,7 @@ function applyEmergencyStartRoute() {
     return;
   }
   if (!careerIsPlayableAndConfigured(state)) {
-    setTimeout(() => { launchStartScreenV2('boot v4.7.0 detectou carreira incompleta'); }, 320);
+    setTimeout(() => { launchStartScreenV2('boot v4.8.1 detectou carreira incompleta'); }, 320);
   }
 }
 function renderEmergencyStartControl() {
@@ -1860,7 +1861,7 @@ function renderEmergencyStartControl() {
     ['Dados da academia', !!(snap.owner && snap.academy && snap.city && snap.avatar), `${snap.owner || 'sem treinador'} • ${snap.academy || 'sem academia'} • ${snap.city || 'sem cidade'}`],
     ['Armazenamento local', snap.storageWritable, snap.storageWritable ? 'localStorage OK' : 'Navegador bloqueou save local.']
   ];
-  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.7.0')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.7.0')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
+  host.innerHTML = `<section class="onboarding-hero glass-card-lite emergency-start-hero"><div><p class="eyebrow">Hard Reset Route • ${BUILD_LABEL}</p><h2>Launcher independente de início</h2><p>Use esta central quando o site insistir em abrir Dashboard zerado ou quando o Chrome/PWA ficar preso em save/cache antigo. Ela cria backup, limpa início quebrado e força a criação de carreira em tela cheia.</p></div><div class="release-score ${esc.score >= 85 ? 'ok':'pending'}"><span>Start</span><strong>${esc.score}</strong><small>${snap.invalidCareer ? 'Bloq.':'OK'}</small></div></section><section class="onboarding-actions"><button class="btn-primary" onclick="window.forceOnboardingLauncher('Reset/Onboarding v4.8.1')">Abrir criação obrigatória</button><button class="btn-secondary" onclick="window.hardResetFirstRun('botão central v4.8.1')">Hard reset com backup</button><button class="btn-secondary" onclick="window.clearCachesThenFreshStart()">Limpar cache + rota nova</button><button class="btn-ghost" onclick="window.exportEmergencyStartReport()">Exportar diagnóstico</button></section><section class="onboarding-check-grid">${checks.map(([label,ok,note])=>`<article class="release-check ${ok?'ok':'pending'}"><span>${ok?'✓':'!'}</span><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(note || '')}</small></div></article>`).join('')}</section><section class="release-grid"><article class="panel-card"><h4>Link de emergência</h4><p class="muted">Abra este caminho quando o navegador ficar preso em build antiga:</p><code>index.html?hardreset=1#emergencystart</code></article><article class="panel-card"><h4>Histórico</h4><div class="list-block">${(esc.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhuma auditoria nesta sessão.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.hardResetFirstRun = async (reason='hard reset guiado') => {
   const esc = ensureEmergencyStartControlSystem();
@@ -1989,8 +1990,8 @@ window.openMandatoryCareerSetup = () => {
 };
 window.repairMandatoryEmptySave = () => {
   ensureMandatoryCareerGateSystem().repairCount = (ensureMandatoryCareerGateSystem().repairCount || 0) + 1;
-  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.7.0');
-  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.7.0';
+  rebuildPlayableCareer('reparo manual pelo Gate Inicial v4.8.1');
+  state.mandatoryCareerGate ||= {}; state.mandatoryCareerGate.lastRepairReason = 'reparo manual pelo Gate Inicial v4.8.1';
   saveState(state); render(); openOwnerSetup(true);
 };
 window.auditMandatoryCareerGate = () => {
@@ -2371,7 +2372,7 @@ function renderCareerCreationUXHub() {
     <section class="release-grid"><article class="panel-card"><h4>Valores atuais do formulário</h4><div class="list-block"><div class="list-item"><span>Treinador</span><strong>${escapeHtml(snap.values.name || '—')}</strong></div><div class="list-item"><span>Academia</span><strong>${escapeHtml(snap.values.academy || '—')}</strong></div><div class="list-item"><span>País</span><strong>${escapeHtml(snap.values.country || '—')}</strong></div><div class="list-item"><span>Cidade</span><strong>${escapeHtml(snap.values.city || '—')}</strong></div></div></article><article class="panel-card"><h4>Últimas verificações</h4><div class="list-block">${(ux.auditLog||[]).slice(0,6).map(item=>`<div class="list-item"><div><strong>${escapeHtml(item.title)}</strong><div class="small">${escapeHtml(item.note || '')}</div></div><b>${escapeHtml(item.result || String(item.score))}</b></div>`).join('') || '<div class="list-item"><span>Nenhum teste executado nesta build.</span><strong>Pronto</strong></div>'}</div></article></section>`;
 }
 window.forceSetupModalNow = () => {
-  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.7.0');
+  if (!hasPlayableCareer(state)) rebuildPlayableCareer('abrir criação com base segura v4.8.1');
   state.flags ||= {}; state.flags.ownerSetupComplete = false;
   ensureCareerCreationUXSystem().firstRunVerified = false;
   saveState(state); render(); forceOnboardingLauncher('abertura manual pela aba Criação');
@@ -2386,7 +2387,7 @@ window.auditCareerCreationUX = () => {
   renderCareerCreationUXHub(); addLog(`Auditoria de criação de carreira: ${score}/100.`);
 };
 window.startFreshSetupSafely = () => {
-  backupBrokenCareer('reset guiado v4.7.0 solicitado pelo usuário');
+  backupBrokenCareer('reset guiado v4.8.1 solicitado pelo usuário');
   clearState();
   state = buildInitialState(content);
   migrateState();
@@ -2607,9 +2608,12 @@ async function boot() {
     applyAdminOverrides(content);
     state = loadState() || buildInitialState(content);
   } catch (error) {
-    showSystemError('Não foi possível carregar os dados principais. Uma nova carreira segura foi preparada.', error);
-    content = await loadContent();
+    showSystemError('Não foi possível carregar os dados principais. A build v4.8.1 ativou conteúdo embutido de emergência.', error);
+    content = getFallbackContent(error);
+    try { applyAdminOverrides(content); } catch {}
     state = buildInitialState(content);
+    state.inbox ||= [];
+    state.inbox.unshift({ title:'Recuperação v4.8.1 ativada', body:'O conteúdo externo não carregou. O jogo usou uma base embutida para liberar a criação de carreira sem prender no lobby.', week:1 });
   }
   migrateState();
   const startupStatus = ensurePlayableStart();
@@ -2631,7 +2635,8 @@ async function boot() {
   handleStartupHash();
   if (startupStatus !== 'ok' || !careerIsPlayableAndConfigured(state)) launchStartScreenV2(startupStatus === 'rebuilt' ? 'base reconstruída no boot' : 'configuração pendente no boot');
   setTimeout(() => window.runOnboardingRuntimeProof?.(), 380);
-  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.7.0'); }, 1800);
+  window.__valeTennisBootReady = true;
+  setInterval(() => { if (state && !careerIsPlayableAndConfigured(state)) syncOnboardingRuntimeLock('watchdog runtime v4.8.1'); }, 1800);
 }
 
 function applyAdminOverrides(content) {
@@ -2943,7 +2948,7 @@ function switchTab(tab) {
 
 
 function visualSceneForTab(tab='dashboard') {
-  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', scoutingworld: 'market', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', broadcast2d: 'broadcast', seasonboard: 'office', relationships: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
+  const map = { startscreen: 'office', dashboard: 'office', facilitiespro: 'training', scoutingworld: 'market', visual: state.visualAcademy?.activeScene || 'office', roster: 'market', career: 'office', training: 'training', microcycle: 'training', calendar: 'calendar', newsroom: 'calendar', mobileux: 'office', economy: 'office', legacy: 'office', release: 'office', delivery: 'office', qa: 'office', compat: 'office', onboarding: 'office', cacheguard: 'office', setupverify: 'office', initialgate: 'office', runtimeproof: 'office', facilitiespro: 'training', input: 'office', a11y: 'office', broadcast2d: 'broadcast', seasonboard: 'office', relationships: 'office', match: 'broadcast', market: 'market', staff: 'medical', ranking: 'calendar', adminhint: 'office' };
   return map[tab] || 'office';
 }
 function updateSceneForTab(tab='dashboard') {
@@ -3055,6 +3060,7 @@ function render() {
   renderFacilities();
   renderRoster();
   renderTrainingLab();
+  renderTrainingMicrocycle();
   renderWorldTourFeed();
   renderCalendar();
   renderTournamentIdentityHub();
@@ -5147,6 +5153,27 @@ const TRAINING_FOCUS = {
   recovery:{label:'Recuperação',attrs:[],fatigue:-16,health:-9,risk:0}
 };
 const TRAINING_INTENSITY = { light:{label:'Leve',mult:.65,risk:.5}, moderate:{label:'Moderada',mult:1,risk:1}, intense:{label:'Intensa',mult:1.45,risk:1.65}, extreme:{label:'Extrema',mult:1.9,risk:2.5} };
+
+const MICRO_LOAD_POLICIES = {
+  conservative: { label: 'Conservador', desc: 'Preserva saúde, reduz carga e prioriza recuperação antes de torneios longos.', load: -10, recovery: 12, risk: -8, perf: -1 },
+  balanced: { label: 'Equilibrado', desc: 'Combina evolução técnica, preparação física e recuperação sem extremos.', load: 0, recovery: 5, risk: -2, perf: 1 },
+  aggressive: { label: 'Agressivo', desc: 'Aumenta estímulo competitivo e evolução, mas exige monitoramento médico.', load: 12, recovery: -2, risk: 7, perf: 4 },
+  peak: { label: 'Pico competitivo', desc: 'Semana curta de ativação para torneio: menos volume, mais velocidade e confiança.', load: -4, recovery: 4, risk: -4, perf: 5 }
+};
+const MICRO_RECOVERY_MODES = {
+  standard: { label: 'Padrão', desc: 'Recuperação normal do staff e instalações.', recovery: 0, risk: 0 },
+  medical: { label: 'Médico preventivo', desc: 'Fisioterapia e monitoramento ativo para reduzir risco de lesão.', recovery: 8, risk: -7 },
+  mental: { label: 'Mental e pressão', desc: 'Psicologia esportiva, redução de pressão e moral mais estável.', recovery: 3, risk: -2, pressure: -6 },
+  regeneration: { label: 'Regenerativo', desc: 'Semana de carga baixa, sono, mobilidade e retorno gradual.', recovery: 14, risk: -11, pressure: -3 }
+};
+const MICRO_FOCUS_OPTIONS = {
+  balanced: { label: 'Equilíbrio geral', trainingFocus: 'balanced', intensity: 'moderate', attrs: ['forehand','backhand','serve','return'] },
+  serveReturn: { label: 'Saque + devolução', trainingFocus: 'technique', intensity: 'moderate', attrs: ['serve','return','composure'] },
+  clayEndurance: { label: 'Saibro e resistência', trainingFocus: 'fitness', intensity: 'intense', attrs: ['stamina','consistency','speed'] },
+  matchSharpness: { label: 'Ritmo de jogo', trainingFocus: 'match', intensity: 'moderate', attrs: ['tacticalIQ','composure','return'] },
+  recovery: { label: 'Recuperação total', trainingFocus: 'recovery', intensity: 'light', attrs: [] }
+};
+
 function ensureTrainingLab(){
   state.trainingLab ||= {cycle:'balanced',autoApply:true,lastProcessedWeek:0,lastReport:[],plans:{}};
   state.trainingLab.plans ||= {}; state.trainingLab.lastReport ||= [];
@@ -5190,6 +5217,131 @@ function processWeeklyTraining(){
   }catch(error){ state.roster=snapshot; state.flags.safeMode=true; report.splice(0,report.length,'Falha no ciclo: atletas restaurados pelo sistema anti-quebra.'); state.trainingLab.lastReport=report; showSystemError('O treino semanal falhou e o elenco foi restaurado automaticamente.'); }
 }
 
+
+
+function ensureTrainingMicrocycle(){
+  state.trainingMicrocycle ||= { score: 82, loadPolicy: 'balanced', recoveryPriority: 'standard', nextWeekFocus: 'balanced', injuryPrevention: true, athleteLoadMap: {}, weeklyLog: [], auditLog: [], lastProcessedToken: null, lastAuditToken: null, flags: { periodization: true, injuryPrevention: true, facilitySynergy: true, matchEngineImpact: true, mobileLoadBoard: true } };
+  const mc = state.trainingMicrocycle;
+  mc.loadPolicy ||= 'balanced';
+  mc.recoveryPriority ||= 'standard';
+  mc.nextWeekFocus ||= 'balanced';
+  mc.injuryPrevention ??= true;
+  mc.athleteLoadMap ||= {};
+  mc.weeklyLog ||= [];
+  mc.auditLog ||= [];
+  mc.flags ||= { periodization: true, injuryPrevention: true, facilitySynergy: true, matchEngineImpact: true, mobileLoadBoard: true };
+  state.roster.forEach(player => {
+    const existing = mc.athleteLoadMap[player.id] || {};
+    const acute = Math.round(clamp(existing.acuteLoad ?? ((player.fatigue || 0) + (100 - (player.health || 100)) * 0.38 + (player.injuredWeeks || 0) * 18), 0, 120));
+    const chronic = Math.round(clamp(existing.chronicLoad ?? 42, 10, 120));
+    const readiness = Math.round(clamp(existing.readiness ?? ((player.health || 100) - (player.fatigue || 0) * 0.42 - (player.injuredWeeks || 0) * 20 + (player.morale || 70) * 0.08), 0, 100));
+    const injuryRisk = Math.round(clamp(existing.injuryRisk ?? microcycleInjuryRisk(player, acute, chronic), 0, 100));
+    mc.athleteLoadMap[player.id] = { acuteLoad: acute, chronicLoad: chronic, readiness, injuryRisk, lastFocus: existing.lastFocus || 'balanced', lastDecision: existing.lastDecision || 'monitorar' };
+  });
+  return mc;
+}
+function microcycleInjuryRisk(player, acute=null, chronic=null){
+  const load = acute ?? ((player.fatigue || 0) + (100 - (player.health || 100)) * 0.35);
+  const base = (player.injuryProneness || 50) * 0.32 + load * 0.52 - (chronic || 42) * 0.12;
+  const medical = (state.academy?.facilities?.medical || 1) * 1.8 + Math.abs(Math.min(0, getStaffBonus('Fisioterapeuta','injury') + getStaffBonus('Nutricionista','injury')));
+  return clamp(base - medical + (player.injuredWeeks || 0) * 26, 2, 96);
+}
+function microcycleSnapshot(){
+  const mc = ensureTrainingMicrocycle();
+  const values = state.roster.map(player => mc.athleteLoadMap[player.id] || {});
+  const avgReady = Math.round(values.reduce((sum,row)=>sum+(row.readiness||0),0)/Math.max(1,values.length));
+  const avgRisk = Math.round(values.reduce((sum,row)=>sum+(row.injuryRisk||0),0)/Math.max(1,values.length));
+  const highRisk = values.filter(row => (row.injuryRisk || 0) >= 55).length;
+  const peakReady = values.filter(row => (row.readiness || 0) >= 74).length;
+  const score = Math.round(clamp(100 - avgRisk * 0.62 + avgReady * 0.22 - highRisk * 4 + peakReady * 2, 0, 100));
+  mc.score = score;
+  return { avgReady, avgRisk, highRisk, peakReady, score };
+}
+function microcycleRecommendation(player){
+  const mc = ensureTrainingMicrocycle();
+  const row = mc.athleteLoadMap[player.id] || {};
+  if ((player.injuredWeeks || 0) > 0) return { focus:'recovery', intensity:'light', decision:'lesionado: recuperação obrigatória' };
+  if ((row.injuryRisk || 0) >= 62 || (row.readiness || 0) <= 42) return { focus:'recovery', intensity:'light', decision:'risco alto: reduzir carga' };
+  if (mc.loadPolicy === 'peak') return { focus:'match', intensity:'light', decision:'pico: ativação competitiva' };
+  const focus = MICRO_FOCUS_OPTIONS[mc.nextWeekFocus] || MICRO_FOCUS_OPTIONS.balanced;
+  const policy = MICRO_LOAD_POLICIES[mc.loadPolicy] || MICRO_LOAD_POLICIES.balanced;
+  const intensity = policy.load > 8 && (row.injuryRisk || 0) < 42 ? 'intense' : focus.intensity;
+  return { focus: focus.trainingFocus, intensity, decision: `${focus.label} • ${MICRO_LOAD_POLICIES[mc.loadPolicy].label}` };
+}
+function renderTrainingMicrocycle(){
+  const host = $('#trainingMicrocycleHub');
+  if(!host) return;
+  ensureTrainingLab();
+  const mc = ensureTrainingMicrocycle();
+  const snap = microcycleSnapshot();
+  const policyOptions = Object.entries(MICRO_LOAD_POLICIES).map(([key,val])=>`<option value="${key}" ${mc.loadPolicy===key?'selected':''}>${val.label}</option>`).join('');
+  const recoveryOptions = Object.entries(MICRO_RECOVERY_MODES).map(([key,val])=>`<option value="${key}" ${mc.recoveryPriority===key?'selected':''}>${val.label}</option>`).join('');
+  const focusOptions = Object.entries(MICRO_FOCUS_OPTIONS).map(([key,val])=>`<option value="${key}" ${mc.nextWeekFocus===key?'selected':''}>${val.label}</option>`).join('');
+  const rows = state.roster.map(player => {
+    const row = mc.athleteLoadMap[player.id] || {};
+    const rec = microcycleRecommendation(player);
+    const riskClass = (row.injuryRisk || 0) >= 60 ? 'danger' : (row.injuryRisk || 0) >= 38 ? 'warn' : 'ok';
+    return `<article class="panel-card micro-athlete-card">
+      <div class="training-player-head">${avatarImg(avatarForPlayer(player.name),'avatar-img',player.name)}<div><h4>${player.name}</h4><p class="muted">Readiness ${row.readiness || 0} • carga aguda ${row.acuteLoad || 0} • crônica ${row.chronicLoad || 0}</p></div><span class="risk-chip ${riskClass}">Risco ${Math.round(row.injuryRisk || 0)}%</span></div>
+      <div class="microcycle-bars"><span>Prontidão <i style="width:${clamp(row.readiness||0,2,100)}%"></i></span><span>Carga <i style="width:${clamp(row.acuteLoad||0,2,100)}%"></i></span></div>
+      <div class="scout-row"><strong>Recomendação</strong><span>${TRAINING_FOCUS[rec.focus]?.label || rec.focus} / ${TRAINING_INTENSITY[rec.intensity]?.label || rec.intensity} • ${rec.decision}</span></div>
+    </article>`;
+  }).join('');
+  host.innerHTML = `<div class="training-summary-grid microcycle-summary">
+    <article class="stat-card"><span>Score microciclo</span><strong>${snap.score}</strong></article>
+    <article class="stat-card"><span>Readiness média</span><strong>${snap.avgReady}</strong></article>
+    <article class="stat-card"><span>Risco médio</span><strong>${snap.avgRisk}%</strong></article>
+    <article class="stat-card"><span>Alto risco</span><strong>${snap.highRisk}</strong></article>
+  </div>
+  <article class="panel-card training-control-card microcycle-control">
+    <div><h4>Direção da semana</h4><p class="muted">O microciclo ajusta carga, recuperação e plano individual antes do Training Lab processar a semana.</p></div>
+    <div class="training-fields"><label>Política de carga<select onchange="window.setMicrocycleOption('loadPolicy',this.value)">${policyOptions}</select></label><label>Recuperação<select onchange="window.setMicrocycleOption('recoveryPriority',this.value)">${recoveryOptions}</select></label><label>Foco principal<select onchange="window.setMicrocycleOption('nextWeekFocus',this.value)">${focusOptions}</select></label></div>
+    <div class="form-actions"><button class="btn-primary" onclick="window.applyMicrocyclePlan()">Aplicar plano recomendado</button><button class="btn-secondary" onclick="window.runMicrocycleAudit()">Auditar risco</button><button class="btn-secondary" onclick="window.exportMicrocycleReport()">Exportar relatório</button></div>
+  </article>
+  <div class="training-plan-grid microcycle-grid">${rows}</div>
+  <article class="panel-card training-report-card"><div class="panel-title-row"><h4>Log do microciclo</h4></div><div class="list-block">${(mc.weeklyLog||[]).slice(0,8).map(item=>`<div class="list-item"><span>${item.title || item}</span><small>${item.detail || ''}</small></div>`).join('') || '<div class="list-item"><span>Nenhuma semana processada pelo microciclo ainda.</span></div>'}</div></article>`;
+  hydrateAssetImages();
+}
+window.setMicrocycleOption = (key,value) => { const mc = ensureTrainingMicrocycle(); if(!['loadPolicy','recoveryPriority','nextWeekFocus'].includes(key)) return; mc[key] = value; mc.auditLog.unshift({ title:'Opção do microciclo alterada', detail:`${key}: ${value}`, week:state.academy.week, season:state.academy.season, build:BUILD_INFO.build }); saveState(state); renderTrainingMicrocycle(); };
+window.applyMicrocyclePlan = () => {
+  const mc = ensureTrainingMicrocycle(); ensureTrainingLab();
+  state.roster.forEach(player => { const rec = microcycleRecommendation(player); state.trainingLab.plans[player.id] = { focus: rec.focus, intensity: rec.intensity }; mc.athleteLoadMap[player.id].lastDecision = rec.decision; mc.athleteLoadMap[player.id].lastFocus = rec.focus; });
+  mc.weeklyLog.unshift({ title:'Plano recomendado aplicado ao Training Lab', detail:`${MICRO_LOAD_POLICIES[mc.loadPolicy]?.label || mc.loadPolicy} • ${MICRO_FOCUS_OPTIONS[mc.nextWeekFocus]?.label || mc.nextWeekFocus}`, week:state.academy.week, season:state.academy.season });
+  addLog('Microciclo avançado aplicou planos individuais ao Training Lab.');
+  saveState(state); render();
+};
+window.runMicrocycleAudit = () => { const mc = ensureTrainingMicrocycle(); const snap = microcycleSnapshot(); mc.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`; mc.auditLog.unshift({ title:'Auditoria de microciclo', detail:`Score ${snap.score}, risco médio ${snap.avgRisk}%, ${snap.highRisk} atletas em alto risco.`, week:state.academy.week, season:state.academy.season, build:BUILD_INFO.build }); mc.weeklyLog.unshift({ title:'Auditoria executada', detail:`Readiness ${snap.avgReady} • risco ${snap.avgRisk}% • alto risco ${snap.highRisk}`, week:state.academy.week, season:state.academy.season }); saveState(state); renderTrainingMicrocycle(); };
+function processTrainingMicrocycleWeek(){
+  const mc = ensureTrainingMicrocycle(); const token = `${state.academy.season}-${state.academy.week}`;
+  if(mc.lastProcessedToken === token) return;
+  const policy = MICRO_LOAD_POLICIES[mc.loadPolicy] || MICRO_LOAD_POLICIES.balanced;
+  const recovery = MICRO_RECOVERY_MODES[mc.recoveryPriority] || MICRO_RECOVERY_MODES.standard;
+  const facilityRecovery = (state.academy?.facilities?.medical || 1) * 1.3 + (state.academy?.facilities?.gym || 1) * 0.6 + (state.academy?.facilities?.analytics || 0) * 0.7;
+  const log = [];
+  state.roster.forEach(player => {
+    const row = mc.athleteLoadMap[player.id] ||= { acuteLoad: 35, chronicLoad: 42, readiness: 70, injuryRisk: 12, lastFocus:'balanced', lastDecision:'monitorar' };
+    const rec = microcycleRecommendation(player);
+    state.trainingLab ||= { plans: {} }; state.trainingLab.plans ||= {};
+    if(mc.injuryPrevention && ((row.injuryRisk || 0) >= 62 || (player.injuredWeeks || 0) > 0)) state.trainingLab.plans[player.id] = { focus:'recovery', intensity:'light' };
+    else state.trainingLab.plans[player.id] ||= { focus: rec.focus, intensity: rec.intensity };
+    const acuteDelta = policy.load + (state.trainingLab.plans[player.id]?.intensity === 'intense' ? 8 : state.trainingLab.plans[player.id]?.intensity === 'light' ? -8 : 0) - recovery.recovery * 0.35;
+    row.acuteLoad = Math.round(clamp((row.acuteLoad || 35) * 0.62 + Math.max(0, (player.fatigue || 0) + acuteDelta) * 0.38, 0, 120));
+    row.chronicLoad = Math.round(clamp((row.chronicLoad || 42) * 0.82 + row.acuteLoad * 0.18, 8, 120));
+    row.readiness = Math.round(clamp((player.health || 100) - row.acuteLoad * 0.28 + recovery.recovery + facilityRecovery + ((player.morale || 70) - 60) * 0.08 + (recovery.pressure || 0) * -0.15, 0, 100));
+    row.injuryRisk = Math.round(clamp(microcycleInjuryRisk(player, row.acuteLoad, row.chronicLoad) + policy.risk + recovery.risk, 1, 96));
+    row.lastFocus = state.trainingLab.plans[player.id]?.focus || rec.focus;
+    row.lastDecision = rec.decision;
+    player.readiness = row.readiness;
+    player.fatigue = Math.max(0, (player.fatigue || 0) + Math.max(-10, policy.load * 0.12 - recovery.recovery * 0.16));
+    player.health = Math.min(100, (player.health || 100) + recovery.recovery * 0.08 + facilityRecovery * 0.06);
+    if (row.injuryRisk >= 70) maybeInjure(player, 4 + row.injuryRisk * 0.05);
+    log.push(`${player.name}: prontidão ${row.readiness}, risco ${row.injuryRisk}%, decisão ${row.lastDecision}.`);
+  });
+  mc.lastProcessedToken = token;
+  mc.weeklyLog.unshift({ title:`Microciclo processado na semana ${state.academy.week}`, detail:log.slice(0,3).join(' • '), week:state.academy.week, season:state.academy.season, build:BUILD_INFO.build });
+  mc.weeklyLog = mc.weeklyLog.slice(0,16);
+}
+window.exportMicrocycleReport = () => { const mc = ensureTrainingMicrocycle(); const payload = { app:BUILD_INFO.appName, version:BUILD_INFO.version, build:BUILD_INFO.build, schema:BUILD_INFO.schemaVersion, generatedAt:new Date().toISOString(), snapshot:microcycleSnapshot(), settings:{ loadPolicy:mc.loadPolicy, recoveryPriority:mc.recoveryPriority, nextWeekFocus:mc.nextWeekFocus, injuryPrevention:mc.injuryPrevention }, athletes:state.roster.map(p=>({ id:p.id, name:p.name, fatigue:p.fatigue, health:p.health, readiness:p.readiness, injuredWeeks:p.injuredWeeks, load:mc.athleteLoadMap[p.id] })), weeklyLog:mc.weeklyLog, privacy:'Relatório local. Nenhum dado é enviado para servidor.' }; try { const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href=url; link.download=`vale-tennis-microcycle-${BUILD_INFO.version}-${BUILD_INFO.build}.json`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); } catch(error) { console.info('Microcycle report', payload, error); } mc.lastAuditToken = `${BUILD_INFO.build}-${Date.now()}`; mc.auditLog.unshift({ title:'Relatório de microciclo exportado', detail:'JSON local gerado', week:state.academy.week, season:state.academy.season, build:BUILD_INFO.build }); saveState(state); renderTrainingMicrocycle(); };
 
 function personalityKeyFor(player={}) {
   const keys = Object.keys(PLAYER_PERSONALITIES);
@@ -6535,6 +6687,7 @@ function addMatchLog(text) { if (!state.match) return; state.match.log.push(text
 
 function advanceWeek() {
   ensureCommercialCareerSystem();
+  processTrainingMicrocycleWeek();
   processWeeklyTraining();
   const weeklyIncome = calculateSponsor();
   const weeklyCosts = calculateWeeklyCosts();
@@ -6838,7 +6991,7 @@ function drawCourt(lastWinner = null) {
 
 
 
-// v4.7.0 — Real Season Objectives & Board Pressure
+// v4.8.1 — Real Season Objectives & Board Pressure
 const BOARD_AMBITIONS = {
   survival: { label: 'Sobrevivência', desc: 'Manter caixa positivo e entrar no Top 150 sem quebrar a academia.', rank: 150, cash: 0, reputation: 32, titles: 0, risk: 0.82 },
   balanced: { label: 'Profissional', desc: 'Top 120, reputação crescente e caixa saudável.', rank: 120, cash: 25000, reputation: 42, titles: 0, risk: 1 },
@@ -6961,7 +7114,7 @@ window.exportBoardReport = () => {
 };
 
 
-// v4.7.0 — Scouting World Map & Youth Recruitment
+// v4.8.1 — Scouting World Map & Youth Recruitment
 const SCOUTING_REGIONS = {
   southAmerica: { label: 'América do Sul', icon: '🌎', desc: 'Brasil, Argentina, Chile e Uruguai. Bom custo e talentos de saibro.', countries: ['Brasil','Argentina','Chile','Uruguai','Colômbia'], surface: 'Saibro', cost: 4200, potential: 7, risk: 4, styleBias: ['Contra-atacador','Defensivo','Agressivo de fundo'] },
   europeWest: { label: 'Europa Ocidental', icon: '🇪🇺', desc: 'Espanha, França, Itália e Alemanha. Base técnica forte e custo alto.', countries: ['Espanha','França','Itália','Alemanha','Portugal'], surface: 'Saibro', cost: 7200, potential: 9, risk: 5, styleBias: ['All-court','Agressivo de fundo','Defensivo'] },
@@ -7280,6 +7433,28 @@ function getStaffImpact(){
 
 
 window.forceEnterCareer = () => saveOwnerSetup();
+
+window.exportBootRecoveryDiagnostic = () => {
+  const payload = {
+    app: BUILD_INFO.appName, version: BUILD_INFO.version, build: BUILD_INFO.build, schema: BUILD_INFO.schemaVersion,
+    generatedAt: new Date().toISOString(), moduleLoaded: !!window.__valeTennisModuleLoaded, bootReady: !!window.__valeTennisBootReady,
+    currentTab: state?.ui?.currentTab, playable: state ? careerIsPlayableAndConfigured(state) : false,
+    contentFallback: content?.manifest?.fallback || false, contentSource: content?.worldTourSource || 'unknown',
+    roster: state?.roster?.length || 0, ranking: state?.ranking?.length || 0, calendar: state?.calendar?.length || 0,
+    ownerSetupComplete: !!state?.flags?.ownerSetupComplete,
+    userAgent: navigator.userAgent,
+    location: String(location.href),
+    note: 'Diagnóstico local v4.8.1: usado para detectar JS ausente, content ausente, cache antigo ou save vazio.'
+  };
+  try {
+    const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = `vale-tennis-boot-recovery-${BUILD_INFO.version}-${BUILD_INFO.build}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  } catch (error) { console.info('Boot recovery diagnostic', payload, error); }
+  return payload;
+};
+
 ['ownerNameInput','academyNameInput','academyCityInput','careerDifficultyInput'].forEach(id => document.getElementById(id)?.addEventListener('input', updateCareerPreview));
 document.getElementById('saveOwnerSetupBtn')?.addEventListener('click', () => saveOwnerSetup());
 window.addEventListener('orientationchange', () => setTimeout(() => { document.documentElement.style.setProperty('--app-vh', `${window.innerHeight * 0.01}px`); }, 150));

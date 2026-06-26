@@ -1531,3 +1531,17 @@ body.start-screen-open .mobile-dock, body.start-screen-open .mobile-quick-bar, b
 .avatar-duo .avatar-img + .avatar-img{margin-left:-14px}
 .profile-badges .ok{color:#79f0ad}.profile-badges .warn{color:#ffd166}.profile-badges .danger{color:#ff8ba0}
 @media(max-width:720px){.relationship-hero-card{flex-direction:column}.relationship-pair-grid{grid-template-columns:1fr}.avatar-duo .avatar-img{width:40px;height:40px}}
+
+/* v4.8.0 — Advanced Training Microcycle & Injury Prevention */
+.training-microcycle-panel .training-microcycle-hub { display: grid; gap: 16px; }
+.microcycle-summary .stat-card strong { letter-spacing: -0.03em; }
+.microcycle-control .training-fields { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.microcycle-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.micro-athlete-card { display: grid; gap: 12px; }
+.microcycle-bars { display: grid; gap: 8px; }
+.microcycle-bars span { display: grid; gap: 4px; color: var(--muted); font-size: .82rem; }
+.microcycle-bars i { display:block; height: 7px; border-radius: 999px; background: linear-gradient(90deg, rgba(111,224,255,.35), rgba(148,255,162,.85)); box-shadow: 0 0 18px rgba(111,224,255,.18); }
+@media (max-width: 720px) {
+  .microcycle-control .form-actions { display:grid; grid-template-columns: 1fr; }
+  .microcycle-grid { grid-template-columns: 1fr; }
+}
