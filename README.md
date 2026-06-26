@@ -1,6 +1,6 @@
-# Vale Games Tennis Manager v4.8.1
+# Vale Games Tennis Manager v4.8.2
 
-Build `20260626-105500` — **Boot Recovery: Embedded Content Fallback & No-JS Shield**.
+Build `20260626-124500` — **Boot Recovery: Embedded Content Fallback & No-JS Shield**.
 
 ## Objetivo
 
@@ -20,7 +20,7 @@ Esta build corrige o problema visto no print: o jogo ficava preso no lobby/Dashb
 O topo precisa mostrar:
 
 ```text
-v4.8.1 • 26/06/2026 • 10:55:00
+v4.8.2 • 26/06/2026 • 12:45:00
 ```
 
 Se aparecer `v4.7.0`, o site ainda não recebeu a build nova ou o navegador/PWA está segurando cache antigo.

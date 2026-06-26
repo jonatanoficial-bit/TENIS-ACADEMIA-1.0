@@ -1,6 +1,6 @@
-# v4.8.1 — Boot Recovery: Embedded Content Fallback & No-JS Shield
+# v4.8.2 — Boot Recovery: Embedded Content Fallback & No-JS Shield
 
-Build `20260626-105500` • Schema 46.
+Build `20260626-124500` • Schema 46.
 
 ## Corrigido
 

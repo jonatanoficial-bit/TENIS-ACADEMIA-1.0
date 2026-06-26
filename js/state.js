@@ -5,7 +5,7 @@ const STORAGE_KEY = 'vale_tennis_manager_save';
 const LEGACY_KEYS = ['ace_academy_save_v040', 'ace-manager-save'];
 const BACKUP_KEY = 'vale_tennis_manager_save_backup';
 const CORRUPT_KEY = 'vale_tennis_manager_corrupt_save';
-const CURRENT_SCHEMA = 46;
+const CURRENT_SCHEMA = 47;
 
 const clone = (value) => typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 

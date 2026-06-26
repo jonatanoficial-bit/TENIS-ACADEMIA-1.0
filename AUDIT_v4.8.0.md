@@ -1,7 +1,7 @@
-# AUDIT v4.8.1 — Boot Recovery: Embedded Content Fallback & No-JS Shield
+# AUDIT v4.8.2 — Boot Recovery: Embedded Content Fallback & No-JS Shield
 
-Build: `20260626-105500`
-Data: 26/06/2026 10:55:00 São Paulo
+Build: `20260626-124500`
+Data: 26/06/2026 12:45:00 São Paulo
 Schema: 45
 
 ## Escopo

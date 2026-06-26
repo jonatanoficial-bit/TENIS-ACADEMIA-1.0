@@ -1,4 +1,4 @@
-# Checklist v4.8.1 — Boot Recovery
+# Checklist v4.8.2 — Boot Recovery
 
 - [x] Atualizar versão/build/schema.
 - [x] Criar fallback embutido de conteúdo.

@@ -1,6 +1,6 @@
-# Checklist v4.8.1 — Microciclo avançado
+# Checklist v4.8.2 — Microciclo avançado
 
-- [x] Build/schema sincronizados: 4.8.1 / 45.
+- [x] Build/schema sincronizados: 4.8.2 / 45.
 - [x] Aba Microciclo criada.
 - [x] Estado `trainingMicrocycle` criado e migrado.
 - [x] Carga aguda/crônica, prontidão e risco calculados por atleta.

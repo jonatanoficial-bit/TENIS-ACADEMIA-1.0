@@ -1,10 +1,10 @@
-# Auditoria v4.8.1
+# Auditoria v4.8.2
 
 ## Build
 
-- Versão: 4.8.1
-- Build: 20260626-105500
-- Schema: 46
+- Versão: 4.8.2
+- Build: 20260626-124500
+- Schema: 47
 - Fase: Boot Recovery: Embedded Content Fallback & No-JS Shield
 
 ## Diagnóstico do print do usuário

@@ -9,7 +9,7 @@ export async function loadJson(path) {
 export function getFallbackContent(reason = null) {
   const academyDefaults = {
     name: 'Vale Tennis Academy', city: 'São Paulo', country: 'BRA', season: 2026, week: 1,
-    reputation: 12, sponsor: 12000, cash: 250000, currency: '$', philosophy: 'Formação competitiva mobile-first'
+    reputation: 12, sponsor: 12000, money: 250000, cash: 250000, weeklyCosts: 14500, currency: '$', philosophy: 'Formação competitiva mobile-first'
   };
   const starterRoster = [
     { id:'vale-starter-1', name:'Lucas Andrade', country:'BRA', countryCode:'BRA', age:19, rank:162, rankingPoints:320, overall:66, potential:82, style:'All court', preferredSurface:'hard', serve:66, return:64, forehand:68, backhand:63, stamina:70, mental:68, focus:68 },
@@ -39,7 +39,7 @@ export function getFallbackContent(reason = null) {
     { id:'market-1', name:'João Lima', country:'BRA', age:17, rank:420, rankingPoints:32, overall:55, potential:83, style:'Agressivo', preferredSurface:'clay', salary:900, value:18000 },
     { id:'market-2', name:'Nicolás Vega', country:'ARG', age:18, rank:390, rankingPoints:45, overall:57, potential:81, style:'Defensivo', preferredSurface:'clay', salary:1100, value:22000 }
   ];
-  return { manifest:{ packs:[], fallback:true, reason:String(reason?.message || reason || 'conteúdo embutido') }, academyDefaults, calendar, rankingSeed, starterRoster, marketTalents, staffMarket, worldDatabase: rankingSeed, worldTourSource:'embedded-fallback-v4.8.1' };
+  return { manifest:{ packs:[], fallback:true, reason:String(reason?.message || reason || 'conteúdo embutido') }, academyDefaults, calendar, rankingSeed, starterRoster, marketTalents, staffMarket, worldDatabase: rankingSeed, worldTourSource:'embedded-fallback-v4.8.2' };
 }
 
 export async function loadContent() {

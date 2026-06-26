@@ -1,7 +1,7 @@
 {
   "name": "Vale Games Tennis Manager",
   "short_name": "Vale Tennis",
-  "start_url": "./index.html?v=4.8.1-20260626-105500#start",
+  "start_url": "./index.html?v=4.8.2-20260626-124500#start",
   "display": "standalone",
   "background_color": "#08101d",
   "theme_color": "#08101d",
